@@ -1,0 +1,6 @@
+name: nextpipe-fastp
+channels:
+  -conda-forge
+  -bioconda
+dependencies:
+  -fastq=0.19.5

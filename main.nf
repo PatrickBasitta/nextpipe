@@ -1,48 +1,148 @@
-params.reads = "/data/data_AG_Glen/input_data/cl_DE11NGSUKBD135765_5-22Rv1_{1,2}.fq"
-params.reference = "/data/data_AG_Glen/reference_data/Homo_sapiens.GRCh38.dna.primary_assembly.fasta"
+nextflow.enable.dsl=2
+/*
+ * pipeline input parameters
+ */
+params.reads = "/data/data_AG_Glen/input_data/DE22NGSUKBD135761_1-LNCaP_{1,2}.fq.gz"
+//params.reference = "/data/data_AG_Glen/reference_data/*"
 params.outdir = "results"
+params.cpus = 2
+params.memory = 6
 
 log.info """\
-    C E L L _ L I N E S - N F   P I P E L I N E
-    ===========================================
+    C E L L _ L I N E S - N F  P I P E L I N E
+    ==========================================
     reads        : ${params.reads}
     reference    : ${params.reference}
     outdir       : ${params.outdir}
+    cpus         : ${params.cpus}
+    memory       : ${params.memory}
     """
     .stripIndent(true)
 
-workflow {
-    Channel
-        .fromFilePairs(params.reads, checkIfExists: true)
-        .set { read_pairs_ch }
-
-    tastp_ch = FASTP_PAIRED(read_pairs_ch)
-}
-
-    .set { read_pairs_ch }
 
 /*
- * STEP 1 - FASTP
+ *read_pairs_ch = Channel.fromFilePairs(params.reads)
+ *read_pairs_ch.view()
  */
 
 process FASTP_PAIRED {
-    cpus 2
-    memory 6
-    tag "{name}"
+    cpus "${params.cpus}"
+    memory "${params.memory}"
+    debug true
+
+    publishDir "${params.outdir}", mode: "copy"
 
     input:
-        tuple name, file(x) from read_pairs_ch
+        tuple val(sample_ID), path(reads)
 
     output:
-    path outdir
+        tuple val(sample_ID), path("fp_trimmed_*"), emit: fp_trimmed_reads
+        tuple val(sample_ID), path("*.json")      , emit: fastp_json
+        tuple val(sample_ID), path("*.html")      , emit: fastp_html
 
     script:
     """
-    mkdir fastq_trimmed
-    fastq \
-    -i ${x[0]} -I ${x[1]} \
-    -o fastp/trimmed/trim_${x[0]} -O fastq_trimmed/trim_${[1]} }
-    -j ${name}_fastq.json
-    """     
+    fastp \
+    -i ${reads[0]} \
+    -I ${reads[1]} \
+    -o fp_trimmed_${reads[0]} \
+    -O fp_trimmed_${reads[1]} \
+    -j ${sample_ID}_fp_trimmed.json \
+    -h ${sample_ID}_fp_trimmed.html
+    """
+}
+
+process DECOMPRESS_FASTQ_GZ {
+    cpus "${params.cpus}"
+    memory "${params.memory}"
+    debug true
+
+    publishDir "${params.outdir}", mode: "copy"
+
+    input:
+        tuple val(sample_ID), path(fp_trimmed_reads)
+
+    output:
+        tuple val(sample_ID), path("d_*"), emit: d_fp_trimmed_reads
+    
+    script:
+    """
+    gzip -dc ${fp_trimmed_reads[0]} > d_${sample_ID}_1.fq
+    gzip -dc ${fp_trimmed_reads[1]} > d_${sample_ID}_2.fq
+    """
+}
+
+process BWA_MEM {
+    cpus "${params.cpus}"
+    memory "${params.memory}"
+    debug true
+
+    publishDir "${params.outdir}", mode: "copy"
+
+    input:
+        path(reference)
+        tuple val(sample_ID), path(d_fp_trimmed_reads)
+   
+    output:
+        tuple val(sample_ID), path("*.bam"), emit: bam
+     
+    script:
+    def idxbase = reference[0].baseName
+
+    """
+    bwa mem -t ${task.cpus} ${idxbase} ${d_fp_trimmed_reads[0]} ${d_fp_trimmed_reads[1]} | samtools view -Shb -o ./${sample_ID}.bam
+    """
+}
+
+process SAM_SORT_BAM {
+    cpus "${params.cpus}"
+    memory "${params.memory}"
+    debug true
+
+    publishDir "${params.outdir}", mode: "copy"
+
+    input:
+        tuple val(sample_ID), path(bam)
+
+    output:
+        tuple val(sample_ID), path("*.bam"), emit: sorted_bam
+
+    script:
+    """
+    samtools sort ${bam} -o sorted_${sample_ID}.bam
+    """
+}
+
+process SAM_INDEX {
+    cpus "${params.cpus}"
+    memory "${params. memory}"
+    debug true
+
+    publishDir "${params.outdir}", mode: "copy"
+
+    input:
+        tuple val(sample_ID), path(sorted_bam)
+
+    output:
+        tuple val(sample_ID), path("*.bai"), emit: sam_bai
+
+    script:
+    """
+    samtools index $sorted_bam
+    """
+}
+
+// Channels
+read_pairs_ch = Channel.fromFilePairs(params.reads)
+//reference_ch = Channel.fromPath(params.reference)
+bwa_index = file('/data/data_AG_Glen/reference_data/Homo_sapiens.GRCh38.dna.primary_assembly.fasta.{,amb,ann,bwt,pac,sa}')
+
+workflow {
+    FASTP_PAIRED(read_pairs_ch)
+    DECOMPRESS_FASTQ_GZ(FASTP_PAIRED.out.fp_trimmed_reads)
+    BWA_MEM(bwa_index,DECOMPRESS_FASTQ_GZ.out.d_fp_trimmed_reads)
+    SAM_SORT_BAM(BWA_MEM.out.bam)
+    SAM_INDEX(SAM_SORT_BAM.out.sorted_bam)
+    SAM_INDEX.out.sam_bai.view()    
 }
 
