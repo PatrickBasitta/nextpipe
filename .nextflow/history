@@ -1,0 +1,27 @@
+2023-06-11 22:38:13	2h 13m 6s	insane_poincare	OK	82b5f5b5ed48a3f8670df1de7a726826	7d329851-a915-4033-ae16-98c7a815d3e2	nextflow run main.nf -with-report report_DE22NGSUKBD135761
+2023-06-12 08:42:55	12.5s	cranky_wilson	ERR	a3ab0751999df48fd39eb93df1728a34	4216ec9b-f679-48de-8586-1fa121545ddd	nextflow run main.nf -with-report report_DE22NGSUKBD135761
+2023-06-12 08:44:18	2h 28m 19s	awesome_venter	OK	a3ab0751999df48fd39eb93df1728a34	9fbe774c-155e-48ae-96cd-49a0670c3c24	nextflow run main.nf -with-report report_DE22NGSUKBD135761
+2023-06-12 17:31:55	23.2s	intergalactic_stallman	ERR	ca3f5f526d23cfe4ca55a3d005661243	ba792fc4-d550-400e-9d6c-485786ae3116	nextflow run main.nf -with-report report_DE22NGSUKBD135761
+2023-06-12 17:33:22	15m 50s	happy_koch	OK	ca3f5f526d23cfe4ca55a3d005661243	44435b43-63f1-439b-9215-84415908b2be	nextflow run main.nf -with-report report_DE22NGSUKBD135761
+2023-06-12 20:02:40	2h 26m 25s	zen_celsius	OK	a3ab0751999df48fd39eb93df1728a34	80a7d68a-2d53-4a9d-868a-d5eb91361f3a	nextflow run main.nf -with-report report_DE22NGSUKBD135761
+2023-06-13 13:07:51	2.4s	deadly_northcutt	OK	56537bea714a4ab011ced1bb927ed827	093f3e2e-4505-440f-b3f4-d6cd683f769d	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-13 13:13:06	2.7s	adoring_pare	OK	56537bea714a4ab011ced1bb927ed827	30963dc2-46db-43de-b7d3-98627d8ab6fe	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-13 13:17:04	13.7s	nice_leibniz	OK	9d1481285e8faf97fe151e6edf722612	7eba071f-c4a3-456c-ace1-6aabab616013	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-13 13:21:57	11.8s	spontaneous_dubinsky	OK	29db4556476025350b4b4b67d29f936b	4dd4d757-a0ae-465e-92f2-a7fbe9045133	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-13 13:26:04	15.1s	naughty_hamilton	OK	c372597c8afc47640e2a01287d883b48	82c597b9-414c-497f-8f84-a049e6488713	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-13 13:31:43	14.4s	irreverent_faraday	OK	0c7fe3f84d7485cfbda50183cfaff47f	55149156-e08c-431b-bc13-72a2b9e41af4	nextflow run main.nf
+2023-06-13 13:33:19	1m 6s	zen_galileo	ERR	a3ab0751999df48fd39eb93df1728a34	29a4fd59-bf54-465a-ad6f-406021c11007	nextflow run main.nf
+2023-06-13 13:38:29	16.6s	wise_hugle	OK	f048d941e586fba4210bb4bdcdf935bd	d91cfbe1-c016-43a4-995f-2bc6bbfcafe3	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-13 13:40:26	13.5s	infallible_stone	OK	0c7fe3f84d7485cfbda50183cfaff47f	723259d8-78e2-457b-8b2f-6acfaf804ee6	nextflow run main.nf
+2023-06-13 13:45:13	13.9s	gloomy_feynman	OK	0c7fe3f84d7485cfbda50183cfaff47f	604dcab0-fa43-4d73-a8d8-29a06126d778	nextflow run main.nf
+2023-06-13 16:24:31	15s	angry_hodgkin	OK	d93eacb5e3efcbf1a391eaae6033b0ac	9403ce44-8507-4694-ba66-b2785bffac5f	nextflow run main.nf
+2023-06-13 16:30:32	15.1s	stoic_leavitt	OK	018c6d25e3b9a21286a77351b5df3e31	3e9576b8-283f-472a-ae48-dd7e89db3b2a	nextflow run main.nf
+2023-06-13 18:02:24	-	mad_babbage	-	d3a026e5d8bfb8325cc9fe626e3690d5	a8d166fd-e8f4-4097-a32b-15eba5c67453	nextflow run main.nf -with-report 3
+2023-06-13 18:04:59	-	shrivelled_agnesi	-	bc17960d80ca1956b910ffd3c216ee5f	3d198561-9427-4902-ace5-bd5e08b51d75	nextflow run main.nf -with-report report_DE27NGSUKBD135768_8-22Rv1-Daro
+2023-06-14 08:08:00	3s	backstabbing_kalam	ERR	43529b51f639ae2c77ae3a0b67a77be7	091f9afb-6408-4430-9ce0-55257dfa02c5	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1_
+2023-06-14 08:09:04	3.2s	ecstatic_goodall	ERR	43529b51f639ae2c77ae3a0b67a77be7	7a468726-9995-4ddd-8473-21a95646a57b	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-14 08:10:01	2h 13m 54s	elated_liskov	OK	98425fd26955f88bbfef83fb5b461692	1580741d-0b19-47f4-ba14-109860124c3f	nextflow run main.nf -with-report report_DE11NGSUKBD135765_5-22Rv1
+2023-06-14 19:58:25	2h 9m 7s	pensive_ramanujan	OK	c1110d761414f6ca7b69a9b619421aa5	3e87e3b1-baa1-470a-88b9-23a61381d065	nextflow run main.nf -with-report report_DE81NGSUKBD135766_6-22Rv1-Bica
+2023-06-15 09:14:37	36.5s	cranky_keller	ERR	a40093049039717ddbc839b07e10860d	f76e84b9-8ada-4ca3-9dd6-6babb2319b91	nextflow run main.nf -with-report report_DE92NGSUKBD135762_2-LNCaP-Bica_1
+2023-06-15 09:16:09	2h 24m 54s	amazing_tuckerman	OK	a40093049039717ddbc839b07e10860d	ecb4f0ea-3023-4732-a97d-a6e7c1c57d60	nextflow run main.nf -with-report report_DE92NGSUKBD135762_2-LNCaP-Bica
+2023-06-16 08:05:39	2h 29m 45s	elated_bernard	OK	4c470738c10a5a18521403fc9d9a6f20	8df8ce2f-15eb-42aa-a084-0ecf529ec092	nextflow run main.nf -with-report report_DE65NGSUKBD135763_3-LNCaP-Apa

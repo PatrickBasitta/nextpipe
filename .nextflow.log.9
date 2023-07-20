@@ -1,0 +1,90 @@
+Jun-13 16:30:31.018 [main] DEBUG nextflow.cli.Launcher - $> nextflow run main.nf
+Jun-13 16:30:31.159 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 23.04.0
+Jun-13 16:30:31.187 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/pbasitta/.nextflow/plugins; core-plugins: nf-amazon@1.16.1,nf-azure@1.0.0,nf-codecommit@0.1.3,nf-console@1.0.5,nf-ga4gh@1.0.4,nf-google@1.7.2,nf-tower@1.5.11,nf-wave@0.8.1
+Jun-13 16:30:31.200 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Jun-13 16:30:31.201 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Jun-13 16:30:31.207 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.4.1 in 'deployment' mode
+Jun-13 16:30:31.233 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Jun-13 16:30:31.258 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /data/basitta/nextpipe/nextflow.config
+Jun-13 16:30:31.259 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /data/basitta/nextpipe/nextflow.config
+Jun-13 16:30:31.293 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+Jun-13 16:30:32.048 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declararion
+Jun-13 16:30:32.072 [main] INFO  nextflow.cli.CmdRun - Launching `main.nf` [stoic_leavitt] DSL2 - revision: 018c6d25e3
+Jun-13 16:30:32.073 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Jun-13 16:30:32.073 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+Jun-13 16:30:32.084 [main] DEBUG nextflow.secret.LocalSecretsProvider - Secrets store: /home/pbasitta/.nextflow/secrets/store.json
+Jun-13 16:30:32.088 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@3456558] - activable => nextflow.secret.LocalSecretsProvider@3456558
+Jun-13 16:30:32.187 [main] DEBUG nextflow.Session - Session UUID: 3e9576b8-283f-472a-ae48-dd7e89db3b2a
+Jun-13 16:30:32.187 [main] DEBUG nextflow.Session - Run name: stoic_leavitt
+Jun-13 16:30:32.187 [main] DEBUG nextflow.Session - Executor pool size: 2
+Jun-13 16:30:32.200 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=10; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Jun-13 16:30:32.249 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 23.04.0 build 5857
+  Created: 01-04-2023 21:09 UTC (23:09 CEST)
+  System: Linux 5.14.21-150400.24.63-default
+  Runtime: Groovy 3.0.16 on OpenJDK 64-Bit Server VM 11.0.19+0-suse-150000.3.96.1-x8664
+  Encoding: UTF-8 (UTF-8)
+  Process: 71497@ukb2580 [10.14.25.80]
+  CPUs: 2 - Mem: 7.7 GB (4.4 GB) - Swap: 2 GB (1.7 GB)
+Jun-13 16:30:32.280 [main] DEBUG nextflow.Session - Work-dir: /data/basitta/nextpipe/work [xfs]
+Jun-13 16:30:32.280 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /data/basitta/nextpipe/bin
+Jun-13 16:30:32.294 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Jun-13 16:30:32.304 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+Jun-13 16:30:32.328 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Jun-13 16:30:32.344 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 3; maxThreads: 1000
+Jun-13 16:30:32.409 [main] DEBUG nextflow.Session - Session start
+Jun-13 16:30:33.143 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Jun-13 16:30:33.172 [main] INFO  nextflow.Nextflow - C E L L _ L I N E S - N F  P I P E L I N E
+==========================================
+reads            : /data/data_AG_Glen/input_data/DE11NGSUKBD135765_5-22Rvone_{1,2}.fq.gz
+reference_dir    : /data/data_AG_Glen/reference_data/
+outdir           : results
+cpus             : 2
+memory           : 6
+
+Jun-13 16:30:33.407 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Jun-13 16:30:33.407 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Jun-13 16:30:33.416 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+Jun-13 16:30:33.422 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=2; memory=7.7 GB; capacity=2; pollInterval=100ms; dumpInterval=5m
+Jun-13 16:30:33.517 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Jun-13 16:30:33.517 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Jun-13 16:30:33.533 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Jun-13 16:30:33.533 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Jun-13 16:30:33.542 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Jun-13 16:30:33.542 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Jun-13 16:30:33.550 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Jun-13 16:30:33.551 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Jun-13 16:30:33.567 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: SAM_SORT_BAM, BWA_MEM, SAM_INDEX, FASTP_PAIRED, DECOMPRESS_FASTQ_GZ
+Jun-13 16:30:33.568 [main] DEBUG nextflow.Session - Igniting dataflow network (7)
+Jun-13 16:30:33.580 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > FASTP_PAIRED
+Jun-13 16:30:33.580 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > DECOMPRESS_FASTQ_GZ
+Jun-13 16:30:33.580 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > BWA_MEM
+Jun-13 16:30:33.581 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > SAM_SORT_BAM
+Jun-13 16:30:33.584 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > SAM_INDEX
+Jun-13 16:30:33.588 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+Jun-13 16:30:33.588 [main] DEBUG nextflow.Session - Session await
+Jun-13 16:30:33.581 [PathVisitor-2] DEBUG nextflow.file.PathVisitor - files for syntax: glob; folder: /data/data_AG_Glen/input_data/; pattern: DE11NGSUKBD135765_5-22Rvone_{1,2}.fq.gz; options: [:]
+Jun-13 16:30:33.578 [PathVisitor-1] DEBUG nextflow.file.PathVisitor - files for syntax: glob; folder: /data/data_AG_Glen/input_data/; pattern: DE11NGSUKBD135765_5-22Rvone_{1,2}.fq.gz; options: [:]
+Jun-13 16:30:33.814 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Jun-13 16:30:33.820 [Task submitter] INFO  nextflow.Session - [e4/ff133a] Submitted process > FASTP_PAIRED (DE11NGSUKBD135765_5-22Rvone)
+Jun-13 16:30:34.125 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: FASTP_PAIRED (DE11NGSUKBD135765_5-22Rvone); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/work/e4/ff133a398a7ffa8bc77e94521f19b3]
+Jun-13 16:30:34.164 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Jun-13 16:30:34.168 [Task submitter] INFO  nextflow.Session - [96/b1122e] Submitted process > DECOMPRESS_FASTQ_GZ (DE11NGSUKBD135765_5-22Rvone)
+Jun-13 16:30:34.193 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'PublishDir' minSize=10; maxSize=10; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Jun-13 16:30:34.299 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 2; name: DECOMPRESS_FASTQ_GZ (DE11NGSUKBD135765_5-22Rvone); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/work/96/b1122e5caa56c76b4e5ece99b85f91]
+Jun-13 16:30:34.322 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Jun-13 16:30:34.323 [Task submitter] INFO  nextflow.Session - [ed/fa46a8] Submitted process > BWA_MEM (DE11NGSUKBD135765_5-22Rvone)
+Jun-13 16:30:43.661 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 3; name: BWA_MEM (DE11NGSUKBD135765_5-22Rvone); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/work/ed/fa46a8b139e5ebfae282ed372f6bfb]
+Jun-13 16:30:45.670 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Jun-13 16:30:45.671 [Task submitter] INFO  nextflow.Session - [bb/d7cd15] Submitted process > SAM_SORT_BAM (DE11NGSUKBD135765_5-22Rvone)
+Jun-13 16:30:45.788 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 4; name: SAM_SORT_BAM (DE11NGSUKBD135765_5-22Rvone); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/work/bb/d7cd1577caa244d636a7c2a2020544]
+Jun-13 16:30:45.883 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Jun-13 16:30:45.884 [Task submitter] INFO  nextflow.Session - [ab/54ac91] Submitted process > SAM_INDEX (DE11NGSUKBD135765_5-22Rvone)
+Jun-13 16:30:45.941 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 5; name: SAM_INDEX (DE11NGSUKBD135765_5-22Rvone); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/work/ab/54ac91cd7136a368760ce4bbaba32e]
+Jun-13 16:30:45.962 [main] DEBUG nextflow.Session - Session await > all processes finished
+Jun-13 16:30:46.131 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Jun-13 16:30:46.381 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'PublishDir' shutdown completed (hard=false)
+Jun-13 16:30:46.617 [main] DEBUG nextflow.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=5; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=19.1s; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=1; peakCpus=2; peakMemory=6 B; ]
+Jun-13 16:30:47.068 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+Jun-13 16:30:47.194 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'FileTransfer' shutdown completed (hard=false)
+Jun-13 16:30:47.197 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
