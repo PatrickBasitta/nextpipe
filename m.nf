@@ -2,8 +2,8 @@ nextflow.enable.dsl=2
 /*
  * pipeline input parameters
  */
-params.reads = "/data/data_AG_Glen/input_data/DE65NGSUKBD135763_3-LNCaP-Apa_{1,2}.fq.gz"
-params.reference = "/data/data_AG_Glen/reference_data/"
+params.reads = "/xxx_{1,2}.fq.gz"
+params.reference = "/data/xxx/reference_data/"
 params.outdir = "results"
 params.cpus = 2
 params.memory = 6
