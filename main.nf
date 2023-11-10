@@ -2,11 +2,11 @@ nextflow.enable.dsl=2
 /*
  * pipeline input parameters
  */
-params.reads = "/data/xxx_{1,2}.fq.gz"
-params.reference = "/data/xxx/reference_data/"
-params.outdir = "results"
-params.cpus = 2
-params.memory = 6
+params.reads = "/PAT-Sequenzer/AG_Glen/data/WES_AA-resistences/P2023046EXO/DE38NGSUKBD135764_4-LNCaP-Daro_{1,2}.fq.gz"
+params.reference = ""
+params.outdir = ""
+params.cpus = 12
+params.memory = 60
 
 log.info """\
     C E L L _ L I N E S - N F  P I P E L I N E
@@ -143,7 +143,7 @@ process SAM_INDEX {
 // Channels
 read_pairs_ch = Channel.fromFilePairs(params.reads)
 //reference_ch = Channel.fromPath(params.reference)
-bwa_index = file('/data/data_AG_Glen/reference_data/Homo_sapiens.GRCh38.dna.primary_assembly.fasta.{,amb,ann,bwt,pac,sa}')
+bwa_index = file('/data2/basitta/fasta_GRCh38/index_GRCh38/Homo_sapiens_sequence_hg38_no_alt_analysis_set.fa.{,amb,ann,bwt,pac,sa}')
 
 workflow {
     FASTP_PAIRED(read_pairs_ch)
