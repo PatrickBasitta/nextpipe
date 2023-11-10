@@ -42,7 +42,9 @@ process MAKE_BED {
 }
 
 process FASTREMAP {
-    
+
+    conda "bioconda::fastremap-bio" //Did not find corresponding container at quay.biocontainer
+        
     cpus "${params.cpus}"
     memory "${params.memory}"
     debug true
