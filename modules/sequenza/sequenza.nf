@@ -149,13 +149,13 @@ process SEQZ_BINNING {
     """
 }
 
-process R_SEQUENZA {
-    
-    container "docker.io/sequenza/sequenza:latest"
-    
+process R_SEQUENZA { 
+/*
+ * manually installed conda package r-sequenza and corresponding packages via mamba installer and BiocManager 
+ * (here GenomeinfoDbData) locally
+ */
     cpus "${params.cpus}"
     memory "${params.memory}"
-    stageInMode "copy"
     publishDir "${params.outdir}/${params.case}", mode: "copy"
     
     input:
@@ -167,11 +167,13 @@ process R_SEQUENZA {
     script:
     """
     #!/usr/bin/env Rscript
-    library("sequenza")
-    data.file <- "${binfile}"
+    require("sequenza")
+    Sys.setenv("VROOM_CONNECTION_SIZE" = 5000072 * 250)
+    data.file <- ("${binfile}")
     seqzdata <- sequenza.extract(data.file)
     CP <- sequenza.fit(seqzdata)
-    sequenza.results(sequenza.extract = seqzdata, cp.table = CP, sample.id = "${params.case}", out.dir="/home/sequenza/")
+    dir.create("3_final_results")
+    sequenza.results(sequenza.extract = seqzdata, cp.table = CP, sample.id = "${params.case}", out.dir = "3_final_results")
     """
 }     
 
