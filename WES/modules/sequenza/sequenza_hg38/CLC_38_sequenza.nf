@@ -1,13 +1,17 @@
 nextflow.enable.dsl=2
 /*
+ * To run this nxf workflow the ref_fasta has to bgziped first using bzip -c .fasta > fasta.gz
+ * and the command sequenza-utils gc_wiggle has to be applied to create .wig.gz file as input
+ */
+
+/*
  * pipeline input parameters
  */
 params.case = ""
-params.normal_cram = ""
-params.tumor_cram =""
-params.ref_fasta = ""
 params.ref_fasta_gz = ""
 params.gc_wig_file = ""
+params.normal_bam = ""
+params.tumor_bam = ""
 params.outdir = ""
 params.cpus = 12
 params.memory = 60
@@ -16,65 +20,17 @@ params.memory = 60
  * CHANNELS
  */
 
-normal_cram_ch = Channel.fromPath(params.normal_cram)
-tumor_cram_ch = Channel.fromPath(params.tumor_cram)
-ref_fasta_ch = Channel.fromPath(params.ref_fasta)
+normal_bam_ch = Channel.fromPath(params.normal_bam)
+tumor_bam_ch = Channel.fromPath(params.tumor_bam)
 ref_fasta_gz_ch = Channel.fromPath(params.ref_fasta_gz)
 gc_wig_file_ch = Channel.fromPath(params.gc_wig_file)
-
-process normal_CRAM_TO_BAM {
-    
-    cpus "${params.cpus}"
-    memory "${params.memory}"
-    
-    publishDir "${params.outdir}/${params.case}/1_bam", mode: "copy"
-
-    input:
-        path(n_cram)
-        path(ref_fasta)
-
-    output:
-        path("*.bam"), emit: normalbam 
-        
-    script:
-    """
-    mkdir -p ${params.case}/1_bam
-    samtools view \
-        -T ${ref_fasta} \
-        -o ${params.case}_normal.bam \
-        ${n_cram} 
-    """
-}
-
-process tumor_CRAM_TO_BAM {
-
-    cpus "${params.cpus}"
-    memory "${params.memory}"
-
-    publishDir "${params.outdir}/${params.case}/1_bam", mode: "copy"
-
-    input:
-        path(t_cram)
-        path(ref_fasta)
-
-    output:
-        path("*.bam"), emit: tumorbam
-
-    script:
-    """
-    samtools view \
-        -T ${ref_fasta} \
-        -o ${params.case}_tumor.bam \
-        ${t_cram}
-    """
-}
 
 process normal_BAM_INDEX {
    
     cpus "${params.cpus}"
     memory "${params.memory}"
 
-    publishDir "${params.outdir}/${params.case}/1_bam", mode: "copy"
+    publishDir "${params.outdir}/${params.case}/1_bai", mode: "copy"
 
     input:
         path(n_bam)
@@ -84,6 +40,7 @@ process normal_BAM_INDEX {
 
     script:
     """
+    mkdir -p  ${params.case}/1_bai
     samtools index ${n_bam} ${n_bam}.bai 
     """
 }
@@ -93,7 +50,7 @@ process tumor_BAM_INDEX {
     cpus "${params.cpus}"
     memory "${params.memory}"
 
-    publishDir "${params.outdir}/${params.case}/1_bam", mode: "copy"
+    publishDir "${params.outdir}/${params.case}/1_bai", mode: "copy"
 
     input:
         path(t_bam)
@@ -178,11 +135,9 @@ process R_SEQUENZA {
 }     
 
 workflow {
-    normal_CRAM_TO_BAM(normal_cram_ch, ref_fasta_ch)  
-    tumor_CRAM_TO_BAM(tumor_cram_ch, ref_fasta_ch)
-    normal_BAM_INDEX(normal_CRAM_TO_BAM.out.normalbam)
-    tumor_BAM_INDEX(tumor_CRAM_TO_BAM.out.tumorbam)
-    BAM2SEQZ(normal_CRAM_TO_BAM.out.normalbam,tumor_CRAM_TO_BAM.out.tumorbam,ref_fasta_gz_ch,gc_wig_file_ch)
+    normal_BAM_INDEX(normal_bam_ch)
+    tumor_BAM_INDEX(tumor_bam_ch)
+    BAM2SEQZ(normal_bam_ch,tumor_bam_ch,ref_fasta_gz_ch,gc_wig_file_ch)
     SEQZ_BINNING(BAM2SEQZ.out.bam2seqfile)
     R_SEQUENZA(SEQZ_BINNING.out.binfile)
 }

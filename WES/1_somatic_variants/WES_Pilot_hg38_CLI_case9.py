@@ -124,8 +124,7 @@ merged = pd.merge(QCI_data, CLC_variant_track_data[["Chromosome", "Position",\
                  "Forward/reverse balance", \
                  "BaseQRankSum", "Read position test probability", \
                  "Read direction test probability", "Homopolymer length", \
-                 "Homopolymer", "QUAL", "Non-synonymous",
-                 "CLNSIG clinvar_20210828_hg38_no_alt_analysis_set"]], \
+                 "Homopolymer", "QUAL", "Non-synonymous"]], \
                  on = ["Chromosome", "Position", "End Position"], how = "left")
   
 # 4.0 get gene list
