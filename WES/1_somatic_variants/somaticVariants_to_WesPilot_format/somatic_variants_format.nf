@@ -3,9 +3,10 @@ nextflow.enable.dsl=2
  * INPUT PARAMETERS
 */
 params.input_file = ""
-params.reference = ""
+params.reference_chain = ""
+params.segm_file= ""
 params.outdir = ""
-params.case = ""
+params.case_no = ""
 params.cpus = 12
 params.memory = 60
 
@@ -13,7 +14,7 @@ params.memory = 60
  * CHANNELS
 */
 input_ch = Channel.fromPath(params.input_file)
-chainhg38Tohg19_ch = Channel.fromPath(params.reference)
+chainhg38Tohg19_ch = Channel.fromPath(params.reference_chain)
 
 process MAKE_BED {
  
@@ -32,8 +33,8 @@ process MAKE_BED {
     processed_data = pandas.read_excel(filename)
 
     # rename Chromosome, Position, End Position to Chr, Start and End
-    processed_data = processed_data.rename(columns={"Chromosome": "Chr",
-                                                "Position": "Start",
+    processed_data = processed_data.rename(columns={"Chromosome": "Chr", \
+                                                "Position": "Start", \
                                                 "End Position": "End"})
     # write bed file
     bed_file = processed_data[["Chr", "Start", "End"]]
@@ -78,7 +79,8 @@ process WES_PILOT_FORMAT {
 
     filename = "${input}"
     bed = "${remapped_tohg19_bedfile}"
-    case = "${params.case}"
+    case = "${params.case_no}"
+    segment_file = "${params.segm_file}"
     processed_data = pandas.read_excel(filename)
     bed_file = pandas.read_csv(bed, delimiter="\t", \
                                header=None, names=["Chr", "Start", "End"],index_col=False)
@@ -90,17 +92,60 @@ process WES_PILOT_FORMAT {
         processed_data["End"] = bed_file["End"]
 
     # get WES Pilot format
-    processed_data_final = processed_data[["Chr", "Start", "End",
+    processed_data_final = processed_data[["Chromosome", "Position", "End Position",
                                      "Reference", "Allele", "HGVS_PROTEIN", \
                                      "GENE_SYMBOL", "TRANSCRIPT_ID", \
-                                     "HGVS_TRANSCRIPT", "ING_AF", "Coverage_x"]]
+                                     "HGVS_TRANSCRIPT", "Frequency_x", "Coverage_x"]]
+    
+     # round AF to max 2 decimals (since AF number are str in excel, one has to set these values to int before run this script!
+    processed_data_final.loc[:,"Frequency_x"]  = processed_data_final\
+                                   ["Frequency_x"].apply(lambda x: round(x,2))
 
-    processed_data_final.insert(loc=0, column="Standort", value="UK_Bonn")
+    # rename according to WES_Pilot_format
+    processed_data_final = processed_data_final.rename(columns={"Chromosome": "Chr", \
+                                                                "Position": "Start", \
+                                                                "End Position": "Ende", \
+                                                                "Reference": "Ref", \
+                                                                "Allele": "Alt", \
+                                                                "GENE_SYMBOL": "Gen", \
+                                                                "HGVS_PROTEIN": "Aminosaeure", \
+                                                                "TRANSCRIPT_ID": "NM-Nummer", \
+                                                                "HGVS_TRANSCRIPT": "cDNA", \
+                                                                "Frequency_x": "VAF", \
+                                                                "Coverage_x": "Coverage"})    
+
+    processed_data_final.insert(loc=0, column="Standort", value="Bonn")
     processed_data_final.insert(loc=1, column="Sample", value=case)
     processed_data_final.insert(loc=11, column="CN", value="-")
 
+    # get CN number from segment_file
+    segm_data = pandas.read_csv(segment_file, delimiter= "\t", engine="python")
+
+    # rename
+    segm_data = segm_data.rename(columns={"chromosome": "Chr", \
+                                          "start.pos": "Start", \
+                                          "end.pos": "Ende"})
+
+    # get chr from variants
+    for i in range(len(processed_data_final)):
+    
+        # get corresponding chr
+        segm_data_chr = segm_data[segm_data["Chr"]==str(processed_data_final["Chr"][i])]
+
+        # get df with CN value
+        tmp_df = processed_data_final.iloc[i,:].to_frame().T
+    
+        df_check_range = tmp_df.merge\
+                        (segm_data_chr, how="cross").query\
+                        ("(Start_x >= Start_y) & (Ende_x <= Ende_y)")
+    
+   
+        if df_check_range.shape[0] == 1:
+            cn_value = df_check_range["CNt"][df_check_range.index[0]]
+            processed_data_final.loc[i,"CN"] = cn_value
+
     # write output
-    processed_data_final.to_csv(case+".csv")
+    processed_data_final.to_csv(case+".csv", index=False)
     """
 }
 
