@@ -1,0 +1,65 @@
+Dec-05 15:44:26.704 [main] DEBUG nextflow.cli.Launcher - $> nextflow run somatic_variants_format.nf --input_file /PAT-Sequenzer/WES-Pilot/WES_Pilot_final/cases/3/intermediate_3_ready.xlsx --outdir /PAT-Sequenzer/WES-Pilot/WES_Pilot_final/somatic_variants/ --reference_chain /data/reference/hg38ToHg19.over.chain --case_no 3 --segm_file /PAT-Sequenzer/WES-Pilot/WES_Pilot_input_all/CNV_all/3_segments_hg19.txt
+Dec-05 15:44:26.762 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 23.04.0
+Dec-05 15:44:26.797 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/pbasitta/.nextflow/plugins; core-plugins: nf-amazon@1.16.1,nf-azure@1.0.0,nf-codecommit@0.1.3,nf-console@1.0.5,nf-ga4gh@1.0.4,nf-google@1.7.2,nf-tower@1.5.11,nf-wave@0.8.1
+Dec-05 15:44:26.811 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Dec-05 15:44:26.812 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Dec-05 15:44:26.816 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.4.1 in 'deployment' mode
+Dec-05 15:44:26.829 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Dec-05 15:44:26.923 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declararion
+Dec-05 15:44:26.955 [main] INFO  nextflow.cli.CmdRun - Launching `somatic_variants_format.nf` [dreamy_brazil] DSL2 - revision: af4caf2ef9
+Dec-05 15:44:26.956 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Dec-05 15:44:26.956 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+Dec-05 15:44:26.970 [main] DEBUG nextflow.secret.LocalSecretsProvider - Secrets store: /home/pbasitta/.nextflow/secrets/store.json
+Dec-05 15:44:26.977 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@56781d96] - activable => nextflow.secret.LocalSecretsProvider@56781d96
+Dec-05 15:44:27.073 [main] DEBUG nextflow.Session - Session UUID: bf54db36-6e09-4185-9629-8df5162613da
+Dec-05 15:44:27.073 [main] DEBUG nextflow.Session - Run name: dreamy_brazil
+Dec-05 15:44:27.075 [main] DEBUG nextflow.Session - Executor pool size: 12
+Dec-05 15:44:27.086 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=36; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Dec-05 15:44:27.126 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 23.04.0 build 5857
+  Created: 01-04-2023 21:09 UTC (23:09 CEST)
+  System: Linux 5.14.21-150500.55.36-default
+  Runtime: Groovy 3.0.16 on OpenJDK 64-Bit Server VM 17.0.8-internal+0-adhoc..src
+  Encoding: UTF-8 (UTF-8)
+  Process: 114620@ukb2580 [10.14.25.80]
+  CPUs: 12 - Mem: 62.7 GB (401.4 MB) - Swap: 2 GB (1.9 GB)
+Dec-05 15:44:27.156 [main] DEBUG nextflow.Session - Work-dir: /data/basitta/nextpipe/WES/1_somatic_variants/somaticVariants_to_WesPilot_format/work [xfs]
+Dec-05 15:44:27.157 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /data/basitta/nextpipe/WES/1_somatic_variants/somaticVariants_to_WesPilot_format/bin
+Dec-05 15:44:27.168 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Dec-05 15:44:27.179 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+Dec-05 15:44:27.205 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Dec-05 15:44:27.219 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 13; maxThreads: 1000
+Dec-05 15:44:27.305 [main] DEBUG nextflow.Session - Session start
+Dec-05 15:44:28.177 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Dec-05 15:44:28.286 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Dec-05 15:44:28.286 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Dec-05 15:44:28.293 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+Dec-05 15:44:28.299 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=12; memory=62.7 GB; capacity=12; pollInterval=100ms; dumpInterval=5m
+Dec-05 15:44:28.414 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Dec-05 15:44:28.415 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Dec-05 15:44:28.424 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Dec-05 15:44:28.424 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Dec-05 15:44:28.455 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: WES_PILOT_FORMAT, MAKE_BED, FASTREMAP
+Dec-05 15:44:28.456 [main] DEBUG nextflow.Session - Igniting dataflow network (5)
+Dec-05 15:44:28.463 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > MAKE_BED
+Dec-05 15:44:28.464 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > FASTREMAP
+Dec-05 15:44:28.464 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > WES_PILOT_FORMAT
+Dec-05 15:44:28.465 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+Dec-05 15:44:28.465 [main] DEBUG nextflow.Session - Session await
+Dec-05 15:44:28.625 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Dec-05 15:44:28.628 [Task submitter] INFO  nextflow.Session - [7b/d02d3a] Submitted process > MAKE_BED (1)
+Dec-05 15:44:30.056 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: MAKE_BED (1); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/WES/1_somatic_variants/somaticVariants_to_WesPilot_format/work/7b/d02d3aea6a119964f3dab71889232e]
+Dec-05 15:44:30.094 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Dec-05 15:44:30.094 [Task submitter] INFO  nextflow.Session - [34/256008] Submitted process > FASTREMAP (1)
+Dec-05 15:44:30.607 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 2; name: FASTREMAP (1); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/WES/1_somatic_variants/somaticVariants_to_WesPilot_format/work/34/2560080e478404fed6609fc32b6919]
+Dec-05 15:44:30.654 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Dec-05 15:44:30.655 [Task submitter] INFO  nextflow.Session - [c7/0bfbfb] Submitted process > WES_PILOT_FORMAT (1)
+Dec-05 15:44:31.461 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 3; name: WES_PILOT_FORMAT (1); status: COMPLETED; exit: 0; error: -; workDir: /data/basitta/nextpipe/WES/1_somatic_variants/somaticVariants_to_WesPilot_format/work/c7/0bfbfbdf5d9eb79636797a23bc8839]
+Dec-05 15:44:31.490 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'PublishDir' minSize=10; maxSize=36; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Dec-05 15:44:31.491 [main] DEBUG nextflow.Session - Session await > all processes finished
+Dec-05 15:44:31.493 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Dec-05 15:44:31.500 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'PublishDir' shutdown completed (hard=false)
+Dec-05 15:44:31.508 [main] DEBUG nextflow.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=3; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=7.5s; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=1; peakCpus=12; peakMemory=60 B; ]
+Dec-05 15:44:31.577 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+Dec-05 15:44:31.592 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'FileTransfer' shutdown completed (hard=false)
+Dec-05 15:44:31.593 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

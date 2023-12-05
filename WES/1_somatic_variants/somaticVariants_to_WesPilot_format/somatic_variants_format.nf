@@ -93,8 +93,8 @@ process WES_PILOT_FORMAT {
 
     # get WES Pilot format
     processed_data_final = processed_data[["Chromosome", "Position", "End Position",
-                                     "Reference", "Allele", "HGVS_PROTEIN", \
-                                     "GENE_SYMBOL", "TRANSCRIPT_ID", \
+                                     "Reference", "Allele", "GENE_SYMBOL", "HGVS_PROTEIN", \
+                                     "TRANSCRIPT_ID", \
                                      "HGVS_TRANSCRIPT", "Frequency_x", "Coverage_x"]]
     
      # round AF to max 2 decimals (since AF number are str in excel, one has to set these values to int before run this script!
@@ -104,7 +104,7 @@ process WES_PILOT_FORMAT {
     # rename according to WES_Pilot_format
     processed_data_final = processed_data_final.rename(columns={"Chromosome": "Chr", \
                                                                 "Position": "Start", \
-                                                                "End Position": "Ende", \
+                                                                "End Position": "End", \
                                                                 "Reference": "Ref", \
                                                                 "Allele": "Alt", \
                                                                 "GENE_SYMBOL": "Gen", \
@@ -124,7 +124,7 @@ process WES_PILOT_FORMAT {
     # rename
     segm_data = segm_data.rename(columns={"chromosome": "Chr", \
                                           "start.pos": "Start", \
-                                          "end.pos": "Ende"})
+                                          "end.pos": "End"})
 
     # get chr from variants
     for i in range(len(processed_data_final)):
