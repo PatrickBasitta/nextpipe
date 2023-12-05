@@ -92,7 +92,7 @@ process WES_PILOT_FORMAT {
         processed_data["End"] = bed_file["End"]
 
     # get WES Pilot format
-    processed_data_final = processed_data[["Chromosome", "Position", "End Position",
+    processed_data_final = processed_data[["Chromosome", "Position", "End Position", \
                                      "Reference", "Allele", "GENE_SYMBOL", "HGVS_PROTEIN", \
                                      "TRANSCRIPT_ID", \
                                      "HGVS_TRANSCRIPT", "Frequency_x", "Coverage_x"]]
