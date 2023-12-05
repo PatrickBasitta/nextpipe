@@ -137,7 +137,7 @@ process WES_PILOT_FORMAT {
     
         df_check_range = tmp_df.merge\
                         (segm_data_chr, how="cross").query\
-                        ("(Start_x >= Start_y) & (Ende_x <= Ende_y)")
+                        ("(Start_x >= Start_y) & (End_x <= End_y)")
     
    
         if df_check_range.shape[0] == 1:

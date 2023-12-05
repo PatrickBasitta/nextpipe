@@ -1,0 +1,68 @@
+Traceback (most recent call last):
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/scope.py", line 233, in resolve
+    return self.resolvers[key]
+  File "/data2/basitta/miniconda3/lib/python3.9/collections/__init__.py", line 941, in __getitem__
+    return self.__missing__(key)            # support subclasses that define __missing__
+  File "/data2/basitta/miniconda3/lib/python3.9/collections/__init__.py", line 933, in __missing__
+    raise KeyError(key)
+KeyError: 'Ende_x'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/scope.py", line 244, in resolve
+    return self.temps[key]
+KeyError: 'Ende_x'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/basitta/nextpipe/WES/1_somatic_variants/somaticVariants_to_WesPilot_format/work/9a/cf49f0d043db067b107fff7b07464d/.command.sh", line 45, in <module>
+    df_check_range = tmp_df.merge                        (segm_data_chr, how="cross").query                        ("(Start_x >= Start_y) & (Ende_x <= Ende_y)")
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/frame.py", line 4440, in query
+    res = self.eval(expr, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/frame.py", line 4566, in eval
+    return _eval(expr, inplace=inplace, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/eval.py", line 336, in eval
+    parsed_expr = Expr(expr, engine=engine, parser=parser, env=env)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 809, in __init__
+    self.terms = self.parse()
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 828, in parse
+    return self._visitor.visit(self.expr)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 415, in visit
+    return visitor(node, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 421, in visit_Module
+    return self.visit(expr, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 415, in visit
+    return visitor(node, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 424, in visit_Expr
+    return self.visit(node.value, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 415, in visit
+    return visitor(node, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 746, in visit_BoolOp
+    return reduce(visitor, operands)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 740, in visitor
+    rhs = self._try_visit_binop(y)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 735, in _try_visit_binop
+    return self.visit(bop)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 415, in visit
+    return visitor(node, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 719, in visit_Compare
+    return self.visit(binop)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 415, in visit
+    return visitor(node, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 535, in visit_BinOp
+    op, op_class, left, right = self._maybe_transform_eq_ne(node)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 455, in _maybe_transform_eq_ne
+    left = self.visit(node.left, side="left")
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 415, in visit
+    return visitor(node, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/expr.py", line 548, in visit_Name
+    return self.term_type(node.id, self.env, **kwargs)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/ops.py", line 86, in __init__
+    self._value = self._resolve_name()
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/ops.py", line 110, in _resolve_name
+    res = self.env.resolve(local_name, is_local=is_local)
+  File "/data2/basitta/miniconda3/lib/python3.9/site-packages/pandas/core/computation/scope.py", line 246, in resolve
+    raise UndefinedVariableError(key, is_local) from err
+pandas.errors.UndefinedVariableError: name 'Ende_x' is not defined

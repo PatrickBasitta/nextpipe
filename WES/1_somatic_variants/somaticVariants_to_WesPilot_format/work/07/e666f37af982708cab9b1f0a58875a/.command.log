@@ -1,0 +1,5 @@
+Chain File:    hg38ToHg19.over.chain
+Input File:    output.bed
+Unmapped File: unmapped.bed
+Output File:   remapped_to_hg19
+Reading the chain file: hg38ToHg19.over.chain
