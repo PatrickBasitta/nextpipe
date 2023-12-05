@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 21 10:57:32 2023
-
 @author: Patrick Basitta
+Script for collecting CNV data in accordance to the WES Pilot specification
 """
 
 import pandas as pd
@@ -14,8 +14,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-hf", "--cnv_folder", type=str)  
 parser.add_argument("-o", "--outdir", type=str)         
 args = parser.parse_args()
-
-#cnv_folder = "X:/PAT-Sequenzer/WES-Pilot/WES_Pilot_final/cnv/all_cnv_data/"
 
 # make dataframe
 df_cnv = pd.DataFrame()
