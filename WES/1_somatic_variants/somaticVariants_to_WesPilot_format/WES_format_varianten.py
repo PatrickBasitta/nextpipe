@@ -46,6 +46,9 @@ tmp_dfs_lst = (pd.read_csv(snv_file) for snv_file in sorted_snv_files)
 # concat all dfs
 final_df = pd.concat(tmp_dfs_lst, ignore_index=True)
 
+# add chr prefix
+final_df["Chr"] = "chr" + final_df["Chr"].astype(str)
+
 # save to csv
 final_df.to_csv(args.outdir+"varianten.csv", index=False)
 

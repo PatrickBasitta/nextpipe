@@ -73,8 +73,8 @@ for index, seqz_file_CP in enumerate(os.listdir\
     if seqz_file_CP.endswith(".txt"):
        
         # get case number
-        if seqz_file_CP.split("_")[0] != "19":
-             case_num_CP = seqz_file_CP.split("_")[0]
+        # if seqz_file_CP.split("_")[0] != "19":
+        case_num_CP = seqz_file_CP.split("_")[0]
         
         # process files
         with open(args.cp_folder+seqz_file_CP) as CP_file:

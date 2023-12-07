@@ -68,6 +68,8 @@ for index, cnv_segments in enumerate(orderd_file_lst):
             
             dfs = [df_cnv, cnv_data_case]
             df_cnv = pd.concat(dfs, ignore_index=True)
+
+df_cnv["Chr"] = "chr" + df_cnv["Chr"].astype(str)
             
 df_cnv.to_csv(args.outdir+"cnv.csv", index=False)
             
