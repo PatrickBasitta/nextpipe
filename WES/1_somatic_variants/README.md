@@ -14,3 +14,6 @@
 
 # Step6: NXF script to report in WES format (here liftover hg38 to hg19)
 
+# Step7: Intermediate files from Step6 curated manually and generated intermediate_ready.xlsx
+
+# Step8: Used python script to make varianten.csv
