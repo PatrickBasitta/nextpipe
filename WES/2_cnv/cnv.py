@@ -44,8 +44,7 @@ for index, cnv_segments in enumerate(orderd_file_lst):
     if cnv_segments.endswith(".txt"):
         
         # get case number
-        if cnv_segments.split("_")[0] != "19":
-             case_num_cnv = int(cnv_segments.split("_")[0])
+        case_num_cnv = int(cnv_segments.split("_")[0])
                
         # process files
         with open(args.cnv_folder+cnv_segments) as cnv_file:
