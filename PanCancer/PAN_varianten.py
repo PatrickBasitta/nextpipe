@@ -202,7 +202,7 @@ for i in range(len(pre_final_data["NM"])):
 #                             engine= None) 
 
 # prcessing vep data
-vep_file = "X:/PAT-Sequenzer/PanCancer_test/23_08_31_PanCancer_E13535_23/woh_test.txt"
+vep_file = ""
 VEP_data = pd.read_csv(vep_file, delimiter="\t")                        
 # add new column Chromosome and Position
 VEP_data.insert(loc=1, column="Chromosome", value="")
