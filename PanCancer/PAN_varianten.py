@@ -30,7 +30,7 @@ args = parser.parse_args()
 #--------------------------------------
 # Getting CLC PAN DATA and format
 #-------------------------------------
-clc_PAN_file = "X:/PAT-Sequenzer/PanCancer_test/23_08_31_PanCancer_E13535_23/dbSNP common filtered Variants-13535-23-DNA_1 (paired).txt"
+clc_PAN_file = ""
 CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter="\t", encoding='latin-1') 
 
 # Rename Region to position
@@ -172,7 +172,7 @@ clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
 
 # filter RefSeq
 clc_data_filtered_dropXM = clc_data_filtered_dropNa
-transcript_list = "X:/PAT-Sequenzer/WES-Pilot/WES_Pilot_input_all/Genliste_mitTr_somatisch.xlsx"
+transcript_list = ""
 #transcript_list = args.transcript_list
 RefSeq_NM = pd.read_excel(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
