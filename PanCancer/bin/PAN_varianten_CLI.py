@@ -2,146 +2,143 @@
 """
 Created on Mon Jan 15 14:48:10 2024
 
+Script to process variant output obtained from CLC PanCancer Workflow and
+ENSEMBL VEP TOOL
+
+Input: clc_PAN_file as .csv
+       vep_PAN_file as .txt
+       transcript_PAN_list as .xlsx
+       
+output: user specified name; file extension: .xlsx
+
 @author: PatrickBasitta
 """
 
 import pandas as pd
-import numpy as np
-import csv
-import os
-import re
 import argparse
-import json
-from itertools import zip_longest
+import functions_pan.process_variantlist_PAN_utils as fp
 
 #---------------------------------------
 # Using argparse for positinal arguments
 #---------------------------------------
 parser = argparse.ArgumentParser()
-#parser.add_argument("-n", "--number", type=str)
-parser.add_argument("-q", "--vep_PAN_file", type=str)
 parser.add_argument("-c", "--clc_PAN_file", type=str)
-#parser.add_argument("-l", "--gene_list", type=str)
+parser.add_argument("-q", "--vep_PAN_file", type=str)
 parser.add_argument("-t", "--transcript_PAN_list", type=str)  
-parser.add_argument("-o", "--outfile", type=str)   
-#parser.add_argument("-tmb", "--tmb_output", type=str)              
+parser.add_argument("-o", "--outfile", type=str)          
 args = parser.parse_args()
 
-#--------------------------------------
-# Getting CLC PAN DATA and format
-#-------------------------------------
-#clc_PAN_file = "/data2/basitta/pan_data/*.txt"
+#---------------------
+# Getting clc PAN data
+#---------------------
+clc_PAN_file = "X:/PAT-Sequenzer/PanCancer_test/23_08_31_PanCancer_E13535_23/valid_import/E13535-23.C.csv"
 clc_PAN_file = args.clc_PAN_file
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";", encoding="ISO-8859-1") 
-#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file)
-# Rename Region to position
-CLC_variant_track_data_PAN = CLC_variant_track_data_PAN.rename\
-                        (columns={"Region": "Position"})
-                        
-# Add new column End Position
-CLC_variant_track_data_PAN.insert(loc=2, column="End Position", value="")
-
-# CLC PAN data
-for i in range(len(CLC_variant_track_data_PAN["Position"])):
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
+                                         encoding="ISO-8859-1") 
     
-    if ".." not in CLC_variant_track_data_PAN["Position"][i] and \
-        "^" not in CLC_variant_track_data_PAN["Position"][i]:
-            tmp_value_snv = CLC_variant_track_data_PAN["Position"][i]
-            CLC_variant_track_data_PAN.loc\
-            [CLC_variant_track_data_PAN.index[i], "End Position"] = tmp_value_snv
-            
-    if ".." in CLC_variant_track_data_PAN["Position"][i]:
-            tmp_value_del = CLC_variant_track_data_PAN["Position"][i]
-            tmp_value_del_start = tmp_value_del.split("..")[0]
-            tmp_value_del_end = tmp_value_del.split("..")[1]
-            CLC_variant_track_data_PAN.loc\
-            [CLC_variant_track_data_PAN.index[i], "Position"] =  tmp_value_del_start
-            CLC_variant_track_data_PAN.loc\
-            [CLC_variant_track_data_PAN.index[i], "End Position"] = tmp_value_del_end
-            
-    if "^" in CLC_variant_track_data_PAN["Position"][i]:
-            tmp_value_ins = CLC_variant_track_data_PAN["Position"][i]
-            tmp_value_ins_start = tmp_value_ins.split("^")[0]
-            tmp_value_ins_end = tmp_value_ins.split("^")[1]
-            CLC_variant_track_data_PAN.loc\
-            [CLC_variant_track_data_PAN.index[i], "Position"] = tmp_value_ins_start
-            CLC_variant_track_data_PAN.loc\
-            [CLC_variant_track_data_PAN.index[i], "End Position"] = tmp_value_ins_end
-            
-# Filtering of valid variants
+#--------------------------------------    
+# CLC PAN data - adjust region_position
+#--------------------------------------    
+CLC_variant_track_data_PAN = fp.adjust_region_position(CLC_variant_track_data_PAN)
 
-# rename column Reference allele to ReferenceAllele
-CLC_variant_track_data_PAN = CLC_variant_track_data_PAN.rename(columns={"Reference allele": "ReferenceAllele"})
-group_reference_allele = CLC_variant_track_data_PAN.groupby(CLC_variant_track_data_PAN.ReferenceAllele)
+#------------------------------------------------------          
+# Filtering of variants not equal to "Reference allele"
+#------------------------------------------------------ 
+# Rename column "Reference allele" to "ReferenceAllele"
+#------------------------------------------------------
+CLC_variant_track_data_PAN = CLC_variant_track_data_PAN.rename\
+                              (columns={"Reference allele": "ReferenceAllele"})
+group_reference_allele = CLC_variant_track_data_PAN.groupby\
+                                   (CLC_variant_track_data_PAN.ReferenceAllele)
 clc_data_ReferenceAllele_NO =  group_reference_allele.get_group("No")
- 
+
+#-----------------------
+# Columns list to filter
+#-----------------------
 columns_to_filter = ["Frequency", "QUAL", "Forward/reverse balance", \
                      "Average quality",\
                      "Read position test probability", \
                      "Read direction test probability"]
-     
-# Convert string number in float of columns to filter   
-for i in range(len(columns_to_filter)):
- 
-    variants_lst_sheets_temp1 = clc_data_ReferenceAllele_NO\
-        [columns_to_filter[i]].apply(lambda x: x.strip("'"))
-    variants_lst_sheets_temp2 = variants_lst_sheets_temp1.apply\
-                                             (lambda x: x.replace(",","."))
-    variants_lst_sheets_temp3 = variants_lst_sheets_temp2.to_frame()
-    variants_lst_sheets_temp4 = variants_lst_sheets_temp3.astype("float")
-    clc_data_ReferenceAllele_NO.loc[:,columns_to_filter[i]] = variants_lst_sheets_temp4
-    
-#type(clc_data_ReferenceAllele_NO.loc[1,"Frequency"])
-    
+
+#----------------------------------------------------   
+# Convert string number in float of columns_to_filter
+#----------------------------------------------------   
+clc_data_ReferenceAllele_NO = fp.convert_coltype_str_to_float\
+    (columns_to_filter, clc_data_ReferenceAllele_NO)
+       
+#-----------------------------
 # Filter data with QUAL >= 150
+#-----------------------------
 clc_data_filtered = clc_data_ReferenceAllele_NO\
 [clc_data_ReferenceAllele_NO["QUAL"] >= 150]
 
-# discarded 1
+# discarded 1 (keep discarded data)
 #clc_data_discarded_1 = clc_data_ReferenceAllele_NO\
 #[clc_data_ReferenceAllele_NO["QUAL"] < 150]
- 
-# Filter data with Av quality >= 25
+
+#---------------------------------- 
+# Filter data with Av quality >= 35
+#----------------------------------
 clc_data_filtered = clc_data_filtered\
 [clc_data_filtered["Average quality"] >= 35]
 
-# discarded 2
+# discarded 2 (keep discared data)
 #clc_data_discarded_2 = clc_data_filtered\
 #[clc_data_filtered["Average quality"] < 25]
- 
+
+#----------------------------
 # Filter data with count >= 2
+#----------------------------
 clc_data_filtered = clc_data_filtered\
 [clc_data_filtered["Count"] >= 2]
 
-# discarded 3
+# discarded 3 (keep discared data)
 #clc_data_discarded_3 = clc_data_filtered\
 #[clc_data_filtered["Count"] < 2]
- 
+
+#-------------------------------- 
 # Filter data with Frequency >= 5
+#--------------------------------
 clc_data_filtered = clc_data_filtered\
 [clc_data_filtered["Frequency"] >= 5]
 
-# discarded 4
+# discarded 4 (keep discared data)
 #clc_data_discarded_4 = clc_data_filtered\
 #[clc_data_filtered["Frequency"] < 5]
- 
+
+#--------------------------------------------- 
 # Filter data with Forward/reverse balance > 0
+#---------------------------------------------
 clc_data_filtered = clc_data_filtered\
 [clc_data_filtered["Forward/reverse balance"] > 0]
- 
+
+#------------------------------------------------------------ 
 # Filter data with Read position test probability >= 0.000001
+#------------------------------------------------------------
 clc_data_filtered = clc_data_filtered\
 [clc_data_filtered["Read position test probability"] >= 0.000001]
- 
+
+#------------------------------------------------------------- 
 # Filter data with Read direction test probability >= 0.000001
+#-------------------------------------------------------------
 clc_data_filtered = clc_data_filtered\
 [clc_data_filtered["Read direction test probability"] >= 0.000001]
 
+#-------------------------
 # filter non-synonymous???
- 
+#-------------------------
+
+#--------------------------------------------------
+# Reindex clc data for further processing necessary
+#-------------------------------------------------- 
 clc_data_filtered = clc_data_filtered.reset_index()
 
-# "explode" coding region change and set NM and HGVSc column           
+#------------------------------------------------------------------------
+# "Explode" column "coding region change"
+# "Explode" necessary since each row contains several transcript:HGVS values
+# Result: presentation of one transcript:HGVS per row; a variant shown in a 
+# variety of rows derived from the total transcript number 
+#------------------------------------------------------------------------           
 clc_data_filtered = clc_data_filtered.rename(columns=\
            {"Coding region change": "Coding_region_change"})
 
@@ -151,63 +148,90 @@ clc_data_filtered = (
         .explode("Coding_region_change")
         .reset_index(drop=True)
 )
-    
+
+#---------------------------------------------------------------------------
+# Get NM/XM and HGVSc derived from transcript:HGVS in "Coding_region_change"
+# NM/XM and HGVSc are saved in new columns ("NM_v" and "HGVSc)
+#---------------------------------------------------------------------------    
 for index, NM_tr in enumerate(clc_data_filtered["Coding_region_change"]):
     
     if pd.isna(NM_tr):
-        clc_data_filtered.loc[i, "NM"] = clc_data_filtered.loc[i, "NM"]
-        clc_data_filtered.loc[index, "HGVSc"] = clc_data_filtered.loc[index, "HGVSc"]
+        clc_data_filtered.loc[index, "NM_v"] = clc_data_filtered.loc\
+                                               [index, "NM_v"]
+        clc_data_filtered.loc[index, "HGVSc"] = clc_data_filtered.loc\
+                                                [index, "HGVSc"]
         
     else:
-        clc_data_filtered.loc[index, "NM"] = NM_tr.split(":")[0]
+        clc_data_filtered.loc[index, "NM_v"] = NM_tr.split(":")[0]
         clc_data_filtered.loc[index, "HGVSc"] = NM_tr.split(":")[1]
         
-#------------------------------------------------------------------------------
-
-# Drop XM transcripts and filter after transcriptlist !not necessary
-#clc_data_filtered_dropXM = clc_data_filtered[clc_data_filtered\
-#                           ["NM"].str.contains("XM*") == False]
+#------------------------------
+# Drop Na values from DataFrame (necessary?)
+#------------------------------
 clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
-                          ["NM"].str.contains("nan") == False]
-# clc_data_filtered_XM = clc_data_filtered[clc_data_filtered\
-#                            ["NM"].str.contains("XM*") == True]
-#------------------------------------------------------------------------------
+                          ["NM_v"].str.contains("nan") == False]
 
-# filter RefSeq
-clc_data_filtered_dropXM = clc_data_filtered_dropNa
-#transcript_list = "X:/PAT-Sequenzer/PanCancer_test/finale_aktuelle_pancancer_transcript_lst.xlsx"
+#------------------------------------------
+# Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
+#------------------------------------------
+transcript_list = "X:/PAT-Sequenzer/PanCancer_test/finale_aktuelle_pancancer_transcript_lst.xlsx"
 transcript_list = args.transcript_PAN_list
 #transcript_list = args.transcript_list
 RefSeq_NM = pd.read_excel(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
-# ok bis hier1
-# in list with version number or in clc_data_filtered_dropXM!!!
 
-# Reset indices
-clc_data_filtered_dropXM = clc_data_filtered_dropXM.reset_index()
-clc_data_filtered_dropXM["NM"] = clc_data_filtered_dropXM["NM"].astype(str)
+#------------------------------------------------------------------------------
+# Reset indices; necessary for further processing; since index could be not
+# in order due to step "Drop Na values from DataFrame" (see above) (necessary?)
+#------------------------------------------------------------------------------
+clc_data_filtered_dropNa = clc_data_filtered_dropNa.reset_index()
+
+#----------------------------
+# convert to str (necessary?)
+#----------------------------
+clc_data_filtered_dropNa["NM_v"] = clc_data_filtered_dropNa["NM_v"].astype(str)
+
+#-----------------------------------------------------
+# Get index of rows presented in PANCANCER RefSeq list
+#-----------------------------------------------------
 NM_idx = []
-for i in range(len(clc_data_filtered_dropXM["NM"])):
-    if clc_data_filtered_dropXM["NM"][i].split(".")[0] in RefSeq_NM_lst:
+for i in range(len(clc_data_filtered_dropNa["NM_v"])):
+    if clc_data_filtered_dropNa["NM_v"][i].split(".")[0] in RefSeq_NM_lst:
         NM_idx.append(i)
 
-pre_final_data = clc_data_filtered_dropXM.loc[NM_idx, :]
-# ok bis hier2
+#-----------------------------------------
+# Filter variants accoriing to NM_idx list
+# Store result in new variable
+#-----------------------------------------
+pre_final_data = clc_data_filtered_dropNa.loc[NM_idx, :]
 
+#------------------------------------------------------------
+# Convert NM + version in NM only for subsequent merging step
+# Store NM only in column NM_merge
+#------------------------------------------------------------
 index_variants = pre_final_data.index.tolist()
-for i in range(len(pre_final_data["NM"])):
-    tmp_NM_name = pre_final_data["NM"][index_variants[i]].split(".")
-    pre_final_data.loc[[index_variants[i]], "NM"] =  tmp_NM_name[0]
+for i in range(len(pre_final_data["NM_v"])):
+    tmp_NM_name = pre_final_data["NM_v"][index_variants[i]].split(".")
+    pre_final_data.loc[[index_variants[i]], "NM_merge"] =  tmp_NM_name[0]
 
-# before vep annotation with vep
-# final_variants = pre_final_data.sort_values(by=["Frequency"], ascending=False)                
+#--------------------------------------------
+# Generate clinvar Link and add to data 
+# Add column "Clinvar_Link" and generate link
+#--------------------------------------------
+pre_final_data["Clinvar_Link"] = ""
+rs = pre_final_data["name dbsnp_v151_ensembl_hg38_no_alt_analysis_set"]
+rs_idx = rs.index.tolist()
+link_lst = []
 
-# final_variants.to_excel("test_output.xlsx", \
-#                             index = False, \
-#                             engine= None) 
+#-----------------------
+# Get clinvar https list
+#-----------------------
+pre_final_data["Clinvar_Link"] = fp.clinvar_link_list(link_lst,\
+                                 rs_idx, rs)
+
 
 # prcessing vep data
-#vep_file = "X:/PAT-Sequenzer/PanCancer_test/*.txt"
+# vep_file = "*.txt"
 vep_file = args.vep_PAN_file
 VEP_data = pd.read_csv(vep_file, delimiter="\t")                        
 # add new column Chromosome and Position
@@ -279,23 +303,21 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "AF_EXAC clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF_TGP clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF", "MAX_AF", "gnomADe_AF", "gnomADg_AF", "SIFT", \
-                        "PolyPhen", "PUBMED"]]
+                        "PolyPhen", "PUBMED", "Clinvar Link"]]
 
- # round AF to max 2 decimals (since AF number are str in excel, one has to set these values to int before run this script!
+# round AF to max 2 decimals (since AF number are str in excel, one has to set these values to int before run this script!
 processed_data_final.loc[:,"Frequency"]  = processed_data_final\
                                    ["Frequency"].apply(lambda x: round(x,2))
 
      
 final_variants = processed_data_final.sort_values(by=["Frequency"], ascending=False)                
 
-#final_variants.to_excel("final_output_with_aktuelle_PanCancerliste_AF.xlsx", \
-#                             index = False, \
-#                             engine= None) 
-
 final_variants.to_excel(args.outfile, \
                             index = False, \
                              engine= None) 
 
+# format
+#variant list intern
 
 
 
