@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 process ENSEMBL_VEP {
 
   tag "${ID}"
-  conda "bioconda::ensembl-vep=108.0"
+  conda "bioconda::ensembl-vep=111.0"
   debug true
  
   publishDir "${params.outdir}/${ID}/ENSEMBL_VEP", mode: "copy"
@@ -21,7 +21,7 @@ process ENSEMBL_VEP {
   """ 
   mkdir -p ${params.outdir}/${ID}
   vep -i ${vcf} -o ${vcf}.txt --tab --everything --species homo_sapiens --assembly GRCh38 \
-      --merged --format vcf --force_overwrite --cache_version 108 --cache --dir_cache ${vep_cache} \
+      --merged --format vcf --force_overwrite --cache_version 111 --cache --dir_cache ${vep_cache} \
       --fasta ${fasta} --offline --dir_plugins ${vep_cache}/plugins/ --plugin SpliceRegion 
   """
 }
@@ -63,7 +63,7 @@ process PANCANCER_PROCESSING {
   
   script:
   """
-  python /data2/basitta/bin/PAN_varianten_CLI.py --clc_PAN_file ${csv} --vep_PAN_file ${formatted_vep_data} --transcript_PAN_list ${transcript_lst} --outfile ${ID}_final_processed.xlsx
+  python /data/basitta/nextpipe/PanCancer/bin/PAN_varianten_CLI.py --clc_PAN_file ${csv} --vep_PAN_file ${formatted_vep_data} --transcript_PAN_list ${transcript_lst} --outfile ${ID}_final_processed.xlsx
   """
 }
 

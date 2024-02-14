@@ -24,26 +24,26 @@ import functions_pan.process_variantlist_PAN_utils as fp
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--clc_PAN_file", type=str)
 parser.add_argument("-q", "--vep_PAN_file", type=str)
-parser.add_argument("-t", "--transcript_PAN_list", type=str)  
+parser.add_argument("-t", "--transcript_PAN_list", type=str) 
+parser.add_argument("-v", "--variant_PAN_DBi", type=str)   
 parser.add_argument("-o", "--outfile", type=str)          
 args = parser.parse_args()
 
-#---------------------
-# Getting clc PAN data
-#---------------------
-clc_PAN_file = "X:/PAT-Sequenzer/PanCancer_test/23_08_31_PanCancer_E13535_23/valid_import/E13535-23.C.csv"
+#-----------------
+# Get CLC_PAN_data
+#-----------------
+#clc_PAN_file = ".csv"
 clc_PAN_file = args.clc_PAN_file
 CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
                                          encoding="ISO-8859-1") 
     
 #--------------------------------------    
-# CLC PAN data - adjust region_position
+# CLC_PAN_data - adjust region_position
 #--------------------------------------    
 CLC_variant_track_data_PAN = fp.adjust_region_position(CLC_variant_track_data_PAN)
 
 #------------------------------------------------------          
 # Filtering of variants not equal to "Reference allele"
-#------------------------------------------------------ 
 # Rename column "Reference allele" to "ReferenceAllele"
 #------------------------------------------------------
 CLC_variant_track_data_PAN = CLC_variant_track_data_PAN.rename\
@@ -52,9 +52,9 @@ group_reference_allele = CLC_variant_track_data_PAN.groupby\
                                    (CLC_variant_track_data_PAN.ReferenceAllele)
 clc_data_ReferenceAllele_NO =  group_reference_allele.get_group("No")
 
-#-----------------------
-# Columns list to filter
-#-----------------------
+#----------------------
+# Column list to filter
+#----------------------
 columns_to_filter = ["Frequency", "QUAL", "Forward/reverse balance", \
                      "Average quality",\
                      "Read position test probability", \
@@ -174,7 +174,7 @@ clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
 #------------------------------------------
 # Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
 #------------------------------------------
-transcript_list = "X:/PAT-Sequenzer/PanCancer_test/finale_aktuelle_pancancer_transcript_lst.xlsx"
+#transcript_list = ".xlsx"
 transcript_list = args.transcript_PAN_list
 #transcript_list = args.transcript_list
 RefSeq_NM = pd.read_excel(transcript_list)
@@ -229,64 +229,80 @@ link_lst = []
 pre_final_data["Clinvar_Link"] = fp.clinvar_link_list(link_lst,\
                                  rs_idx, rs)
 
-
-# prcessing vep data
-# vep_file = "*.txt"
+#-------------------------------------------------
+# Process VEP data (obtained via ensembl-vep tool)
+#-------------------------------------------------
+#vep_file = ".txt"
 vep_file = args.vep_PAN_file
-VEP_data = pd.read_csv(vep_file, delimiter="\t")                        
-# add new column Chromosome and Position
-VEP_data.insert(loc=1, column="Chromosome", value="")
-VEP_data.insert(loc=1, column="Position", value="")
+VEP_data = pd.read_csv(vep_file, delimiter="\t")  
 
-# VEP data
-for i in range(len(VEP_data["Location"])):
-    tmp_split = VEP_data["Location"][i].split("-")[0]
-    tmp_split = tmp_split.split(":")
-    VEP_data.loc[i, "Chromosome"] =  tmp_split[0]
-    VEP_data.loc[i, "Position"] =  tmp_split[1]
+#-----------------------------------------------------------------                    
+# Add column "Chromosome" and "Position"
+# Get chromosome and position from column "Location" and NM values
+# Result: Ready VEP data for merging with CLC_PAN_data
+#-----------------------------------------------------------------     
+VEP_data = fp.adjust_chr_pos_NM_VEP(VEP_data)
+# ok bis hier 06.02.2024
+#------------------------------------
+# Merge CLC_PAN_data and VEP data dfs
+#------------------------------------
 
-for i in range(len(VEP_data["Feature"])):
-    tmp_NM = VEP_data["Feature"][i].split(".")
-    VEP_data.loc[i, "Feature"] =  tmp_NM[0]
+#pre_final_data["Chromosome"] = pre_final_data["Chromosome"] ???
+#VEP_data["Chromosome"] = VEP_data["Chromosome"] ???
 
-# 3.0 merge VEP and CLC dfs
-pre_final_data["Chromosome"] = pre_final_data["Chromosome"]
-VEP_data["Chromosome"] = VEP_data["Chromosome"]
-
+#----------------------------------------------
+# Prepare CLC_PAN_data and VEP data for merging
+#----------------------------------------------
 VEP_data["Chromosome"] = VEP_data["Chromosome"].astype(str)
 pre_final_data["Chromosome"] = pre_final_data["Chromosome"].astype(str)
 
 VEP_data["Position"] = VEP_data["Position"].astype(int)
 pre_final_data["Position"] = pre_final_data["Position"].astype(int)
                  
-pre_final_data = pre_final_data.rename\
-                        (columns={"NM": "NM-Nummer"})
-
 VEP_data = VEP_data.rename\
-                        (columns={"Feature": "NM-Nummer"})
+                        (columns={"Feature": "NM_merge"})
                         
-VEP_data["NM-Nummer"] = VEP_data["NM-Nummer"].astype(str)
-pre_final_data["NM-Nummer"] = pre_final_data["NM-Nummer"].astype(str)
+VEP_data["NM_merge"] = VEP_data["NM_merge"].astype(str)
+pre_final_data["NM_merge"] = pre_final_data["NM_merge"].astype(str)
 
-# add here more columns from vep
+#------------------------------------------------------------------------------
+# Merge CLC_PAN_data with VEP via columns "Chromosome", "Position", "NM_merge"
+# and add aditional columns from vep
+#------------------------------------------------------------------------------
 merged = pd.merge(pre_final_data, VEP_data[["Chromosome", "Position",\
-                 "NM-Nummer", "HGVSc", "HGVSp", "SYMBOL", "AF", "MAX_AF", \
+                 "NM_merge", "HGVSc", "HGVSp", "SYMBOL", "AF", "MAX_AF", \
                  "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "PUBMED" ]], \
-                 on = ["Chromosome", "Position", "NM-Nummer"], how = "left")
-    
-merged = merged.rename(columns={"NM-Nummer": "TRANSCRIPT_ID"})
-
+                 on = ["Chromosome", "Position", "NM_merge"], how = "left")
+ 
+#------------------------------
+# Get HGVSp nomenclature RefSeq
+# Get indices necessary ???
+#------------------------------
 index_variants_merged = merged.index.tolist()
 for i in range(len(merged["HGVSp"])):
     if pd.isna(merged["HGVSp"][index_variants_merged[i]]):
-        merged.loc[[index_variants_merged[i]], "HGVS_PROTEIN"] = merged["HGVSp"][index_variants_merged[i]]
+        merged.loc[[index_variants_merged[i]], "HGVS_PROTEIN"] = merged\
+            ["HGVSp"][index_variants_merged[i]]
     else:
         tmp_p_name = merged["HGVSp"][index_variants_merged[i]].split(":")
         if len(tmp_p_name) >= 2:
             merged.loc[[index_variants_merged[i]], "HGVS_PROTEIN"] =  tmp_p_name[1]
 
-# get comprehensive output format
+#-----------------------------------------------------------   
+# Merge/join internal variantDB (variantDBi) PAN_CANCER_DATA
+# Change to current "Variantenliste" if needed
+#------------------------------------------------------------
+variantDBi = pd.read_excel(args.variant_PAN_DBi)
 
+merged = pd.merge(merged,\
+                  variantDBi,\
+                  left_on = ["name dbsnp_v151_ensembl_hg38_no_alt_analysis_set"],\
+                  right_on = ["name dbsnp_v151_ensembl_hg38_no_alt_analysis_set"],\
+                  how = "left")
+
+#--------------------------------
+# Get comprehensive output format
+#--------------------------------
 processed_data_final = merged[["Chromosome", "Position", "End Position", \
                        "Reference", "Allele", "Count", "Coverage", \
                         "Frequency", "QUAL", "Forward/reverse balance", \
@@ -295,7 +311,7 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "Homopolymer", "Homopolymer length", \
                         "Count (singleton UMI)", "Count (big UMI)", \
                         "Proportion (singleton UMIs)", "SYMBOL", \
-                        "TRANSCRIPT_ID", "HGVSc_x", "HGVS_PROTEIN", "Exon Number", \
+                        "NM_v", "NM_merge", "HGVSc_x", "HGVS_PROTEIN", "Exon Number", \
                         "func dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
                         "name dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
                         "CLNSIG clinvar_20220730_hg38_no_alt_analysis_set", \
@@ -303,21 +319,32 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "AF_EXAC clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF_TGP clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF", "MAX_AF", "gnomADe_AF", "gnomADg_AF", "SIFT", \
-                        "PolyPhen", "PUBMED", "Clinvar Link"]]
+                        "PolyPhen", "PUBMED", "Wertung", "Clinvar_Link"]]
 
-# round AF to max 2 decimals (since AF number are str in excel, one has to set these values to int before run this script!
+#---------------------------
+# Round AF to max 2 decimals 
+#---------------------------
 processed_data_final.loc[:,"Frequency"]  = processed_data_final\
                                    ["Frequency"].apply(lambda x: round(x,2))
 
-     
+#---------------                                   
+# Sort Frequency
+#---------------     
 final_variants = processed_data_final.sort_values(by=["Frequency"], ascending=False)                
 
+#----------
+# Save file
+#----------
 final_variants.to_excel(args.outfile, \
                             index = False, \
                              engine= None) 
 
-# format
-#variant list intern
+# format (erstmal händisch)
+# check input data transcripts
+# bei einigen indels Duplikate, da Popfreq. mehrmals vorhanden
+# aktuelle Clin info via VEP 
+# PLugins
+# finale Dokumentation und Validierung
 
 
 

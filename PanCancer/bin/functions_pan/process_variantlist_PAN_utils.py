@@ -180,3 +180,42 @@ def clinvar_link_list(link_lst, rs_idx, rs):
             link_lst.append(rs[rs_idx[i]])
             
     return link_lst
+
+
+def adjust_chr_pos_NM_VEP(VEP_data):
+    """
+    
+    Parameters
+    ----------
+    VEP_data : DataFrame
+        
+        DESCRIPTION: contains data obtained from ensembl-vep (txt file)
+
+    Returns
+    -------
+    VEP_data : DataFrame 
+        
+        DESCRIPTION: contains processed/adjusted "Chromosome", "Position" and
+        "Feature" column needed for merging with CLC data
+
+    """
+    #---------------------------------------                      
+    # Add column "Chromosome" and "Position"
+    #---------------------------------------
+    VEP_data.insert(loc=1, column="Chromosome", value="")
+    VEP_data.insert(loc=1, column="Position", value="")
+
+    #---------------------------------------------------
+    # Get chromosome and position from column "Location"
+    #---------------------------------------------------
+    for i in range(len(VEP_data["Location"])):
+        tmp_split = VEP_data["Location"][i].split("-")[0]
+        tmp_split = tmp_split.split(":")
+        VEP_data.loc[i, "Chromosome"] =  tmp_split[0]
+        VEP_data.loc[i, "Position"] =  tmp_split[1]
+
+    for i in range(len(VEP_data["Feature"])):
+        tmp_NM = VEP_data["Feature"][i].split(".")
+        VEP_data.loc[i, "Feature"] =  tmp_NM[0]
+        
+    return VEP_data
