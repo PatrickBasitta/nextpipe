@@ -17,23 +17,40 @@ output: user specified name; file extension: .xlsx
 import pandas as pd
 import argparse
 import functions_pan.process_variantlist_PAN_utils as fp
+from datetime import datetime
 
 #---------------------------------------
 # Using argparse for positinal arguments
 #---------------------------------------
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--clc_PAN_file", type=str)
-parser.add_argument("-q", "--vep_PAN_file", type=str)
-parser.add_argument("-t", "--transcript_PAN_list", type=str) 
-parser.add_argument("-v", "--variant_PAN_DBi", type=str)   
-parser.add_argument("-o", "--outfile", type=str)          
+parser.add_argument("-c", "--clc", type=str)
+parser.add_argument("-v", "--vep", type=str)
+parser.add_argument("-t", "--transcripts", type=str) 
+parser.add_argument("-D", "--variant_DBi", type=str)   
+parser.add_argument("-o", "--outfile", type=str)  
+parser.add_argument("-rv", "--removed_variants", type=str)        
 args = parser.parse_args()
+
+#--------------------------------------------------
+# Getting current date and time for log information
+#--------------------------------------------------
+date_time_now = datetime.now()
+# dd/mm/YY H:M:S
+dt_string = date_time_now.strftime("%d/%m/%Y %H:%M:%S")
+print("Start:", dt_string)
+# Processed file
+print("Input_CLC_file:", args.clc)
+print("Input_VEP_file:", args.vep)
+print("Output_file_1:", args.outfile)
+print("Output_file_2:", args.removed_variants)
+# Script used
+print("Script: PAN_varianten_v1.0.py")
 
 #-----------------
 # Get CLC_PAN_data
 #-----------------
 #clc_PAN_file = ".csv"
-clc_PAN_file = args.clc_PAN_file
+clc_PAN_file = args.clc
 CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
                                          encoding="ISO-8859-1") 
     
@@ -72,61 +89,89 @@ clc_data_ReferenceAllele_NO = fp.convert_coltype_str_to_float\
 clc_data_filtered = clc_data_ReferenceAllele_NO\
 [clc_data_ReferenceAllele_NO["QUAL"] >= 150]
 
-# discarded 1 (keep discarded data)
-#clc_data_discarded_1 = clc_data_ReferenceAllele_NO\
-#[clc_data_ReferenceAllele_NO["QUAL"] < 150]
+# discarded variants 1 (keep discarded data)
+clc_data_discarded_1 = clc_data_ReferenceAllele_NO\
+[clc_data_ReferenceAllele_NO["QUAL"] < 150]
 
 #---------------------------------- 
 # Filter data with Av quality >= 35
 #----------------------------------
-clc_data_filtered = clc_data_filtered\
+clc_data_filtered_aq = clc_data_filtered\
 [clc_data_filtered["Average quality"] >= 35]
 
-# discarded 2 (keep discared data)
-#clc_data_discarded_2 = clc_data_filtered\
-#[clc_data_filtered["Average quality"] < 25]
+# discarded variants 2 (keep discared data)
+clc_data_discarded_2 = clc_data_filtered\
+[clc_data_filtered["Average quality"] < 25]
 
 #----------------------------
 # Filter data with count >= 2
 #----------------------------
-clc_data_filtered = clc_data_filtered\
-[clc_data_filtered["Count"] >= 2]
+clc_data_filtered_c = clc_data_filtered_aq\
+[clc_data_filtered_aq["Count"] >= 2]
 
-# discarded 3 (keep discared data)
-#clc_data_discarded_3 = clc_data_filtered\
-#[clc_data_filtered["Count"] < 2]
+# discarded variants 3 (keep discared data)
+clc_data_discarded_3 = clc_data_filtered_aq\
+[clc_data_filtered_aq["Count"] < 2]
 
 #-------------------------------- 
 # Filter data with Frequency >= 5
 #--------------------------------
-clc_data_filtered = clc_data_filtered\
-[clc_data_filtered["Frequency"] >= 5]
+clc_data_filtered_frq = clc_data_filtered_c\
+[clc_data_filtered_c["Frequency"] >= 5]
 
-# discarded 4 (keep discared data)
-#clc_data_discarded_4 = clc_data_filtered\
-#[clc_data_filtered["Frequency"] < 5]
+# discarded variants 4 (keep discared data)
+clc_data_discarded_4 = clc_data_filtered_c\
+[clc_data_filtered_c["Frequency"] < 5]
 
 #--------------------------------------------- 
 # Filter data with Forward/reverse balance > 0
 #---------------------------------------------
-clc_data_filtered = clc_data_filtered\
-[clc_data_filtered["Forward/reverse balance"] > 0]
+clc_data_filtered_frb = clc_data_filtered_frq\
+[clc_data_filtered_frq["Forward/reverse balance"] > 0]
+
+# discarded variants 5 (keep discared data)
+clc_data_discarded_5 = clc_data_filtered_frq\
+[clc_data_filtered_frq["Forward/reverse balance"] <= 0]
 
 #------------------------------------------------------------ 
 # Filter data with Read position test probability >= 0.000001
 #------------------------------------------------------------
-clc_data_filtered = clc_data_filtered\
-[clc_data_filtered["Read position test probability"] >= 0.000001]
+clc_data_filtered_rptp = clc_data_filtered_frb\
+[clc_data_filtered_frb["Read position test probability"] >= 0.000001]
+
+# discarded variants 6 (keep discared data)
+clc_data_discarded_6 = clc_data_filtered_frb\
+[clc_data_filtered_frb["Read position test probability"] < 0.000001]
 
 #------------------------------------------------------------- 
 # Filter data with Read direction test probability >= 0.000001
 #-------------------------------------------------------------
-clc_data_filtered = clc_data_filtered\
-[clc_data_filtered["Read direction test probability"] >= 0.000001]
+clc_data_filtered = clc_data_filtered_rptp\
+[clc_data_filtered_rptp["Read direction test probability"] >= 0.000001]
+
+# discarded variants 6 (keep discared data)
+clc_data_discarded_7 = clc_data_filtered_rptp\
+[clc_data_filtered_rptp["Read direction test probability"] < 0.000001]
 
 #-------------------------
 # filter non-synonymous???
 #-------------------------
+
+#---------------------------------------
+# Generate xlsx file of removed_variants
+#---------------------------------------
+discarded_clc_data = [clc_data_discarded_1, clc_data_discarded_2, \
+                      clc_data_discarded_3, clc_data_discarded_4, \
+                      clc_data_discarded_5, clc_data_discarded_6, \
+                      clc_data_discarded_7]
+
+# concatenate discarded/removed clc_data variants
+removed_variants = pd.concat(discarded_clc_data)
+
+# write file
+removed_variants.to_excel(args.removed_variants, \
+                            index = False, \
+                             engine= None) 
 
 #--------------------------------------------------
 # Reindex clc data for further processing necessary
@@ -175,11 +220,18 @@ clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
 # Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
 #------------------------------------------
 #transcript_list = ".xlsx"
-transcript_list = args.transcript_PAN_list
+transcript_list = args.transcripts
 #transcript_list = args.transcript_list
 RefSeq_NM = pd.read_excel(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
 
+#-------------------------------
+# Check transcript input for " "
+#-------------------------------
+for RefSeq_idx in range(len(RefSeq_NM)):
+    if ' ' in RefSeq_NM.loc[RefSeq_idx, "NM_RefSeq_final"]:
+        raise ValueError('Space in transcript name! Please correct!')
+  
 #------------------------------------------------------------------------------
 # Reset indices; necessary for further processing; since index could be not
 # in order due to step "Drop Na values from DataFrame" (see above) (necessary?)
@@ -229,11 +281,15 @@ link_lst = []
 pre_final_data["Clinvar_Link"] = fp.clinvar_link_list(link_lst,\
                                  rs_idx, rs)
 
+# Log information
+print("Process information:")
+print("--> Processing CLC_PanCancer data: successful!")    
+    
 #-------------------------------------------------
 # Process VEP data (obtained via ensembl-vep tool)
 #-------------------------------------------------
 #vep_file = ".txt"
-vep_file = args.vep_PAN_file
+vep_file = args.vep
 VEP_data = pd.read_csv(vep_file, delimiter="\t")  
 
 #-----------------------------------------------------------------                    
@@ -265,13 +321,16 @@ VEP_data = VEP_data.rename\
 VEP_data["NM_merge"] = VEP_data["NM_merge"].astype(str)
 pre_final_data["NM_merge"] = pre_final_data["NM_merge"].astype(str)
 
+print("--> Processing VEP_Ensembl data: successful!")  
+
 #------------------------------------------------------------------------------
 # Merge CLC_PAN_data with VEP via columns "Chromosome", "Position", "NM_merge"
 # and add aditional columns from vep
 #------------------------------------------------------------------------------
 merged = pd.merge(pre_final_data, VEP_data[["Chromosome", "Position",\
                  "NM_merge", "HGVSc", "HGVSp", "SYMBOL", "AF", "MAX_AF", \
-                 "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "PUBMED" ]], \
+                 "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "CLIN_SIG", \
+                 "PUBMED" ]], \
                  on = ["Chromosome", "Position", "NM_merge"], how = "left")
  
 #------------------------------
@@ -292,7 +351,7 @@ for i in range(len(merged["HGVSp"])):
 # Merge/join internal variantDB (variantDBi) PAN_CANCER_DATA
 # Change to current "Variantenliste" if needed
 #------------------------------------------------------------
-variantDBi = pd.read_excel(args.variant_PAN_DBi)
+variantDBi = pd.read_excel(args.variant_DBi)
 
 merged = pd.merge(merged,\
                   variantDBi,\
@@ -315,12 +374,13 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "func dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
                         "name dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
                         "CLNSIG clinvar_20220730_hg38_no_alt_analysis_set", \
+                        "CLIN_SIG", \
                         "CLNREVSTAT clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF_EXAC clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF_TGP clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF", "MAX_AF", "gnomADe_AF", "gnomADg_AF", "SIFT", \
                         "PolyPhen", "PUBMED", "Wertung", "Clinvar_Link"]]
-
+   
 #---------------------------
 # Round AF to max 2 decimals 
 #---------------------------
@@ -332,6 +392,9 @@ processed_data_final.loc[:,"Frequency"]  = processed_data_final\
 #---------------     
 final_variants = processed_data_final.sort_values(by=["Frequency"], ascending=False)                
 
+# Log information
+print("--> Combining and formatting CLC and VEP data: successful!")
+
 #----------
 # Save file
 #----------
@@ -339,10 +402,15 @@ final_variants.to_excel(args.outfile, \
                             index = False, \
                              engine= None) 
 
-# format (erstmal händisch)
-# check input data transcripts
+# Log information
+print("--> Writing data to xlsx output files: successful!")
+# Getting current date and time for log information
+date_time_now = datetime.now()
+# dd/mm/YY H:M:S
+dt_string = date_time_now.strftime("%d/%m/%Y %H:%M:%S")
+print("End:", dt_string)
+ 
 # bei einigen indels Duplikate, da Popfreq. mehrmals vorhanden
-# aktuelle Clin info via VEP 
 # PLugins
 # finale Dokumentation und Validierung
 
