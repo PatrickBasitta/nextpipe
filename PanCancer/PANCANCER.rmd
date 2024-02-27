@@ -1,8 +1,11 @@
 In this nxf workflow CLC PanCancer data obtained from CLC Genomis Server/Workbench are processed. 
 
+SETUP
+        bin folder with PAN_varianten_v1.0.py and folder functions_pan has to be in work dir
+
 STEP1
-	Export vcf file according to this example (xxxx.VCF.vcf) in directory X:\PAT-Sequenzer\PANCANCER_INPUT_NXF\vcf_input
-	Export txt/csv file according to this example(xxxx.CSV.csv) in directory X:\PAT-Sequenzer\PANCANCER_INPUT_NXF\csv_input
+	Export vcf file according to this example (xxxx.VCF.vcf) in folder X:\PAT-Sequenzer\PANCANCER_INPUT_NXF\vcf_input
+	Export txt/csv file according to this example(xxxx.CSV.csv) in folder X:\PAT-Sequenzer\PANCANCER_INPUT_NXF\csv_input
 
 STEP2
 	Run/execute the follofing command
