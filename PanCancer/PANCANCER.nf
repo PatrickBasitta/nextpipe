@@ -94,14 +94,14 @@ workflow PANCANCER_CLC_VEP {
     vcf_ch = Channel
                  .fromPath(vcfs)
                  .map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
-     
+    vcf_ch.view() 
     dir_cache_ch = Channel.value(dir_cache)
     fasta_ch = Channel.value(fasta)
     
     clc_csv_ch = Channel
                  .fromPath(clc_csvs, checkIfExists: true)
                  .map { clc_file -> [clc_file.getSimpleName(), clc_file]}
-    
+    clc_csv_ch.view() 
     transcript_lst_ch = Channel.value(transcript_lst)
     variantDBi_ch = Channel.value(variantDBi)
             
