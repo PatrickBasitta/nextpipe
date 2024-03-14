@@ -51,9 +51,9 @@ print("Script: PAN_varianten_v1.0.py")
 #-----------------
 #clc_PAN_file = ".csv"
 clc_PAN_file = args.clc
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
-                                         encoding="ISO-8859-1") 
-    
+#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
+#                                         encoding="ISO-8859-1") 
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")    
 #--------------------------------------    
 # CLC_PAN_data - adjust region_position
 #--------------------------------------    
