@@ -9,7 +9,7 @@ Input: clc_PAN_file as .csv
        vep_PAN_file as .txt
        transcript_PAN_list as .xlsx
        variantDBi as .xlsx
-       
+
 output: user specified name; file extension: .xlsx
 
 @author: PatrickBasitta
