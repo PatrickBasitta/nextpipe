@@ -62,6 +62,7 @@ process PANCANCER_PROCESSING {
   output:
   path("*_final_processed.xlsx"), emit: final_xlsx
   path("*_removed_variants.xlsx"), emit: removed_variants
+  path("*_removed_duplicates.xlsx"), emit: removed_duplicates
   path("*.log"), emit: log
   
   script:
@@ -73,7 +74,7 @@ process PANCANCER_PROCESSING {
                                                                      -D ${variantDBi} \
                                                                      -o ${ID}_final_processed.xlsx \
                                                                      -rv ${ID}_removed_variants.xlsx \
-                                                                     -rd ${ID}_removed_duplicated.xlsx > log_${ID}.log
+                                                                     -rd ${ID}_removed_duplicates.xlsx > log_${ID}.log
   """
 }
 
