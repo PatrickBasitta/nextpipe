@@ -8,6 +8,7 @@ ENSEMBL VEP TOOL
 Input: clc_PAN_file as .csv
        vep_PAN_file as .txt
        transcript_PAN_list as .xlsx
+       variantDBi as .xlsx
        
 output: user specified name; file extension: .xlsx
 
@@ -28,7 +29,8 @@ parser.add_argument("-v", "--vep", type=str)
 parser.add_argument("-t", "--transcripts", type=str) 
 parser.add_argument("-D", "--variant_DBi", type=str)   
 parser.add_argument("-o", "--outfile", type=str)  
-parser.add_argument("-rv", "--removed_variants", type=str)        
+parser.add_argument("-rv", "--removed_variants", type=str) 
+parser.add_argument("-rd", "--removed_duplicates", type=str)        
 args = parser.parse_args()
 
 #--------------------------------------------------
@@ -43,17 +45,17 @@ print("Input_CLC_file:", args.clc)
 print("Input_VEP_file:", args.vep)
 print("Output_file_1:", args.outfile)
 print("Output_file_2:", args.removed_variants)
+print("Output_file_3:", args.removed_duplicates)
 # Script used
 print("Script: PAN_varianten_v1.0.py")
 
 #-----------------
 # Get CLC_PAN_data
 #-----------------
-#clc_PAN_file = ".csv"
+# clc_PAN_file = ".csv"
 clc_PAN_file = args.clc
-#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
-#                                         encoding="ISO-8859-1") 
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")    
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
+
 #--------------------------------------    
 # CLC_PAN_data - adjust region_position
 #--------------------------------------    
@@ -219,9 +221,8 @@ clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
 #------------------------------------------
 # Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
 #------------------------------------------
-#transcript_list = ".xlsx"
+# transcript_list = ".xlsx"
 transcript_list = args.transcripts
-#transcript_list = args.transcript_list
 RefSeq_NM = pd.read_excel(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
 
@@ -288,7 +289,7 @@ print("--> Processing CLC_PanCancer data: successful!")
 #-------------------------------------------------
 # Process VEP data (obtained via ensembl-vep tool)
 #-------------------------------------------------
-#vep_file = ".txt"
+# vep_file = ".txt"
 vep_file = args.vep
 VEP_data = pd.read_csv(vep_file, delimiter="\t")  
 
@@ -351,6 +352,8 @@ for i in range(len(merged["HGVSp"])):
 # Merge/join internal variantDB (variantDBi) PAN_CANCER_DATA
 # Change to current "Variantenliste" if needed
 #------------------------------------------------------------
+# lst_var = ".xlsx"
+# variantDBi = pd.read_excel(lst_var)
 variantDBi = pd.read_excel(args.variant_DBi)
 
 merged = pd.merge(merged,\
@@ -390,8 +393,98 @@ processed_data_final.loc[:,"Frequency"]  = processed_data_final\
 #---------------                                   
 # Sort Frequency
 #---------------     
-final_variants = processed_data_final.sort_values(by=["Frequency"], ascending=False)                
+final_variants = processed_data_final.sort_values(by=["Frequency"], ascending=False)  
 
+#--------------------
+# Identify duplicates
+#--------------------  
+
+# Define dict for agg function
+agg_dict = {"Chromosome": "first", \
+            "Position": "first", \
+            "End Position": "first", \
+            "Reference": "first", \
+            "Allele": "first", \
+            "Count": "first", \
+            "Coverage": "first", \
+            "Frequency": "first", \
+            "QUAL": "first", \
+            "Forward/reverse balance": "first", \
+            "Average quality": "first", \
+            "Read position test probability": "first", \
+            "Read direction test probability": "first", \
+            "BaseQRankSum": "first", \
+            "Homopolymer": "first", \
+            "Homopolymer length": "first", \
+            "Count (singleton UMI)": "first", \
+            "Count (big UMI)": "first", \
+            "Proportion (singleton UMIs)": "first", \
+            "SYMBOL": "first", \
+            "NM_v": "first", \
+            "NM_merge": "first", \
+            "HGVSc_x": "first", \
+            "HGVS_PROTEIN": "first", \
+            "Exon Number": "first", \
+            "func dbsnp_v151_ensembl_hg38_no_alt_analysis_set": "first", \
+            "name dbsnp_v151_ensembl_hg38_no_alt_analysis_set": "first", \
+            "CLNSIG clinvar_20220730_hg38_no_alt_analysis_set": "first", \
+            "CLIN_SIG": "first", \
+            "CLNREVSTAT clinvar_20220730_hg38_no_alt_analysis_set": "first", \
+            "AF_EXAC clinvar_20220730_hg38_no_alt_analysis_set": "first", \
+            "AF_TGP clinvar_20220730_hg38_no_alt_analysis_set": "first", \
+            "AF": "first", \
+            "MAX_AF": ",".join, \
+            "gnomADe_AF": ",".join, \
+            "gnomADg_AF": ",".join, \
+            "SIFT": "first", \
+            "PolyPhen": "first", \
+            "PUBMED": "first", \
+            "Wertung": "first", \
+            "Clinvar_Link": "first"}
+    
+# list for discarded duplicates dfs
+discarded_duplicates = []
+
+# Get string presenting Chromosome_Position_End Postion 
+final_variants["check_duplicated"] = ""
+col_combine = ["Chromosome", "Position", "End Position"]
+final_variants["check_duplicated"] = final_variants[col_combine].\
+                                     apply(lambda row: '_'.\
+                                     join(row.values.astype(str)), axis=1)
+                                                    
+# Get duplicate rows
+duplicates_rows = final_variants["check_duplicated"][final_variants\
+                               ["check_duplicated"].duplicated() == True].tolist()
+
+if duplicates_rows != []:
+    
+    for i in range(len(duplicates_rows)):
+        duplicates_index = final_variants[final_variants\
+                 ["check_duplicated"] == duplicates_rows[i]].index.tolist()
+            
+        if len(duplicates_index) == 2:
+        
+        # print(duplicates_index)
+    
+            combine_duplicates = final_variants.loc[duplicates_index, :]
+            
+            discarded_duplicates.append(combine_duplicates)
+        
+            tmp_cd = combine_duplicates.groupby\
+                             ("check_duplicated", as_index=False).agg(agg_dict)
+        
+            final_variants.loc[duplicates_index[0], :] = tmp_cd.loc[0, :]
+            
+            final_variants.drop(index=duplicates_index[1], inplace=True)
+
+    # concatenate discarded/removed duplicated variants
+    discarded_duplicates_df = pd.concat(discarded_duplicates)
+
+    # write file
+    discarded_duplicates_df.to_excel(args.removed_duplicates, \
+                            index = False, \
+                             engine= None) 
+            
 # Log information
 print("--> Combining and formatting CLC and VEP data: successful!")
 
@@ -410,7 +503,6 @@ date_time_now = datetime.now()
 dt_string = date_time_now.strftime("%d/%m/%Y %H:%M:%S")
 print("End:", dt_string)
  
-# bei einigen indels Duplikate, da Popfreq. mehrmals vorhanden
 # PLugins
 # finale Dokumentation und Validierung
 
