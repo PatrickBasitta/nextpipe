@@ -54,11 +54,13 @@ print("Script: PAN_varianten_v1.0.py")
 #-----------------
 # clc_PAN_file = ".csv"
 clc_PAN_file = args.clc
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
+                                       encoding="ISO-8859-1")
+# CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
 
-#--------------------------------------    
+#--------------------------------------
 # CLC_PAN_data - adjust region_position
-#--------------------------------------    
+#--------------------------------------
 CLC_variant_track_data_PAN = fp.adjust_region_position(CLC_variant_track_data_PAN)
 
 #------------------------------------------------------          
@@ -480,6 +482,16 @@ if duplicates_rows != []:
     # concatenate discarded/removed duplicated variants
     discarded_duplicates_df = pd.concat(discarded_duplicates)
 
+    # write file
+    discarded_duplicates_df.to_excel(args.removed_duplicates, \
+                            index = False, \
+                             engine= None) 
+
+else:
+    
+    write_data = ["No duplicates"]
+    discarded_duplicates_df = pd.DataFrame(write_data, columns=["No_Duplicates"])
+    
     # write file
     discarded_duplicates_df.to_excel(args.removed_duplicates, \
                             index = False, \
