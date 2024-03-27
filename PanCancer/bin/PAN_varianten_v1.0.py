@@ -26,11 +26,11 @@ from datetime import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--clc", type=str)
 parser.add_argument("-v", "--vep", type=str)
-parser.add_argument("-t", "--transcripts", type=str) 
-parser.add_argument("-D", "--variant_DBi", type=str)   
-parser.add_argument("-o", "--outfile", type=str)  
-parser.add_argument("-rv", "--removed_variants", type=str) 
-parser.add_argument("-rd", "--removed_duplicates", type=str)        
+parser.add_argument("-t", "--transcripts", type=str)
+parser.add_argument("-D", "--variant_DBi", type=str)
+parser.add_argument("-o", "--outfile", type=str)
+parser.add_argument("-rv", "--removed_variants", type=str)
+parser.add_argument("-rd", "--removed_duplicates", type=str)
 args = parser.parse_args()
 
 #--------------------------------------------------
