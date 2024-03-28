@@ -1,0 +1,24 @@
+# First steps using mongoDB
+
+# Set up mongoDB
+# podman run --name mongoDNPM -v dnpmdata:/data/db -d -p 27017:27017 docker.io/library/mongo:latest
+
+# Open mongoDB
+# podman exec -it mongoDNPM mongosh
+
+# mongosh commands
+# show dbs, use <db_name>, show collections, ...
+
+# delete a database
+# use database
+# db.dropDatabase()
+
+# delete a collection
+# use collection
+# db.collection.drop()
+
+# Preliminary workflow
+
+# Step1: Generate Patient DatenmodellV2.0.xlsx
+# Step2: Fill in known data
+# Step3: 
