@@ -25,10 +25,8 @@ file_dnpm_data_template="PATIENT_ID1_DNPM_DatenmodellV2.0.xlsx"
 with open (file_dnpm_data_template, "rb") as f:
     dnpm_data = pd.read_excel(f,\
                          sheet_name=None, engine = "openpyxl")
-        
-        
 # get "Einfache Varianten"
-processed_variant_data = pd.read_excel("E22533-23_final_processed.xlsx")
+processed_variant_data = pd.read_excel(".xlsx")
 
 # get relevant data for report
 
@@ -68,17 +66,17 @@ final_data = final_data.rename(columns=\
             "Frequency": "Allelic Frequency", 
             "name dbsnp_v151_ensembl_hg38_no_alt_analysis_set": "dbSNP ID",
             "CLIN_SIG": "Interpretation"})
-    
+
 # add additional columns
 final_data.insert(loc=0, column="VariantenID", value="-")
 final_data.insert(loc=13, column="COSMIC ID", value="-")
-            
+
 # VariantID-generator
 VariantID_lst = []
 for i in range(len(final_data)):
     i = i + 1
     VariantID_lst.append("VariantID_"+str(i))
-    
+
 # insert VariantIDs
 final_data["VariantenID"] = VariantID_lst
 
@@ -98,10 +96,10 @@ dnpm_data_dict = {
 DNPM_out[0]["Einfache Varianten"] = dnpm_data_dict["Einfache Variante"]
 
 def unlist_func(DNPM_out):
-    
+
     for i in DNPM_out:
         return i
-    
+
 DNPM_out = unlist_func(DNPM_out)
 
 # write to disk
@@ -113,5 +111,5 @@ with open('data_dict.json', 'w') as file:
         sort_keys=True
     )
 
-# End    
+# End
 ###############################################################################
