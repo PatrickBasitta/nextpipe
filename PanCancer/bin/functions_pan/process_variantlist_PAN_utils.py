@@ -202,17 +202,27 @@ def adjust_chr_pos_NM_VEP(VEP_data):
     #---------------------------------------                      
     # Add column "Chromosome" and "Position"
     #---------------------------------------
-    VEP_data.insert(loc=1, column="Chromosome", value="")
+    VEP_data.insert(loc=1, column="End Position", value="")
     VEP_data.insert(loc=1, column="Position", value="")
-
+    VEP_data.insert(loc=1, column="Chromosome", value="")
+    
     #---------------------------------------------------
     # Get chromosome and position from column "Location"
     #---------------------------------------------------
     for i in range(len(VEP_data["Location"])):
-        tmp_split = VEP_data["Location"][i].split("-")[0]
-        tmp_split = tmp_split.split(":")
-        VEP_data.loc[i, "Chromosome"] =  tmp_split[0]
-        VEP_data.loc[i, "Position"] =  tmp_split[1]
+        if len(VEP_data["Location"][i].split("-")) == 1:
+            tmp_split = VEP_data["Location"][i].split("-")
+            tmp_split = tmp_split[0].split(":")
+            VEP_data.loc[i, "Chromosome"] =  tmp_split[0]
+            VEP_data.loc[i, "Position"] =  tmp_split[1]
+            VEP_data.loc[i, "End Position"] =  tmp_split[1]
+            
+        if len(VEP_data["Location"][i].split("-")) == 2:
+            tmp_split_two = VEP_data["Location"][i].split("-")
+            tmp_split = tmp_split_two[0].split(":")
+            VEP_data.loc[i, "Chromosome"] =  tmp_split[0]
+            VEP_data.loc[i, "Position"] =  tmp_split[1]
+            VEP_data.loc[i, "End Position"] =  tmp_split_two[1]
 
     for i in range(len(VEP_data["Feature"])):
         tmp_NM = VEP_data["Feature"][i].split(".")
