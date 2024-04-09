@@ -8,8 +8,7 @@ ENSEMBL VEP TOOL
 Input: clc_PAN_file as .csv
        vep_PAN_file as .txt
        transcript_PAN_list as .xlsx
-       variantDBi as .xlsx
-
+       
 output: user specified name; file extension: .xlsx
 
 @author: PatrickBasitta
@@ -26,11 +25,11 @@ from datetime import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--clc", type=str)
 parser.add_argument("-v", "--vep", type=str)
-parser.add_argument("-t", "--transcripts", type=str)
-parser.add_argument("-D", "--variant_DBi", type=str)
-parser.add_argument("-o", "--outfile", type=str)
-parser.add_argument("-rv", "--removed_variants", type=str)
-parser.add_argument("-rd", "--removed_duplicates", type=str)
+parser.add_argument("-t", "--transcripts", type=str) 
+parser.add_argument("-D", "--variant_DBi", type=str)   
+parser.add_argument("-o", "--outfile", type=str)  
+parser.add_argument("-rv", "--removed_variants", type=str) 
+#parser.add_argument("-rd", "--removed_duplicates", type=str)        
 args = parser.parse_args()
 
 #--------------------------------------------------
@@ -45,22 +44,21 @@ print("Input_CLC_file:", args.clc)
 print("Input_VEP_file:", args.vep)
 print("Output_file_1:", args.outfile)
 print("Output_file_2:", args.removed_variants)
-print("Output_file_3:", args.removed_duplicates)
+#print("Output_file_3:", args.removed_duplicates)
 # Script used
 print("Script: PAN_varianten_v1.0.py")
 
 #-----------------
 # Get CLC_PAN_data
 #-----------------
-# clc_PAN_file = ".csv"
+#clc_PAN_file = ".csv"
 clc_PAN_file = args.clc
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
-                                       encoding="ISO-8859-1")
-# CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
-
-#--------------------------------------
+#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
+#                                       encoding="ISO-8859-1") 
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")    
+#--------------------------------------    
 # CLC_PAN_data - adjust region_position
-#--------------------------------------
+#--------------------------------------    
 CLC_variant_track_data_PAN = fp.adjust_region_position(CLC_variant_track_data_PAN)
 
 #------------------------------------------------------          
@@ -223,8 +221,9 @@ clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
 #------------------------------------------
 # Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
 #------------------------------------------
-# transcript_list = ".xlsx"
-transcript_list = args.transcripts
+#transcript_list = "in_use_finale_aktuelle_pancancer_transcript_lst.xlsx"
+#transcript_list = args.transcripts
+transcript_list = args.transcript_list
 RefSeq_NM = pd.read_excel(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
 
@@ -291,7 +290,7 @@ print("--> Processing CLC_PanCancer data: successful!")
 #-------------------------------------------------
 # Process VEP data (obtained via ensembl-vep tool)
 #-------------------------------------------------
-# vep_file = ".txt"
+#vep_file = ".vcf.txt"
 vep_file = args.vep
 VEP_data = pd.read_csv(vep_file, delimiter="\t")  
 
@@ -301,14 +300,9 @@ VEP_data = pd.read_csv(vep_file, delimiter="\t")
 # Result: Ready VEP data for merging with CLC_PAN_data
 #-----------------------------------------------------------------     
 VEP_data = fp.adjust_chr_pos_NM_VEP(VEP_data)
-# ok bis hier 06.02.2024
-#------------------------------------
+
+#----------------------------------------------
 # Merge CLC_PAN_data and VEP data dfs
-#------------------------------------
-
-#pre_final_data["Chromosome"] = pre_final_data["Chromosome"] ???
-#VEP_data["Chromosome"] = VEP_data["Chromosome"] ???
-
 #----------------------------------------------
 # Prepare CLC_PAN_data and VEP data for merging
 #----------------------------------------------
@@ -317,6 +311,9 @@ pre_final_data["Chromosome"] = pre_final_data["Chromosome"].astype(str)
 
 VEP_data["Position"] = VEP_data["Position"].astype(int)
 pre_final_data["Position"] = pre_final_data["Position"].astype(int)
+
+VEP_data["End Position"] = VEP_data["End Position"].astype(int)
+pre_final_data["End Position"] = pre_final_data["End Position"].astype(int)
                  
 VEP_data = VEP_data.rename\
                         (columns={"Feature": "NM_merge"})
@@ -330,11 +327,12 @@ print("--> Processing VEP_Ensembl data: successful!")
 # Merge CLC_PAN_data with VEP via columns "Chromosome", "Position", "NM_merge"
 # and add aditional columns from vep
 #------------------------------------------------------------------------------
-merged = pd.merge(pre_final_data, VEP_data[["Chromosome", "Position",\
-                 "NM_merge", "HGVSc", "HGVSp", "SYMBOL", "AF", "MAX_AF", \
+merged = pd.merge(pre_final_data, VEP_data[["Chromosome", "Position", "End Position", \
+                 "NM_merge", "HGVSc", "HGVSp", "SYMBOL", "EXON", "AF", "MAX_AF", \
                  "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "CLIN_SIG", \
                  "PUBMED" ]], \
-                 on = ["Chromosome", "Position", "NM_merge"], how = "left")
+                 on = ["Chromosome", "Position", "End Position", "NM_merge"], \
+                 how = "left")
  
 #------------------------------
 # Get HGVSp nomenclature RefSeq
@@ -354,8 +352,8 @@ for i in range(len(merged["HGVSp"])):
 # Merge/join internal variantDB (variantDBi) PAN_CANCER_DATA
 # Change to current "Variantenliste" if needed
 #------------------------------------------------------------
-# lst_var = ".xlsx"
-# variantDBi = pd.read_excel(lst_var)
+#lst_var = ".xlsx"
+#variantDBi = pd.read_excel(lst_var)
 variantDBi = pd.read_excel(args.variant_DBi)
 
 merged = pd.merge(merged,\
@@ -396,7 +394,7 @@ processed_data_final.loc[:,"Frequency"]  = processed_data_final\
 # Sort Frequency
 #---------------     
 final_variants = processed_data_final.sort_values(by=["Frequency"], ascending=False)  
-
+"""
 #--------------------
 # Identify duplicates
 #--------------------  
@@ -486,17 +484,18 @@ if duplicates_rows != []:
     discarded_duplicates_df.to_excel(args.removed_duplicates, \
                             index = False, \
                              engine= None) 
-
 else:
-    
+      
     write_data = ["No duplicates"]
     discarded_duplicates_df = pd.DataFrame(write_data, columns=["No_Duplicates"])
+    
     
     # write file
     discarded_duplicates_df.to_excel(args.removed_duplicates, \
                             index = False, \
                              engine= None) 
-            
+    
+"""           
 # Log information
 print("--> Combining and formatting CLC and VEP data: successful!")
 
@@ -506,7 +505,7 @@ print("--> Combining and formatting CLC and VEP data: successful!")
 final_variants.to_excel(args.outfile, \
                             index = False, \
                              engine= None) 
-
+    
 # Log information
 print("--> Writing data to xlsx output files: successful!")
 # Getting current date and time for log information
