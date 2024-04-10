@@ -53,9 +53,10 @@ print("Script: PAN_varianten_v1.0.py")
 #-----------------
 #clc_PAN_file = ".csv"
 clc_PAN_file = args.clc
-#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
-#                                       encoding="ISO-8859-1") 
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")    
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
+                                       encoding="ISO-8859-1") 
+#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
+
 #--------------------------------------    
 # CLC_PAN_data - adjust region_position
 #--------------------------------------    
@@ -222,8 +223,8 @@ clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
 # Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
 #------------------------------------------
 #transcript_list = "in_use_finale_aktuelle_pancancer_transcript_lst.xlsx"
-#transcript_list = args.transcripts
-transcript_list = args.transcript_list
+transcript_list = args.transcripts
+#transcript_list = args.transcript_list
 RefSeq_NM = pd.read_excel(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
 
