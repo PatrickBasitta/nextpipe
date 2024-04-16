@@ -321,9 +321,9 @@ processed_data_final.loc[:,"Frequency"]  = processed_data_final\
 final_variants = processed_data_final.sort_values(by=["Frequency"], ascending=False)
 
 # Rename columns (final names not yet final known from DNPM)
-final_variants = final_variants.rename(columns={"Chromosome": "Chromosome",
-                                                "SYMBOL": "Gen", 
-                                                "NM_v": "Transcript_ID", 
+final_variants = final_variants.rename(columns={"Chromosome": "Chromosom",
+                                                "SYMBOL": "Gen",
+                                                "NM_v": "Transcript_ID",
                                                 "HGVSc_x": "cDNA_Change",
                                                 "HGVS_PROTEIN": "Amino_Acid_Change",
                                                 "EXON": "Exon"})
