@@ -301,7 +301,7 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "Homopolymer", "Homopolymer length", \
                         "Count (singleton UMI)", "Count (big UMI)", \
                         "Proportion (singleton UMIs)", "SYMBOL", \
-                        "NM_v", "HGVSc_x", "HGVS_PROTEIN", "Non-synonymous", \
+                        "NM_v", "HGVS_PROTEIN", "HGVSc_x", "Non-synonymous", \
                         "EXON", \
                         "func dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
                         "name dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
@@ -311,7 +311,7 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "AF_EXAC clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF_TGP clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF", "MAX_AF", "gnomADe_AF", "gnomADg_AF", "SIFT", \
-                        "PolyPhen", "PUBMED", "Wertung", "Clinvar_Link"]]
+                        "PolyPhen", "Wertung", "Clinvar_Link", "PUBMED"]]
 
 # Round AF to max 2 decimals
 processed_data_final.loc[:,"Frequency"]  = processed_data_final\
@@ -327,6 +327,10 @@ final_variants = final_variants.rename(columns={"Chromosome": "Chromosom",
                                                 "HGVSc_x": "cDNA_Change",
                                                 "HGVS_PROTEIN": "Amino_Acid_Change",
                                                 "EXON": "Exon"})
+
+# Add "submit" and "Interpretation" column
+final_variants.insert(loc=38, column="submit", value="-")
+final_variants.insert(loc=39, column="Interpretation", value="-")
 
 # Log information
 print("--> Combining and formatting CLC and VEP data: successful!")
