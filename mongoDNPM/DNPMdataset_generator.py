@@ -63,7 +63,7 @@ final_data = final_data.rename(columns=\
             "HGVSc_x": "cDNA Change",
             "HGVS_PROTEIN": "Amino Acid Change",
             "Coverage": "Read Depth",
-            "Frequency": "Allelic Frequency", 
+            "Frequency": "Allelic Frequency",
             "name dbsnp_v151_ensembl_hg38_no_alt_analysis_set": "dbSNP ID",
             "CLIN_SIG": "Interpretation"})
 
@@ -88,7 +88,7 @@ DNPM_out = dnpm_data["NGS-Bericht"].to_dict(orient='records')
 
 # convert dataframes into dictionaries
 dnpm_data_dict = {
-    key: dnpm_data[key].to_dict(orient='records') 
+    key: dnpm_data[key].to_dict(orient='records')
     for key in dnpm_data.keys()
 }
 
@@ -105,9 +105,9 @@ DNPM_out = unlist_func(DNPM_out)
 # write to disk
 with open('data_dict.json', 'w') as file:
     json.dump(
-        DNPM_out, 
-        file, 
-        indent=4, 
+        DNPM_out,
+        file,
+        indent=4,
         sort_keys=True
     )
 
