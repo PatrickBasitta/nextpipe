@@ -22,7 +22,7 @@ process ENSEMBL_VEP {
   mkdir -p ${params.outdir}/${ID}
   vep -i ${vcf} -o ${vcf}.txt --tab --everything --species homo_sapiens --assembly GRCh38 \
       --merged --format vcf --force_overwrite --cache_version 111 --cache --dir_cache ${vep_cache} \
-      --fasta ${fasta} --offline --dir_plugins ${vep_cache}/plugins/ --plugin SpliceRegion
+      --fasta ${fasta} --offline --dir_plugins ${vep_cache}/plugins/ --plugin SpliceRegion 
   """
 }
 
@@ -66,13 +66,13 @@ process PANCANCER_PROCESSING {
   
   script:
   """
-  python /data/basitta/nextpipe/PanCancer/bin/PAN_varianten_v1.0.py \
-                                                                     --clc ${csv} \
-                                                                     --vep ${formatted_vep_data} \
-                                                                     -t ${transcript_lst} \
-                                                                     -D ${variantDBi} \
-                                                                     -o ${ID}_final_processed.xlsx \
-                                                                     -rv ${ID}_removed_variants.xlsx > log_${ID}.log
+  PAN_varianten_v1.0.py \
+      --clc ${csv} \
+      --vep ${formatted_vep_data} \
+      -t ${transcript_lst} \
+      -D ${variantDBi} \
+      -o ${ID}_final_processed.xlsx \
+      -rv ${ID}_removed_variants.xlsx > log_${ID}.log
   """
 }
 
@@ -94,14 +94,14 @@ workflow PANCANCER_CLC_VEP {
     vcf_ch = Channel
                  .fromPath(vcfs)
                  .map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
-    vcf_ch.view() 
+     
     dir_cache_ch = Channel.value(dir_cache)
     fasta_ch = Channel.value(fasta)
     
     clc_csv_ch = Channel
                  .fromPath(clc_csvs, checkIfExists: true)
                  .map { clc_file -> [clc_file.getSimpleName(), clc_file]}
-    clc_csv_ch.view() 
+     
     transcript_lst_ch = Channel.value(transcript_lst)
     variantDBi_ch = Channel.value(variantDBi)
             

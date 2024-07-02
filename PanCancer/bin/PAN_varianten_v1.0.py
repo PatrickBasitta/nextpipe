@@ -1,17 +1,4 @@
-"""
-Created on Mon Jan 15 14:48:10 2024
-
-Script to process variant output obtained from CLC PanCancer Workflow and
-ENSEMBL VEP TOOL
-
-Input: clc_PAN_file as .csv
-       vep_PAN_file as .txt
-       transcript_PAN_list as .xlsx
-
-output: user specified name; file extension: .xlsx
-
-@author: PatrickBasitta
-"""
+#!/usr/bin/env python
 
 import pandas as pd
 import argparse
@@ -47,9 +34,9 @@ print("Script: PAN_varianten_v1.0.py")
 # Get CLC_PAN_data
 #clc_PAN_file = ".csv"
 clc_PAN_file = args.clc
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
-                                       encoding="ISO-8859-1") 
-#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
+#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
+#                                       encoding="ISO-8859-1") 
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
 
 # CLC_PAN_data - adjust region_position
 CLC_variant_track_data_PAN = fp.adjust_region_position(CLC_variant_track_data_PAN)
