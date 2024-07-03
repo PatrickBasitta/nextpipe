@@ -3,8 +3,8 @@ prefix="Variants-"
 target_dir_csv="/PAT-Sequenzer/PANCANCER/INPUT/csv_input"
 target_dir_vcf="/PAT-Sequenzer/PANCANCER/INPUT/vcf_input"
 
-mv -v /PAT-Sequenzer/ImportExport/CLC_PAN_EXPORT/old/*.vcf $target_dir_vcf
-mv -v /PAT-Sequenzer/ImportExport/CLC_PAN_EXPORT/old/*.csv $target_dir_csv
+mv -v /PAT-Sequenzer/ImportExport/CLC_PAN_EXPORT/*.vcf $target_dir_vcf
+mv -v /PAT-Sequenzer/ImportExport/CLC_PAN_EXPORT/*.csv $target_dir_csv
 
 for filevcf in /PAT-Sequenzer/PANCANCER/INPUT/vcf_input/*.vcf
 do

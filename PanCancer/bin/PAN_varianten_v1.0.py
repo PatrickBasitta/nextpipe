@@ -250,8 +250,7 @@ print("--> Processing VEP_Ensembl data: successful!")
 # and add aditional columns from vep
 merged = pd.merge(pre_final_data, VEP_data[["Chromosome", "Position", "End Position", \
                  "NM_merge", "HGVSc", "HGVSp", "SYMBOL", "EXON", "AF", "MAX_AF", \
-                 "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "CLIN_SIG", \
-                 "PUBMED" ]], \
+                 "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "CLIN_SIG"]], \
                  on = ["Chromosome", "Position", "End Position", "NM_merge"], \
                  how = "left")
 
@@ -298,7 +297,7 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "AF_EXAC clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF_TGP clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF", "MAX_AF", "gnomADe_AF", "gnomADg_AF", "SIFT", \
-                        "PolyPhen", "Wertung", "Clinvar_Link", "PUBMED"]]
+                        "PolyPhen", "Wertung", "Clinvar_Link"]]
 
 # Round AF to max 2 decimals
 processed_data_final.loc[:,"Frequency"]  = processed_data_final\
