@@ -1,10 +1,7 @@
 nextflow.enable.dsl=2
 
 process ENSEMBL_VEP {
-
-  tag "${ID}"
   conda "bioconda::ensembl-vep=111.0"
-  debug true
  
   publishDir "${params.outdir}/${ID}/ENSEMBL_VEP", mode: "copy"
   
@@ -14,7 +11,8 @@ process ENSEMBL_VEP {
   val(fasta)
 
   output:
-  tuple val(ID), path("*.txt")        ,  emit: tab
+  //tuple val(ID), path("*.txt")        ,  emit: tab
+  tuple val(ID), path("${vcf}.txt")        ,  emit: tab
   tuple val(ID), path("*summary.html"),  emit: report
         
   script:
@@ -26,11 +24,7 @@ process ENSEMBL_VEP {
   """
 }
 
-process FORMAT_VEP_DATA {
-  
-  tag "${ID}"
-  debug true
-
+process format_vep_outputs {
   publishDir "${params.outdir}/${ID}/FORMAT_VEP_DATA", mode: "copy"  
 
   input:
@@ -47,10 +41,10 @@ process FORMAT_VEP_DATA {
   """
 }
 
-process PANCANCER_PROCESSING {
-  
-  tag "${ID}"
-  debug true
+// format, filter, merge and unify data to make it readable
+// and interpretable when looking at the table
+process organize_variant_table {
+  conda "pandas=2.2.2 openpyxl=3.1.4"
  
   publishDir "${params.outdir}/${ID}/FINAL_OUTPUT", mode: "copy"
   
@@ -66,7 +60,7 @@ process PANCANCER_PROCESSING {
   
   script:
   """
-  PAN_varianten_v1.0.py \
+  organize_variant_table.py \
       --clc ${csv} \
       --vep ${formatted_vep_data} \
       -t ${transcript_lst} \
@@ -77,43 +71,45 @@ process PANCANCER_PROCESSING {
 }
 
 workflow PANCANCER_CLC_VEP {
- 
   take:
     args
 
   main:
    
-    def vcfs = args.vcfs
-    def clc_csvs = args.clc_csvs
-    def dir_cache = args.dir_cache
+    def vcfs = args.vcf
+    def clc_csvs = args.clc_csv
+    def dir_cache = args.vep_cache
     def fasta = args.fasta
-    def transcript_lst = args.transcript_lst
-    def variantDBi = args.variantDBi
+    def transcript_list = args.transcriptlist
+    def variantDBi = args.variantlist
     def outdir = args.outdir 
+    println variantDBi
                  
-    vcf_ch = Channel
-                 .fromPath(vcfs)
-                 .map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
+    vcf_ch = Channel.fromPath(vcfs).map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
      
     dir_cache_ch = Channel.value(dir_cache)
     fasta_ch = Channel.value(fasta)
     
-    clc_csv_ch = Channel
-                 .fromPath(clc_csvs, checkIfExists: true)
-                 .map { clc_file -> [clc_file.getSimpleName(), clc_file]}
-     
-    transcript_lst_ch = Channel.value(transcript_lst)
-    variantDBi_ch = Channel.value(variantDBi)
+    clc_csv_ch = Channel.fromPath(clc_csvs, checkIfExists: true).map { clc_file -> [clc_file.getSimpleName(), clc_file]}
             
     ENSEMBL_VEP(vcf_ch,dir_cache_ch,fasta_ch)
-    FORMAT_VEP_DATA(ENSEMBL_VEP.out.tab)
-    csv_vcf_ch = clc_csv_ch.join(FORMAT_VEP_DATA.out.formatted_vep_data)
-    PANCANCER_PROCESSING(csv_vcf_ch,transcript_lst_ch,variantDBi_ch)
+
+    format_vep_outputs(ENSEMBL_VEP.out.tab)
+
+    csv_vcf_ch = clc_csv_ch.join(format_vep_outputs.out.formatted_vep_data)
+    //variantDBi_ch.view()
+    //organize_variant_table(csv_vcf_ch,transcript_lst_ch,args.variantlist)
+    organize_variant_table(csv_vcf_ch, transcript_list, args.variantlist)
+    final_table = organize_variant_table.out.final_xlsx
+  emit:
+    final_table
+  
  
 }
 
 workflow {
-  def args = params
+  def args = [:]
+  for (param in params) { args[param.key] = param.value }
   PANCANCER_CLC_VEP(args)
 }
 
