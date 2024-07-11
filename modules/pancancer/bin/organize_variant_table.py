@@ -2,7 +2,7 @@
 
 import pandas as pd
 import argparse
-import functions_pan.process_variantlist_PAN_utils as fp
+import variantlist_utils as vu
 from datetime import datetime
 
 # Using argparse for positinal arguments
@@ -39,7 +39,7 @@ clc_PAN_file = args.clc
 CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
 
 # CLC_PAN_data - adjust region_position
-CLC_variant_track_data_PAN = fp.adjust_region_position(CLC_variant_track_data_PAN)
+CLC_variant_track_data_PAN = vu.adjust_region_position(CLC_variant_track_data_PAN)
 
 # Filtering of variants not equal to "Reference allele"
 # Rename column "Reference allele" to "ReferenceAllele"
@@ -56,7 +56,7 @@ columns_to_filter = ["Frequency", "QUAL", "Forward/reverse balance", \
                      "Read direction test probability"]
 
 # Convert string number in float of columns_to_filter
-clc_data_ReferenceAllele_NO = fp.convert_coltype_str_to_float\
+clc_data_ReferenceAllele_NO = vu.convert_coltype_str_to_float\
     (columns_to_filter, clc_data_ReferenceAllele_NO)
 
 # Filter data with QUAL >= 150
@@ -210,7 +210,7 @@ rs_idx = rs.index.tolist()
 link_lst = []
 
 # Get clinvar https list
-pre_final_data["Clinvar_Link"] = fp.clinvar_link_list(link_lst,\
+pre_final_data["Clinvar_Link"] = vu.clinvar_link_list(link_lst,\
                                  rs_idx, rs)
 
 # Log information
@@ -225,7 +225,7 @@ VEP_data = pd.read_csv(vep_file, delimiter="\t")
 # Add column "Chromosome" and "Position"
 # Get chromosome and position from column "Location" and NM values
 # Result: Ready VEP data for merging with CLC_PAN_data
-VEP_data = fp.adjust_chr_pos_NM_VEP(VEP_data)
+VEP_data = vu.adjust_chr_pos_NM_VEP(VEP_data)
 
 # Merge CLC_PAN_data and VEP data dfs
 # Prepare CLC_PAN_data and VEP data for merging
