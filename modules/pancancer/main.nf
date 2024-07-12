@@ -1,6 +1,9 @@
 nextflow.enable.dsl=2
 
 process ENSEMBL_VEP {
+  cpus 10
+  memory 35.GB
+
   conda "bioconda::ensembl-vep=111.0"
  
   publishDir "${params.outdir}/${ID}/ENSEMBL_VEP", mode: "copy"
