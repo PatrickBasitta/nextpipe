@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-process ENSEMBL_VEP {
+process ensembl_vep {
   cpus 10
   memory 35.GB
 
@@ -73,21 +73,16 @@ process organize_variant_table {
   """
 }
 
-workflow PANCANCER_CLC_VEP {
+workflow pancancer_analyse {
   take:
-    args
-
+    vcfs
+    clc_csvs
+    dir_cache
+    fasta
+    transcript_list
+    variantlist
+    outdir
   main:
-   
-    def vcfs = args.vcf
-    def clc_csvs = args.clc_csv
-    def dir_cache = args.vep_cache
-    def fasta = args.fasta
-    def transcript_list = args.transcriptlist
-    def variantDBi = args.variantlist
-    def outdir = args.outdir 
-    println variantDBi
-                 
     vcf_ch = Channel.fromPath(vcfs).map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
      
     dir_cache_ch = Channel.value(dir_cache)
@@ -95,14 +90,12 @@ workflow PANCANCER_CLC_VEP {
     
     clc_csv_ch = Channel.fromPath(clc_csvs, checkIfExists: true).map { clc_file -> [clc_file.getSimpleName(), clc_file]}
             
-    ENSEMBL_VEP(vcf_ch,dir_cache_ch,fasta_ch)
+    tab = ensembl_vep(vcf_ch,dir_cache_ch,fasta_ch).tab
 
-    format_vep_outputs(ENSEMBL_VEP.out.tab)
+    format_vep_outputs(tab)
 
     csv_vcf_ch = clc_csv_ch.join(format_vep_outputs.out.formatted_vep_data)
-    //variantDBi_ch.view()
-    //organize_variant_table(csv_vcf_ch,transcript_lst_ch,args.variantlist)
-    organize_variant_table(csv_vcf_ch, transcript_list, args.variantlist)
+    organize_variant_table(csv_vcf_ch, transcript_list, variantlist)
     final_table = organize_variant_table.out.final_xlsx
   emit:
     final_table
@@ -113,6 +106,9 @@ workflow PANCANCER_CLC_VEP {
 workflow {
   def args = [:]
   for (param in params) { args[param.key] = param.value }
-  PANCANCER_CLC_VEP(args)
+  pancancer_analyse(
+  	args.vcf, args.clc_csv, args.vep_cache, args.fasta, 
+  	args.transcriptlist, args.variantlist, args.outdir
+	)
 }
 
