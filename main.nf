@@ -7,11 +7,11 @@ process ensembl_vep {
   conda "bioconda::ensembl-vep=111.0"
  
   publishDir "${params.outdir}/${ID}/ENSEMBL_VEP", mode: "copy"
-  
+
   input:
   tuple val(ID), path(vcf)
-  val(vep_cache)
-  val(fasta)
+  path(vep_cache)
+  path(fasta)
 
   output:
   //tuple val(ID), path("*.txt")        ,  emit: tab
@@ -53,8 +53,8 @@ process organize_variant_table {
   
   input:
   tuple val(ID), path(csv), path(formatted_vep_data)
-  val(transcript_lst)
-  val(variantDBi)
+  path(transcript_lst)
+  path(variantDBi)
 
   output:
   path("${ID}_final_processed.xlsx"), emit: final_xlsx
@@ -83,12 +83,12 @@ workflow pancancer_analyse {
     variantlist
     outdir
   main:
-    vcf_ch = Channel.fromPath(vcfs).map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
+    vcf_ch = vcfs.map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
      
-    dir_cache_ch = Channel.value(dir_cache)
-    fasta_ch = Channel.value(fasta)
+    dir_cache_ch = dir_cache
+    fasta_ch = fasta
     
-    clc_csv_ch = Channel.fromPath(clc_csvs, checkIfExists: true).map { clc_file -> [clc_file.getSimpleName(), clc_file]}
+    clc_csv_ch = clc_csvs.map { clc_file -> [clc_file.getSimpleName(), clc_file]}
             
     tab = ensembl_vep(vcf_ch,dir_cache_ch,fasta_ch).tab
 
