@@ -16,14 +16,20 @@ process ensembl_vep {
   path(fasta)
 
   output:
-  //tuple val(ID), path("*.txt")        ,  emit: tab
   tuple val(ID), path("${vcf}.txt")        ,  emit: tab
-  tuple val(ID), path("*summary.html"),  emit: report
+  tuple val(ID), path("${vcf}.txt_summary.html"),  emit: report
         
   script:
   //todo reintroduce --merged
+  println "id"
+  println "${ID}"
+  println "id"
+  println "${vcf}"
+  println "vep_cache"
+  println "${vep_cache}"
+  println "fasta"
+  println "${fasta}"
   """ 
-  #mkdir -p "${params.outdir}/${ID}"
   vep -i ${vcf} -o ${vcf}.txt --tab --everything --species homo_sapiens --assembly GRCh38 \
       --format vcf --force_overwrite --cache_version 110 --cache --dir_cache "${vep_cache}" \
       --fasta "${fasta}" --offline --dir_plugins "${vep_cache}/plugins/" --plugin SpliceRegion 
@@ -37,8 +43,8 @@ process format_vep_outputs {
   tuple val(ID), path(vep_data)
 
   output:
-  tuple val(ID), path("*formatted_*"), emit: formatted_vep_data
-  tuple val(ID), path("vcf_header_*")
+  tuple val(ID), path("formatted_${vep_data}"), emit: formatted_vep_data
+  tuple val(ID), path("vcf_header_${vep_data}")
 
   script:
   """
@@ -69,6 +75,7 @@ process organize_variant_table {
   organize_variant_table.py \
       --clc ${csv} \
       --vep ${formatted_vep_data} \
+      --encoding latin1 \
       -t ${transcript_lst} \
       -D ${variantDBi} \
       -o "${ID}_final_processed.xlsx" \

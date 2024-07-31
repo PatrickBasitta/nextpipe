@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--clc", type=str)
 parser.add_argument("-v", "--vep", type=str)
 parser.add_argument("-t", "--transcripts", type=str)
+parser.add_argument("-e", "--encoding", type=str)
 parser.add_argument("-D", "--variant_DBi", type=str)
 parser.add_argument("-o", "--outfile", type=str)
 parser.add_argument("-rv", "--removed_variants", type=str)
@@ -36,7 +37,7 @@ print("Script: PAN_varianten_v1.0.py")
 clc_PAN_file = args.clc
 #CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
 #                                       encoding="ISO-8859-1") 
-CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",")
+CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",", encoding=args.encoding)
 
 # CLC_PAN_data - adjust region_position
 CLC_variant_track_data_PAN = vu.adjust_region_position(CLC_variant_track_data_PAN)
