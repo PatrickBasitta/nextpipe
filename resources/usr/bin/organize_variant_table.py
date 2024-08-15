@@ -30,13 +30,13 @@ print("Output_file_1:", args.outfile)
 print("Output_file_2:", args.removed_variants)
 
 # Script used
-print("Script: PAN_varianten_v1.0.py")
+print("Script: organize_variant_table.py")
 
 # Get CLC_PAN_data
 #clc_PAN_file = ".csv"
-clc_PAN_file = args.clc
-#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=";",\
-#                                       encoding="ISO-8859-1") 
+clc_PAN_file = args.clc 
+#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",",\
+#                                      encoding="ISO-8859-1")
 CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",", encoding=args.encoding)
 
 # CLC_PAN_data - adjust region_position
@@ -127,11 +127,39 @@ discarded_clc_data = [clc_data_discarded_1, clc_data_discarded_2, \
 # concatenate discarded/removed clc_data variants
 removed_variants = pd.concat(discarded_clc_data)
 
+# Sort Frequency of removed variants
+process_removed_variants = removed_variants.sort_values(by=["Frequency"], ascending=False)
+
+# Extract Deletions, Inserstion and Replacements with AF > 5 and TERT KRAS Variants
+biotypes = ["Insertion", "Deletion", "Replacement"]
+get_back_biotypes = process_removed_variants[(process_removed_variants\
+                                             ["Type"].isin(biotypes)) & \
+                                             (process_removed_variants\
+                                             ["Frequency"] >= 5) == True]
+    
+discareded_remaining_biotypes = process_removed_variants[(process_removed_variants\
+                                             ["Type"].isin(biotypes)) & \
+                                             (process_removed_variants\
+                                             ["Frequency"] >= 5) == False]
+
+extract_genes = ["TERT", "KRAS"] 
+get_back_genes = process_removed_variants[process_removed_variants\
+["gene (Homo_sapiens_refseq_GRCh38.p14_no_alt_analysis_set_Genes)"].isin(extract_genes)]
+    
+final_removed_variants = discareded_remaining_biotypes[~discareded_remaining_biotypes\
+["gene (Homo_sapiens_refseq_GRCh38.p14_no_alt_analysis_set_Genes)"].isin(extract_genes)]
+
 # write file
-removed_variants.to_excel(args.removed_variants, \
+final_removed_variants.to_excel(args.removed_variants, \
                             index = False, \
                              engine= None)
 
+# Adding get back biotypes and genes to data
+data_to_analyse = [clc_data_filtered, get_back_biotypes, get_back_genes]
+
+# concatenate clc_data variants
+clc_data_filtered = pd.concat(data_to_analyse)
+    
 # Reindex clc data for further processing necessary
 clc_data_filtered = clc_data_filtered.reset_index()
 
@@ -168,10 +196,10 @@ clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
                           ["NM_v"].str.contains("nan") == False]
 
 # Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
-#transcript_list = "in_use_finale_aktuelle_pancancer_transcript_lst.xlsx"
+#transcript_list = "PanCancer_updated_08082024_1_blank.txt"
 transcript_list = args.transcripts
-#transcript_list = args.transcript_list
-RefSeq_NM = pd.read_excel(transcript_list)
+#RefSeq_NM = pd.read_excel(transcript_list)
+RefSeq_NM = pd.read_csv(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
 
 # Check transcript input for " "
@@ -219,14 +247,24 @@ print("Process information:")
 print("--> Processing CLC_PanCancer data: successful!")
 
 # Process VEP data (obtained via ensembl-vep tool)
-#vep_file = ".vcf.txt"
+#vep_file = ".txt"
 vep_file = args.vep
 VEP_data = pd.read_csv(vep_file, delimiter="\t")
 
 # Add column "Chromosome" and "Position"
 # Get chromosome and position from column "Location" and NM values
-# Result: Ready VEP data for merging with CLC_PAN_data
 VEP_data = vu.adjust_chr_pos_NM_VEP(VEP_data)
+
+# get cosmic id from existing variation!!!
+# Result: Ready VEP data for merging with CLC_PAN_data
+VEP_data["cosmic_ID"] = ""
+for ID_str in range(len(VEP_data["Existing_variation"])):
+    if "COSV" in VEP_data["Existing_variation"].iloc[ID_str]:
+        tmp_ID_str = list(filter(lambda x: "COSV" in x, VEP_data\
+                         ["Existing_variation"].iloc[ID_str].split(",")))[0]
+        VEP_data.loc[ID_str, "cosmic_ID"] = tmp_ID_str 
+    else:
+        VEP_data.loc[ID_str, "cosmic_ID"] = "-" 
 
 # Merge CLC_PAN_data and VEP data dfs
 # Prepare CLC_PAN_data and VEP data for merging
@@ -251,7 +289,7 @@ print("--> Processing VEP_Ensembl data: successful!")
 # and add aditional columns from vep
 merged = pd.merge(pre_final_data, VEP_data[["Chromosome", "Position", "End Position", \
                  "NM_merge", "HGVSc", "HGVSp", "SYMBOL", "EXON", "AF", "MAX_AF", \
-                 "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "CLIN_SIG"]], \
+                 "gnomADe_AF", "gnomADg_AF", "SIFT", "PolyPhen", "CLIN_SIG", "cosmic_ID"]], \
                  on = ["Chromosome", "Position", "End Position", "NM_merge"], \
                  how = "left")
 
@@ -269,7 +307,7 @@ for i in range(len(merged["HGVSp"])):
 
 # Merge/join internal variantDB (variantDBi) PAN_CANCER_DATA
 # Change to current "Variantenliste" if needed
-#lst_var = ".xlsx"
+#lst_var = "Variantenliste22_12_15.xlsx"
 #variantDBi = pd.read_excel(lst_var)
 variantDBi = pd.read_excel(args.variant_DBi)
 
@@ -286,6 +324,7 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "Average quality","Read position test probability", \
                         "Read direction test probability", "BaseQRankSum",
                         "Homopolymer", "Homopolymer length", \
+                        "Homopolymer region", "Repeat region", \
                         "Count (singleton UMI)", "Count (big UMI)", \
                         "Proportion (singleton UMIs)", "SYMBOL", \
                         "NM_v", "HGVS_PROTEIN", "HGVSc_x", "Non-synonymous", \
@@ -295,10 +334,12 @@ processed_data_final = merged[["Chromosome", "Position", "End Position", \
                         "CLNSIG clinvar_20220730_hg38_no_alt_analysis_set", \
                         "CLIN_SIG", \
                         "CLNREVSTAT clinvar_20220730_hg38_no_alt_analysis_set", \
+                        "alleles dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
+                        "alleleFreqs dbsnp_v151_ensembl_hg38_no_alt_analysis_set", \
                         "AF_EXAC clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF_TGP clinvar_20220730_hg38_no_alt_analysis_set", \
                         "AF", "MAX_AF", "gnomADe_AF", "gnomADg_AF", "SIFT", \
-                        "PolyPhen", "Wertung", "Clinvar_Link"]]
+                        "PolyPhen", "cosmic_ID", "Wertung", "Clinvar_Link"]]
 
 # Round AF to max 2 decimals
 processed_data_final.loc[:,"Frequency"]  = processed_data_final\
@@ -316,8 +357,8 @@ final_variants = final_variants.rename(columns={"Chromosome": "Chromosom",
                                                 "EXON": "Exon"})
 
 # Add "submit" and "Interpretation" column
-final_variants.insert(loc=38, column="submit", value="-")
-final_variants.insert(loc=39, column="Interpretation", value="-")
+final_variants.insert(loc=43, column="submit", value="-")
+final_variants.insert(loc=44, column="Interpretation", value="-")
 
 # Log information
 print("--> Combining and formatting CLC and VEP data: successful!")
