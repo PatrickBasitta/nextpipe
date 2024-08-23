@@ -145,7 +145,7 @@ discareded_remaining_biotypes = process_removed_variants[(process_removed_varian
 extract_genes = ["TERT", "KRAS"] 
 get_back_genes = process_removed_variants[process_removed_variants\
 ["gene (Homo_sapiens_refseq_GRCh38.p14_no_alt_analysis_set_Genes)"].isin(extract_genes)]
-    
+
 final_removed_variants = discareded_remaining_biotypes[~discareded_remaining_biotypes\
 ["gene (Homo_sapiens_refseq_GRCh38.p14_no_alt_analysis_set_Genes)"].isin(extract_genes)]
 

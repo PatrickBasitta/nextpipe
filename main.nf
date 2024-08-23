@@ -4,7 +4,7 @@ process ensembl_vep {
   cpus 10
   memory 35.GB
 
-  conda "bioconda::ensembl-vep=110.0"
+  conda "bioconda::ensembl-vep=112.0"
  
   //publishDir "${params.outdir}/${ID}/ENSEMBL_VEP", mode: "copy"
 
@@ -31,8 +31,8 @@ process ensembl_vep {
   println "${fasta}"
   """ 
   vep -i ${vcf} -o ${vcf}.txt --tab --everything --species homo_sapiens --assembly GRCh38 \
-      --format vcf --force_overwrite --cache_version 110 --cache --dir_cache "${vep_cache}" \
-      --fasta "${fasta}" --offline --dir_plugins "${vep_cache}/plugins/" --plugin SpliceRegion 
+      --format vcf --force_overwrite --cache_version 112 --merged --cache --dir_cache "${vep_cache}" \
+      --fasta "${fasta}" --offline  
   """
 }
 
