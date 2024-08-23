@@ -33,10 +33,7 @@ print("Output_file_2:", args.removed_variants)
 print("Script: organize_variant_table.py")
 
 # Get CLC_PAN_data
-#clc_PAN_file = ".csv"
-clc_PAN_file = args.clc 
-#CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",",\
-#                                      encoding="ISO-8859-1")
+clc_PAN_file = args.clc
 CLC_variant_track_data_PAN = pd.read_csv(clc_PAN_file, delimiter=",", encoding=args.encoding)
 
 # CLC_PAN_data - adjust region_position
@@ -136,13 +133,13 @@ get_back_biotypes = process_removed_variants[(process_removed_variants\
                                              ["Type"].isin(biotypes)) & \
                                              (process_removed_variants\
                                              ["Frequency"] >= 5) == True]
-    
+
 discareded_remaining_biotypes = process_removed_variants[(process_removed_variants\
                                              ["Type"].isin(biotypes)) & \
                                              (process_removed_variants\
                                              ["Frequency"] >= 5) == False]
 
-extract_genes = ["TERT", "KRAS"] 
+extract_genes = ["TERT", "KRAS"]
 get_back_genes = process_removed_variants[process_removed_variants\
 ["gene (Homo_sapiens_refseq_GRCh38.p14_no_alt_analysis_set_Genes)"].isin(extract_genes)]
 
@@ -159,7 +156,7 @@ data_to_analyse = [clc_data_filtered, get_back_biotypes, get_back_genes]
 
 # concatenate clc_data variants
 clc_data_filtered = pd.concat(data_to_analyse)
-    
+
 # Reindex clc data for further processing necessary
 clc_data_filtered = clc_data_filtered.reset_index()
 
@@ -195,10 +192,8 @@ for index, NM_tr in enumerate(clc_data_filtered["Coding_region_change"]):
 clc_data_filtered_dropNa = clc_data_filtered[clc_data_filtered\
                           ["NM_v"].str.contains("nan") == False]
 
-# Load PANCANCER RefSeq transcripts to list (RefSeq check with Natalie und Anna-Lena!!!)
-#transcript_list = "PanCancer_updated_08082024_1_blank.txt"
+# Load PANCANCER RefSeq transcripts to list
 transcript_list = args.transcripts
-#RefSeq_NM = pd.read_excel(transcript_list)
 RefSeq_NM = pd.read_csv(transcript_list)
 RefSeq_NM_lst = RefSeq_NM["NM_RefSeq_final"].values.tolist()
 
@@ -247,7 +242,6 @@ print("Process information:")
 print("--> Processing CLC_PanCancer data: successful!")
 
 # Process VEP data (obtained via ensembl-vep tool)
-#vep_file = ".txt"
 vep_file = args.vep
 VEP_data = pd.read_csv(vep_file, delimiter="\t")
 
@@ -262,9 +256,9 @@ for ID_str in range(len(VEP_data["Existing_variation"])):
     if "COSV" in VEP_data["Existing_variation"].iloc[ID_str]:
         tmp_ID_str = list(filter(lambda x: "COSV" in x, VEP_data\
                          ["Existing_variation"].iloc[ID_str].split(",")))[0]
-        VEP_data.loc[ID_str, "cosmic_ID"] = tmp_ID_str 
+        VEP_data.loc[ID_str, "cosmic_ID"] = tmp_ID_str
     else:
-        VEP_data.loc[ID_str, "cosmic_ID"] = "-" 
+        VEP_data.loc[ID_str, "cosmic_ID"] = "-"
 
 # Merge CLC_PAN_data and VEP data dfs
 # Prepare CLC_PAN_data and VEP data for merging
@@ -294,7 +288,6 @@ merged = pd.merge(pre_final_data, VEP_data[["Chromosome", "Position", "End Posit
                  how = "left")
 
 # Get HGVSp nomenclature RefSeq
-# Get indices necessary ???
 index_variants_merged = merged.index.tolist()
 for i in range(len(merged["HGVSp"])):
     if pd.isna(merged["HGVSp"][index_variants_merged[i]]):
@@ -307,8 +300,6 @@ for i in range(len(merged["HGVSp"])):
 
 # Merge/join internal variantDB (variantDBi) PAN_CANCER_DATA
 # Change to current "Variantenliste" if needed
-#lst_var = "Variantenliste22_12_15.xlsx"
-#variantDBi = pd.read_excel(lst_var)
 variantDBi = pd.read_excel(args.variant_DBi)
 
 merged = pd.merge(merged,\
