@@ -92,15 +92,15 @@ workflow pancancer_analyse {
     transcript_list
     variantlist
     outdir
+    pancancer_refgenome
   main:
     vcf_ch = vcfs.map { vcf_file  -> [vcf_file.getSimpleName(), vcf_file]}
      
     dir_cache_ch = dir_cache
-    fasta_ch = fasta
     
     clc_csv_ch = clc_csvs.map { clc_file -> [clc_file.getSimpleName(), clc_file]}
             
-    tab = ensembl_vep(vcf_ch,dir_cache_ch,fasta_ch).tab
+    tab = ensembl_vep(vcf_ch,dir_cache_ch,pancancer_refgenome).tab
 
     format_vep_outputs(tab)
 
