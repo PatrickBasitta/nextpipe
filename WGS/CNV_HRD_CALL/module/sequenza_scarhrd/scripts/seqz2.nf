@@ -247,7 +247,7 @@ workflow sequenza {
        seqz_binning(formatting_merged_seqz_file.out)
        r_sequenza(seqz_binning.out.smallbinfile)
        preprare_scar_hrd_input(r_sequenza.out.segments,r_sequenza.out.cellularity_ploidy,scar_hrd_header_ch)
-       //scar_hrd(preprare_scar_hrd_input.out.scarhrd_input)
+       scar_hrd(preprare_scar_hrd_input.out.scarhrd_input)
 }
 
 workflow {
