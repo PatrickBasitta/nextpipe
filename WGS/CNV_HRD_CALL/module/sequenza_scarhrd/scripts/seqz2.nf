@@ -8,10 +8,10 @@ process bam_index {
     conda "bioconda::samtools=1.21"
 
     input:
-        tuple val(sample_id), path(normal_bam), path(tumor_bam)
+        tuple val(sample_id), val(female), path(normal_bam), path(tumor_bam)
 
     output:
-        tuple val(sample_id), path("${normal_bam}"), path("${normal_bam}.bai"), path("${tumor_bam}"), path("${tumor_bam}.bai"), emit: bam_bai
+        tuple val(sample_id), val(female), path("${normal_bam}"), path("${normal_bam}.bai"), path("${tumor_bam}"), path("${tumor_bam}.bai"), emit: bam_bai
 
     script:
     def args = task.ext.args ?: ""                                                                                                                                               
@@ -33,13 +33,13 @@ process bam2seqz {
     //publishDir(path: "${outdir}/${sample_id}/preprocessed_files", mode: "copy")
 
     input:
-        tuple val(sample_id), path(normal_bam), path(normal_bai), path(tumor_bam), path(tumor_bai)
+        tuple val(sample_id), val(female), path(normal_bam), path(normal_bai), path(tumor_bam), path(tumor_bai)
         val(ref_fasta_gz)
         val(gc_wig_file)
         
     output:
-        tuple val(sample_id), path("${sample_id}*.seqz.gz"), emit: seqzfile
-        tuple val(sample_id), path("${sample_id}*.seqz.gz.tbi"), emit: tbi_seqzfile
+        tuple val(sample_id), val(female), path("${sample_id}*.seqz.gz"), emit: seqzfile
+        tuple val(sample_id), val(female), path("${sample_id}*.seqz.gz.tbi"), emit: tbi_seqzfile
             
     script:
     def args = task.ext.args ?: ""     
@@ -64,11 +64,11 @@ process merge_seqz_files {
     //publishDir(path: "${outdir}/${sample_id}/merged_seqz_file", mode: "copy")
 
     input:
-        tuple val(sample_id), path(seqzfile)    
+        tuple val(sample_id), val(female), path(seqzfile)    
 
     output:
-        tuple val(sample_id), path("header_${sample_id}.txt"),     emit: header_seqzfile
-        tuple val(sample_id), path("merged_${sample_id}.seqz"),    emit: merged_seqzfile
+        tuple val(sample_id), val(female), path("header_${sample_id}.txt"),     emit: header_seqzfile
+        tuple val(sample_id), val(female), path("merged_${sample_id}.seqz"),    emit: merged_seqzfile
         
      script:
      """
@@ -88,11 +88,11 @@ process formatting_merged_seqz_file {
     //publishDir(path: "${outdir}/${sample_id}/merged_seqz_file", mode: "copy")
 
     input:
-        tuple val(sample_id), path(header_seqzfile)
-        tuple val(sample_id), path(merged_seqzfile)
+        tuple val(sample_id), val(female), path(header_seqzfile)
+        tuple val(sample_id), val(female), path(merged_seqzfile)
         
     output:
-        tuple val(sample_id), path("all_${sample_id}.seqz.gz"), path("all_${sample_id}.seqz.gz.tbi")
+        tuple val(sample_id), val(female), path("all_${sample_id}.seqz.gz"), path("all_${sample_id}.seqz.gz.tbi")
 
      script:
      def args = task.ext.args ?: ""   
@@ -114,10 +114,10 @@ process seqz_binning {
     //publishDir(path: "${outdir}/${sample_id}/preprocessed_files", mode: "copy")
     
     input:
-        tuple val(sample_id), path(all_seqzfile), path(all_tbi_seqzfile)
+        tuple val(sample_id), val(female), path(all_seqzfile), path(all_tbi_seqzfile)
 
     output:
-        tuple val(sample_id), path("${sample_id}_bin.seqz.gz"), emit: smallbinfile
+        tuple val(sample_id), val(female), path("${sample_id}_bin.seqz.gz"), emit: smallbinfile
 
     script:
     def args = task.ext.args ?: ""
@@ -139,7 +139,7 @@ process r_sequenza {
     publishDir(path: "${outdir}/${sample_id}/sequenza_results", mode: "copy")
     
     input:
-       tuple val(sample_id), path(smallbinfile)
+       tuple val(sample_id), val(female), path(smallbinfile)
   
     output:
        tuple val(sample_id), path("${sample_id}_alternative_fit.pdf"),        emit: alternative_fit 
@@ -165,7 +165,7 @@ process r_sequenza {
     library(sequenza)
     data.file <- "${smallbinfile}"
     seqzdata <- sequenza.extract(data.file, assembly="hg38")
-    CP <- sequenza.fit(seqzdata)
+    CP <- sequenza.fit(seqzdata, female="${female}")
     sequenza.results(sequenza.extract = seqzdata, cp.table = CP, sample.id = "${sample_id}", out.dir = ".")
     
     cint <- get.ci(CP)
@@ -224,7 +224,7 @@ process scar_hrd {
 }
 
 
-csv_ch = Channel.fromPath(params.input_csv) | splitCsv(header: true) | map { row-> tuple(row.sampleid, file(row.normal_bam), file(row.tumor_bam)) }
+csv_ch = Channel.fromPath(params.input_csv) | splitCsv(header: true) | map { row-> tuple(row.sampleid, row.female, file(row.normal_bam), file(row.tumor_bam)) }
 ref_fasta_gz_ch = Channel.value(params.ref_fasta_gz)
 gc_wig_file_ch = Channel.value(params.gc_wig_file)
 outdir = params.outdir
