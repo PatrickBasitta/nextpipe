@@ -120,7 +120,7 @@ process process_bamfile_bedfile {
     conda "bioconda::samtools=1.22.1"
 
     input:
-    tuple val(sample_id), path(bam), path(bai)
+    tuple val(sample_id), path(bam)
     val(bedfile)
     val(grz_submission_dir)
     
@@ -137,12 +137,24 @@ process process_bamfile_bedfile {
     def awk2 = "awk -v OFS=',' '{num=num?num OFS s1 \$1 s1:s1 \$1 s1} {file=file?file OFS s1 \$2 s1:s1 \$2 s1} END{print num file}'"
     def awk3 = "awk -v OFS=',' '{num=num?num OFS s1 \$1 s1:s1 \$1 s1} {file=file?file OFS s1 \$2 s1:s1 \$2 s1} END{print num,file}'"
     """
-    samtools depth -b ${bedfile} -q 30 ${bam} --threads 8 -o ${bam.getSimpleName()}_depth.stats
+     if [ ! -d ${grz_submission_dir}/${sample_id}/files/ ]
+    then
+      mkdir -p ${grz_submission_dir}/${sample_id}/files/
+    fi
+
+    if [ ! -d ${grz_submission_dir}/${sample_id}/metadata/ ]
+    then
+      mkdir -p ${grz_submission_dir}/${sample_id}/metadata/
+    fi
+    
+    samtools sort ${bam} -o sorted_${bam}
+    samtools index sorted_${bam} sorted_${bam}.bai
+    samtools depth -b ${bedfile} -q 30 sorted_${bam} --threads 8 -o ${bam.getSimpleName()}_depth.stats
     cat ${bam.getSimpleName()}_depth.stats | ${awk1} > ${bam.getSimpleName()}_qc_cov.csv
     echo "min_cov,max_cov,mean_cov,targeted_above_mincov" > header.csv
     cat  header.csv ${bam.getSimpleName()}_qc_cov.csv | ${awk2} > ${bam.getSimpleName()}_bam_qc.csv
     qc_info=\$(cat ${bam.getSimpleName()}_bam_qc.csv)
-    bamfile="${bam},"
+    bamfile="sorted_${bam}"
     full_info=\$bamfile\$qc_info
     echo \$full_info | jq -Rsn '
                          {"bam_qc":
@@ -199,6 +211,16 @@ process process_vcf {
     script:
     def awk = "awk -v OFS=',' '{num=num?num OFS s1 \$1 s1:s1 \$1 s1} {file=file?file OFS s1 \$2 s1:s1 \$2 s1} END{print num,file}'"
     """
+     if [ ! -d ${grz_submission_dir}/${sample_id}/files/ ]
+    then
+      mkdir -p ${grz_submission_dir}/${sample_id}/files/
+    fi
+
+    if [ ! -d ${grz_submission_dir}/${sample_id}/metadata/ ]
+    then
+      mkdir -p ${grz_submission_dir}/${sample_id}/metadata/
+    fi
+
     sha256sum ${vcf} > ${sample_id}_vcf_cal_sha256.txt
     cat ${sample_id}_vcf_cal_sha256.txt | ${awk} > ${sample_id}_vcf_sha256sum.csv
     cat ${sample_id}_vcf_sha256sum.csv | jq -Rsn '
@@ -219,7 +241,7 @@ process process_vcf {
                                           | {"file":  \$input[1], "fileByteSize": \$input[0]}]}
                                            ' > ${sample_id}_vcf_bytesize.json
 
-    if ${grz_submission_dir}/${sample_id}/files/${vcf} ]
+    if [ ! -f ${grz_submission_dir}/${sample_id}/files/${vcf} ]
     then
       cp ${vcf} ${grz_submission_dir}/${sample_id}/files/
     fi
@@ -235,17 +257,8 @@ process make_json {
     conda "conda-forge::pandas=2.3.1 conda-forge::openpyxl=3.1.5"
 
     input:
-        tuple val(sample_id), path(xlsx)
-        tuple val(sample_id), path(fastp_json)
-        tuple val(sample_id), path(sha256sum_fqs)
-        tuple val(sample_id), path(bytesize_fqs)
-        tuple val(sample_id), path(bam_json)
-        tuple val(sample_id), path(json_sha256sum_vcf)
-        tuple val(sample_id), path(json_bytesize_vcf)
-        tuple val(sample_id), path(json_sha256sum_bed)
-        tuple val(sample_id), path(json_bytesize_bed)
+        tuple val(sample_id), path(xlsx), path(fastp_json), path(sha256sum_fqs), path(bytesize_fqs), path(bam_json), path(json_sha256sum_bed), path(json_bytesize_bed), path(json_sha256sum_vcf), path(json_bytesize_vcf)
     
-
     output:
         tuple val(sample_id), path("${sample_id}_submit.json"), emit: final_json
 
@@ -281,24 +294,36 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
         
        // make samplesheets
        // channel for make_json process
-       id_xlsx_ch = extract_id_filepath.out.id_xlsx | splitCsv(header: true) | map { row -> [patient_id:row.patient_id,
-                                                                                             xlsx_path:file(row.xlsx_path) ]}
+       id_xlsx_ch = extract_id_filepath.out.id_xlsx | splitCsv(header: true) | map { row -> [row.patient_id,
+                                                                                             file(row.xlsx_path) ]}
        // channel for process_fastp
-       id_fastqs_ch = extract_id_filepath.out.id_fastqs | splitCsv(header: true) | map { row -> [patient_id:row.patient_id,
-                                                                                         R1:file(row.fq_R1_path),
-                                                                                         R2:file(row.fq_R2_path) ]}
+       id_fastqs_ch = extract_id_filepath.out.id_fastqs | splitCsv(header: true) | map { row -> [row.patient_id,
+                                                                                         file(row.fq_R1_path),
+                                                                                         file(row.fq_R2_path) ]}
        // channel for process_bamfile_bedfile
-       id_bam_ch = extract_id_filepath.out.id_bam | splitCsv(header: true) | map { row -> [patient_id:row.patient_id,
-                                                                                   bam:file(row.bam_path),
-                                                                                   bai:file(row.bai_path) ]}
+       id_bam_ch = extract_id_filepath.out.id_bam | splitCsv(header: true) | map { row -> [row.patient_id,
+                                                                                   file(row.bam_path) ]}
+                                                                                   // file(row.bai_path) ]}
        // channel for process_vcf
-       id_vcf_ch = extract_id_filepath.out.id_vcf | splitCsv(header: true) | map { row -> [patient_id:row.patient_id,
-                                                                                            vcf:file(row.vcf_path) ]}
+       id_vcf_ch = extract_id_filepath.out.id_vcf | splitCsv(header: true) | map { row -> [row.patient_id,
+                                                                                           file(row.vcf_path) ]}
 
-       process_fastqs(id_fastqs_ch,grz_submission_dir_ch)
-       process_bamfile_bedfile(id_bam_ch,pan_bedfile_ch,grz_submission_dir_ch)
-       process_vcf(id_vcf_ch,grz_submission_dir_ch)
-       make_json(id_xlsx_ch,process_fastqs.out.fastp_json,process_fastqs.out.sha256sum_fqs,process_fastqs.out.bytesize_fqs,process_bamfile_bedfile.out.bam_json,process_vcf.out.json_sha256sum_vcf,process_vcf.out.json_bytesize_vcf,process_bamfile_bedfile.out.json_sha256sum_bed,process_bamfile_bedfile.out.json_bytesize_bed)
+       fastq_out = process_fastqs(id_fastqs_ch,grz_submission_dir_ch)
+       bam_bed_out = process_bamfile_bedfile(id_bam_ch,pan_bedfile_ch,grz_submission_dir_ch)
+       vcf_out = process_vcf(id_vcf_ch,grz_submission_dir_ch)
+
+       //fastq_out.fastp_json.view()
+       //fastq_out.sha256sum_fqs.view()
+       //fastq_out.bytesize_fqs.view()
+       joined_fq_data = fastq_out.fastp_json.join(fastq_out.sha256sum_fqs, by:0).join(fastq_out.bytesize_fqs, by:0)
+       //joined_fq_data.view()
+       joined_bam_bed_data = bam_bed_out.bam_json.join(bam_bed_out.json_sha256sum_bed,by:0).join(bam_bed_out.json_bytesize_bed,by:0)
+       //joined_bam_bed_data.view()
+       joined_vcf_data = vcf_out.json_sha256sum_vcf.join(vcf_out.json_bytesize_vcf,by:0)
+       //joined_vcf_data.view()
+       data_for_json = id_xlsx_ch.join(joined_fq_data,by:0).join(joined_bam_bed_data,by:0).join(joined_vcf_data,by:0)
+       //data_for_json.view()
+       make_json(data_for_json)
 
 }
 // set channels
