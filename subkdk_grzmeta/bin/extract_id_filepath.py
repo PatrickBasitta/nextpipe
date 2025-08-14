@@ -50,7 +50,7 @@ for date_dirs_done in dirs_done:
 size_of_df = len(files_DONE_pan)
 id_path_df = pd.DataFrame("", index=list(range(0,size_of_df)),
                           columns = ["patient_id", "xlsx_path", "fq_R1_path",
-                                     "fq_R2_path", "bam_path", "bai_path",
+                                     "fq_R2_path", "bam_path", #"bai_path",
                                      "vcf_path"])
 
 for i, pancancer_file in enumerate(files_DONE_pan):
@@ -90,11 +90,11 @@ for i, pancancer_file in enumerate(files_DONE_pan):
         bam_file_path = glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam")
 
     id_path_df.loc[i,"bam_path"] = Path(bam_file_path[0])
-    id_path_df.loc[i,"bai_path"] = Path(bam_file_path[0]+".bai")
+    #id_path_df.loc[i,"bai_path"] = Path(bam_file_path[0]+".bai")
 
     # find vcf file PanCancer
     # check that only one file exits! also for fastq / all data
-    vcf_files_dir = args.pan_IE_dir
+    vcf_files_dir = args.pan_ie_dir
     if glob.glob( vcf_files_dir  +"/**/"+patient_id+".vcf") != []:
         vcf_file_path = glob.glob( vcf_files_dir  +"/**/"+patient_id+".vcf")
     elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf") != []:
@@ -108,7 +108,8 @@ for i, pancancer_file in enumerate(files_DONE_pan):
 qc_fastp_df = id_path_df[["patient_id", "fq_R1_path","fq_R2_path"]]
 qc_fastp_df.to_csv(args.id_fastq_paths, sep=",",index=False)
 #samtools depth
-qc_samtools_depth_df = id_path_df[["patient_id", "bam_path", "bai_path"]]
+#qc_samtools_depth_df = id_path_df[["patient_id", "bam_path", "bai_path"]]
+qc_samtools_depth_df = id_path_df[["patient_id", "bam_path"]]
 qc_samtools_depth_df.to_csv(args.id_bam_path, sep=",",index=False)
 # for vcf calculations
 vcf_df = id_path_df[["patient_id", "vcf_path"]]
