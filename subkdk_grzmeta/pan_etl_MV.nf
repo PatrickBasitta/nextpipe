@@ -327,13 +327,22 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
 
 }
 // set channels
-target_dir_mvpan_ch = Channel.fromPath(params.target_dir_mvpan, type: "dir")
-NextSeq_data_dir_ch = Channel.value(params.NextSeq_data_dir)
-NovaSeq_data_dir_ch = Channel.value(params.NovaSeq_data_dir)
-pan_IE_dir_ch = Channel.value(params.pan_IE_dir)
-pan_bedfile_ch = Channel.value(params.bedfile)
-grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
+//target_dir_mvpan_ch = Channel.fromPath(params.target_dir_mvpan, type: "dir")
+//NextSeq_data_dir_ch = Channel.value(params.NextSeq_data_dir)
+//NovaSeq_data_dir_ch = Channel.value(params.NovaSeq_data_dir)
+//pan_IE_dir_ch = Channel.value(params.pan_IE_dir)
+//pan_bedfile_ch = Channel.value(params.bedfile)
+//grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
 
 workflow {
+
+    // set channels
+    target_dir_mvpan_ch = Channel.fromPath(params.target_dir_mvpan, type: "dir")
+    NextSeq_data_dir_ch = Channel.value(params.NextSeq_data_dir)
+    NovaSeq_data_dir_ch = Channel.value(params.NovaSeq_data_dir)
+    pan_IE_dir_ch = Channel.value(params.pan_IE_dir)
+    pan_bedfile_ch = Channel.value(params.bedfile)
+    grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
+
     pan_ETL_subKDK_grzSubmissionPreparation(target_dir_mvpan_ch,NextSeq_data_dir_ch,NovaSeq_data_dir_ch,pan_IE_dir_ch,pan_bedfile_ch,grz_submission_dir_ch)
 }
