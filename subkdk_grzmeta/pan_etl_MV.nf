@@ -17,6 +17,7 @@ process extract_id_filepath {
       path("fastq_paths.csv")  , emit: id_fastqs
       path("bam_path.csv")     , emit: id_bam
       path("vcf_path.csv")     , emit: id_vcf
+      path("patient_id.csv")   , emit: id_patient
 
     script:
     """
@@ -28,7 +29,8 @@ process extract_id_filepath {
         --id_xlsx_paths id_xlsx_paths.csv \\
         --id_fastq_paths fastq_paths.csv \\
         --id_bam_path bam_path.csv \\
-        --id_vcf_path vcf_path.csv
+        --id_vcf_path vcf_path.csv \\
+        --id_patient patient_id.csv
     """  
 
 }
@@ -86,7 +88,7 @@ process process_fastqs {
                                          [inputs
                                           | . / "\n"
                                           | (.[] | select(length > 0) | . / ",") as \$input
-                                          | {"R1": {"file":  \$input[2], "fileByteSize": \$input[0]}}, {"R2": {"file":  \$input[3],"fileByteSize": \$input[1]}}]}
+                                          | {"R1": {"file":  \$input[2], "fileByteSize": \$input[0]}}, {"R2": {"file": \$input[3],"fileByteSize": \$input[1]}}]}
                                            ' > ${sample_id}_fq_bytesize.json                                                  
     fastp \\
         --in1 ${read1} \\
@@ -154,7 +156,7 @@ process process_bamfile_bedfile {
     echo "min_cov,max_cov,mean_cov,targeted_above_mincov" > header.csv
     cat  header.csv ${bam.getSimpleName()}_qc_cov.csv | ${awk2} > ${bam.getSimpleName()}_bam_qc.csv
     qc_info=\$(cat ${bam.getSimpleName()}_bam_qc.csv)
-    bamfile="sorted_${bam}"
+    bamfile="${bam},"
     full_info=\$bamfile\$qc_info
     echo \$full_info | jq -Rsn '
                          {"bam_qc":
@@ -248,17 +250,39 @@ process process_vcf {
     """
 }
 
+process extract_patient_data {
+
+    tag "${sample_id}"
+    debug true
+    //errorStrategy 'ignore'
+
+    input:
+        val(sample_id)
+
+    output:
+        tuple val(sample_id), path("${sample_id}_meta_data.json"), emit: meta_data
+
+    script:
+    """
+    extract_patient_data.py \\
+         --patient_id ${sample_id} \\
+         --patient_meta_data ${sample_id}_meta_data.json
+    """
+}
+
 process make_json {
 
     tag "${sample_id}"
     debug true
     //errorStrategy 'ignore'
 
-    conda "conda-forge::pandas=2.3.1 conda-forge::openpyxl=3.1.5"
+    conda "conda-forge::pandas=2.3.1 conda-forge::openpyxl=3.1.5 conda-forge::requests"
+
+    publishDir(path: "${params.outdir}/${sample_id}/", mode: "copy")
 
     input:
-        tuple val(sample_id), path(xlsx), path(fastp_json), path(sha256sum_fqs), path(bytesize_fqs), path(bam_json), path(json_sha256sum_bed), path(json_bytesize_bed), path(json_sha256sum_vcf), path(json_bytesize_vcf)
-    
+        tuple val(sample_id), path(xlsx), path(fastp_json), path(sha256sum_fqs), path(bytesize_fqs), path(bam_json), path(json_sha256sum_bed), path(json_bytesize_bed), path(json_sha256sum_vcf), path(json_bytesize_vcf), path(patient_data)
+  
     output:
         tuple val(sample_id), path("${sample_id}_submit.json"), emit: final_json
 
@@ -274,7 +298,8 @@ process make_json {
         --vcf_256_json ${json_sha256sum_vcf} \\
         --vcf_bytes_json ${json_bytesize_vcf} \\
         --bed_256_json ${json_sha256sum_bed} \\
-        --bed_bytes_json ${json_bytesize_bed}
+        --bed_bytes_json ${json_bytesize_bed} \\
+        --patient_data_json ${patient_data}
     """ 
 }
 
@@ -287,6 +312,7 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        pan_IE_dir_ch
        pan_bedfile_ch
        grz_submission_dir_ch
+       
        
     main:
 
@@ -307,10 +333,17 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        // channel for process_vcf
        id_vcf_ch = extract_id_filepath.out.id_vcf | splitCsv(header: true) | map { row -> [row.patient_id,
                                                                                            file(row.vcf_path) ]}
-
+      
+       // channel for patient_id
+       id_patient_ch = extract_id_filepath.out.id_patient | splitCsv(header: true) | map { row -> [row.patient_id]}
+       //id_patient_ch.view()
+                                                                                   
        fastq_out = process_fastqs(id_fastqs_ch,grz_submission_dir_ch)
        bam_bed_out = process_bamfile_bedfile(id_bam_ch,pan_bedfile_ch,grz_submission_dir_ch)
        vcf_out = process_vcf(id_vcf_ch,grz_submission_dir_ch)
+
+       patient_id = id_patient_ch.flatten()
+       patient_data = extract_patient_data(patient_id)
 
        //fastq_out.fastp_json.view()
        //fastq_out.sha256sum_fqs.view()
@@ -321,9 +354,13 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        //joined_bam_bed_data.view()
        joined_vcf_data = vcf_out.json_sha256sum_vcf.join(vcf_out.json_bytesize_vcf,by:0)
        //joined_vcf_data.view()
-       data_for_json = id_xlsx_ch.join(joined_fq_data,by:0).join(joined_bam_bed_data,by:0).join(joined_vcf_data,by:0)
+       data_for_json = id_xlsx_ch.join(joined_fq_data,by:0).join(joined_bam_bed_data,by:0).join(joined_vcf_data,by:0).join(patient_data.meta_data,by:0)
        //data_for_json.view()
        make_json(data_for_json)
+       
+
+    //emit:
+    //    out = json_out.final_json
 
 }
 // set channels
@@ -333,6 +370,7 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
 //pan_IE_dir_ch = Channel.value(params.pan_IE_dir)
 //pan_bedfile_ch = Channel.value(params.bedfile)
 //grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
+//params.outdir = "/mnt/nas0/mv_kdk_etl/pancancer_json_submit/"
 
 workflow {
 
@@ -343,6 +381,7 @@ workflow {
     pan_IE_dir_ch = Channel.value(params.pan_IE_dir)
     pan_bedfile_ch = Channel.value(params.bedfile)
     grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
+    //outdir_ch = Channel.value(params.outdir)
 
     pan_ETL_subKDK_grzSubmissionPreparation(target_dir_mvpan_ch,NextSeq_data_dir_ch,NovaSeq_data_dir_ch,pan_IE_dir_ch,pan_bedfile_ch,grz_submission_dir_ch)
 }

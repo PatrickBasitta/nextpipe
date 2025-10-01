@@ -6,6 +6,10 @@
 import os
 import pandas as pd
 import hashlib
+import requests
+import json as js
+import functions_pan_etl.global_variables as gv
+import xml.etree.ElementTree as ET
 
 def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
     
@@ -37,7 +41,12 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
         
         # rename colums
         variants_to_report = variants_to_report.rename(columns = 
-                                       {"Gen":"gene.diplay",
+                                       {"Chromosom":"chromosome",
+                                        "Position":"startPosition",
+                                        "End Position": "endPosition",
+                                        "Reference": "ref",
+                                        "Allele": "alt",
+                                        "Gen":"gene.diplay",
                                         "HGNC_MV":"gene.code",
                                         "Transcript_ID": "transcriptId",
                                         "cDNA_Change": "dnaChange",
@@ -53,6 +62,11 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
                                          "transcriptId",
                                          "dnaChange",
                                          "proteinChange",
+                                         "chromosome",
+                                         "startPosition",
+                                         "endPosition",
+                                         "ref",
+                                         "alt",
                                          "localization",
                                          "variantTypes",
                                          "LOH"]]
@@ -114,119 +128,119 @@ def pan_final_page_to_dict(filepath,excel_file,idx1):
                     
 
 submission_grz = {
-    "submissionDate" : "",
-    "submissionType" : "",
-    "tanG": "",
-    "localCaseId" : "",
-    "coverageType" : "",
-    "submitterId" : "",
-    "genomicDataCenterId" : "",
-    "clinicalDataNodeId" : "",
-    "diseaseType" : "",
-    "genomicStudyType" : "",
-    "genomicStudySubtype" : "",
-    "labName" : "",
+    "submission" : {
+        "submissionDate" : "",
+        "submissionType" : "",
+        "tanG": "",
+        "localCaseId" : "",
+        "coverageType" : "",
+        "submitterId" : "",
+        "genomicDataCenterId" : "",
+        "clinicalDataNodeId" : "",
+        "diseaseType" : "",
+        "genomicStudyType" : "",
+        "genomicStudySubtype" : "",
+        "labName" : ""
+         },
     "donors" : [{
         "donorPseudonym" : "",
         "gender" : "",
-        "relation" : ""
-        }],
-    "mvConsent" : {
-        "presentationDate" : "",
-        "version" : ""
-        },
-    "scope" : [{
-        "type" : "",
-        "date" : "",
-        "domain" : ""
-        }],
-    "researchConsents" : [{
-        "schemaVersion" : "",
-        "presentationDate" : "",
-        "scope" : ""
-        }],
-    "labData" : [{
-        "labDataName" : "FFPE DNA tumor",
-        "tissueOntology" : {
-            "name" : "not_yet_available",
-            "version" : "not_yet_available"
+        "relation" : "",
+        "mvConsent" : {
+            "presentationDate" : "",
+            "version" : "",
+            "scope" : [{
+                "type" : "",
+                "date" : "",
+                "domain" : ""
+                }],
             },
-        "tissueTypeId" : "not_yet_available",
-        "tissueTypeName" : "not_yet_available",
-        "sampleDate" : "", 
-        "sampleConservation" : "",
-        "sequenceType" : "", 
-        "sequenceSubtype" : "not_yet_available",
-        "fragmentationMethod" : "not_yet_available",
-        "libraryType" : "panel",
-        "libraryPrepKit" : "not_yet_available",
-        "libraryPrepKitManufacturer" : "not_yet_available",
-        "sequencerModel" : "not_yet_available",
-        "sequencerManufacturer" : "not_yet_available",
-        "kitName" : "not_yet_available",
-        "kitManufacturer" : "not_yet_available",
-        "enrichmentKitManufacturer" : "not_yet_available",
-        "enrichmentKitDescription" : "not_yet_available",
-        "barcode" : "na",
-        "sequencingLayout" : "paired-end",
-        "tumorCellCount" : [{
-            "count" : "not_yet_available",
-            "method" : "pathology"
-            }],       
-        }],
-    "sequenceData" : {
-        "bioinformaticsPipelineName" : "not_yet_available", 
-        "bioinformaticsPipelineVersion" : "not_yet_available",
-        "referenceGenome" : "GRCh38",
-        "percentBasesAboveQualityThreshold" : "not_yet_available",
-        "meanDepthOfCoverage" : "not_yet_available",
-        "minCoverage" : "not_yet_available",
-        "targetedRegionsAboveMinCoverage" : "not_yet_available",
-        "files" : "not_yet_available",
-        "nonCodingVariants" : "not_yet_available",
-        "callerUsed" : [{
-            "name" : "not_yet_available",
-            "version" : "not_yet_available"
+        "researchConsents" : [{
+            "schemaVersion" : "",
+            "presentationDate" : "",
+            "scope" : ""
             }],
-        },
-    "files" : [{
-        "filePath" : "not_yet_available",
-        "fileType" : "fastq",
-        "checksumType" :"sha256",
-        "fileChecksum" : "not_yet_available",
-        "fileSizeInBytes" : "not_yet_available",
-        "readOrder" : "R1",
-        "readLenght" : "not_yet_available",
-        "flowcellId" : "not_yet_available",
-        "laneId" : "not_yet_available"
-        },
-        {
-        "filePath" : "not_yet_available",
-        "fileType" : "fastq",
-        "checksumType" :"sha256",
-        "fileChecksum" : "not_yet_available",
-        "fileSizeInBytes" : "not_yet_available",
-        "readOrder" : "R2",
-        "readLenght" : "not_yet_available",
-        "flowcellId" : "not_yet_available",
-        "laneId" : "not_yet_available"
-        },
-        {
-        "filePath" : "not_yet_available",
-        "fileType" : "vcf",
-        "checksumType" :"sha256",
-        "fileChecksum" : "not_yet_available",
-        "fileSizeInBytes" : "not_yet_available"
-        },
-        {
-        "filePath" : "not_yet_available",
-        "fileType" : "not_yet_available",
-        "checksumType" :"sha256",
-        "fileChecksum" : "not_yet_available",
-        "fileSizeInBytes" : "not_yet_available"
-        }]
-    }
-
+        "labData" : [{
+            "labDataName" : "",
+            "tissueOntology" : {
+                "name" : "",
+                "version" : ""
+                },
+            "tissueTypeId" : "",
+            "tissueTypeName" : "",
+            "sampleDate" : "",
+            "sampleConservation" : "",
+            "sequenceType" : "",
+            "sequenceSubtype" : "",
+            "fragmentationMethod" : "",
+            "libraryType" : "",
+            "libraryPrepKit" : "",
+            "libraryPrepKitManufacturer" : "",
+            "sequencerModel" : "",
+            "sequencerManufacturer" : "",
+            "kitName" : "",
+            "kitManufacturer" : "",
+            "enrichmentKitManufacturer" : "",
+            "enrichmentKitDescription" : "",
+            "barcode" : "",
+            "sequencingLayout" : "",
+            "tumorCellCount" : [{
+                "count" : "",
+                "method" : ""
+                }],
+            "sequenceData" : {
+                "bioinformaticsPipelineName" : "",
+                "bioinformaticsPipelineVersion" : "",
+                "referenceGenome" : "",
+                "percentBasesAboveQualityThreshold" : "",
+                "meanDepthOfCoverage" : "",
+                "minCoverage" : "",
+                "targetedRegionsAboveMinCoverage" : "",
+                "nonCodingVariants" : "",
+                "callerUsed" : [{
+                    "name" : "",
+                    "version" : ""
+                    }],
+                "files" : [{
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : "",
+                    "readOrder" : "",
+                    #"readLenght" : "",
+                    #"flowcellId" : "",
+                    #"laneId" : ""
+                    },
+                    {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : "",
+                    "readOrder" : "",
+                    #"readLenght" : "",
+                    #"flowcellId" : "",
+                    #"laneId" : ""
+                    },
+                    {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : ""
+                    },
+                    {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : ""
+                    }],
+               },
+          }],
+    }],
+}
 #do files calculations
 #def sha256sum(fastq_file):
 #    with open(fastq_file, "rb", buffering=0) as fq_file:
@@ -237,28 +251,144 @@ def get_fastq_info(lst_R1_R2_dict,number_reads):
     #if os.path.exists(grz_cli_dir):
     for index_read_fq in range(number_reads):
         for key in lst_R1_R2_dict[index_read_fq].keys():
-            print(key)
-                
+            #print(key)
+
             for fastq_file in lst_R1_R2_dict[index_read_fq][key].values():
-                print(fastq_file)
-                
-            fq_file_name = os.path.basename(fastq_file)
-            collect_fq_file_name.append(fq_file_name)
-    
-            # calulate sha256sum and store in dict
-            #os.path.basename(fastq_file) use grz_cli path!!! or compare sums!!!
-            #with open(fastq_file, "rb", buffering=0) as fq_file:
-            #    data = fq_file.read()
-            #    hashlib.update(data)
-            #    digest = hashlib.hexdigest()
+                #print(fastq_file)
+
+                fq_file_name = os.path.basename(fastq_file)
+                collect_fq_file_name.append(fq_file_name)
+
+                # calulate sha256sum and store in dict
+                #os.path.basename(fastq_file) use grz_cli path!!! or compare sums!!!
+                #with open(fastq_file, "rb", buffering=0) as fq_file:
+                #    data = fq_file.read()
+                #    hashlib.update(data)
+                #    digest = hashlib.hexdigest()
                 #sha256sum = hashlib.file_digest(fq_file, "sha256").hexdigest()
-            #sha256sum_fq_file = digest
-            #add_sha256sum = {"fileChecksum": sha256sum_fq_file}
-            #lst_R1_R2_dict[index_read_fq][key].update(add_sha256sum)
-          
-            # get file size in bytes
-            file_size_in_bytes = os.path.getsize(fastq_file)
-            add_fileSizeBytes = {"fileSizeInBytes": file_size_in_bytes}
-            lst_R1_R2_dict[index_read_fq][key].update(add_fileSizeBytes)
-                
+                #sha256sum_fq_file = digest
+                #add_sha256sum = {"fileChecksum": sha256sum_fq_file}
+                #lst_R1_R2_dict[index_read_fq][key].update(add_sha256sum)
+
+                # get file size in bytes
+                file_size_in_bytes = os.path.getsize(fastq_file)
+                add_fileSizeBytes = {"fileSizeInBytes": file_size_in_bytes}
+                lst_R1_R2_dict[index_read_fq][key].update(add_fileSizeBytes)
+
     return collect_fq_file_name, lst_R1_R2_dict
+
+# login
+def get_token(url):
+    url = url
+    headers = {
+         "Content-Type":"application/json",
+         "Authorization": gv.authorization
+    }
+    parameters = {}
+    response = requests.post(url, headers=headers, json=parameters, verify=gv.certification)
+
+    status = response.status_code
+    response_json = response.json()
+    token = response_json["response"]["token"]
+
+    return token, status
+
+# extract data
+def get_all_records(token):
+    url = gv.url_get_all_records
+    headers = {"Authorization": "Bearer " + token}
+
+    response = requests.get(url, headers=headers, verify=gv.certification)
+
+    #print(response.json())
+
+def get_record_Leistungserfassung(token,prefix,number,year,analysis):
+    url = gv.url_get_record_leistungserfassung
+    headers = {"Authorization": "Bearer "+ token}
+    parameters = { "query":[
+                     {  "Kürzel": prefix,
+                        "Nummer": number,
+                        "Jahr":year,
+                        "Untersuchung":analysis}
+                   ]
+                 }
+
+
+    response = requests.post(url, headers=headers, json=parameters, verify=gv.certification)
+
+    #print(response.json())
+    return response.json()
+
+def get_record_nexus_mssql_db(token,OrderNumber):
+    url = gv.url_get_record_nexus_mssql_db
+    headers = {"Authorization": "Bearer "+ token}
+    parameters = { "query":[
+                     {  "OrderNumber": OrderNumber }
+                   ]
+                 }
+
+
+    response = requests.post(url, headers=headers, json=parameters, verify=gv.certification)
+
+    #print(response.json())
+
+def get_orbis_id(token,lastname,firstname,renamed_dob):
+    url = gv.url_get_orbis_id
+    headers = {"Authorization": "Bearer "+ token}
+    parameters = { "query":[
+                     {  "Lastname": lastname,
+                        "Firstname": firstname,
+                         "dateofbirth": renamed_dob }
+                   ]
+                 }
+
+
+    response = requests.post(url, headers=headers, json=parameters, verify=gv.certification)
+
+    #print(response.json())
+    return response.json()
+
+def adjust_id_for_fmrest_request(sample_id):
+    one_letter_prefix = ["J","M","P","G"] # E is excluded since it is not used for sample labeling - Exception!
+    two_letter_prefix = ["JS","MS"]
+    if sample_id[0] not in one_letter_prefix or sample_id[0] =="E":
+        #prefix_ad_sample_id = "E-"+sample_id
+        sample_id_splitted = sample_id.split("-")
+        # since sequencing started not before 1999, the year 20?? is assumed
+        sample_id_fmrest = ("E",sample_id_splitted[0],"20"+sample_id_splitted[1])
+
+    elif sample_id[0] in one_letter_prefix and sample_id[0:2] not in two_letter_prefix:
+        sample_id_splitted = sample_id[1:].split("-")
+        sample_id_fmrest = (sample_id[0],sample_id_splitted[0],"20"+sample_id_splitted[1])
+
+    elif sample_id[0:2] in two_letter_prefix:
+        sample_id_splitted = sample_id[2:].split("-")
+        sample_id_fmrest = (sample_id[0:2],sample_id_splitted[0],"20"+sample_id_splitted[1])
+
+    return sample_id_fmrest
+
+# logout
+
+def parse_icdo3_xml(xml_file,code):
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # check code
+    if code.startswith("C") and len(code) <= 5:
+
+        for child in root.findall("Class"):
+
+            if code.count(".") == 1 and child.get("code") == code:
+                if child[1].attrib["kind"] == "preferred":
+                    for label in child[1]:
+                        icdo3_text = label.text
+
+            elif code.count(".") == 0 and child.get("code") == "C22":#code:
+                if child[3].attrib["kind"] == "preferred":
+                    for label in child[3]:
+                        icdo3_text = label.text
+
+    else:
+        raise ValueError("ICD-O-3 code not valid!")
+
+    return icdo3_text

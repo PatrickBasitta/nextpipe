@@ -17,6 +17,7 @@ parser.add_argument("-x", "--id_xlsx_paths", type=str)
 parser.add_argument("-f", "--id_fastq_paths", type=str)
 parser.add_argument("-b", "--id_bam_path", type=str)
 parser.add_argument("-v", "--id_vcf_path", type=str)
+parser.add_argument("-i", "--id_patient", type=str)
 args = parser.parse_args()
 
 # ETL path: Pancancer MV
@@ -66,10 +67,10 @@ for i, pancancer_file in enumerate(files_DONE_pan):
     raw_data_dir_NextSeq = args.nextseq_data_dir
     raw_data_dir_NovaSeq = args.novaseq_data_dir
 
-    fastq_read1_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/*/"+patient_id+"*_1.fq.gz")
-    fastq_read2_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/*/"+patient_id+"*_2.fq.gz")
-    fastq_read1_inNovaSeq = glob.glob(raw_data_dir_NovaSeq+"/*/"+patient_id+"*_1.fq.gz")
-    fastq_read2_inNovaSeq= glob.glob(raw_data_dir_NovaSeq+"/*/"+patient_id+"*_2.fq.gz")
+    fastq_read1_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_1.fq.gz", recursive=True)
+    fastq_read2_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_2.fq.gz", recursive=True)
+    fastq_read1_inNovaSeq = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*_1.fq.gz", recursive=True)
+    fastq_read2_inNovaSeq= glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*_2.fq.gz", recursive=True)
 
     if fastq_read1_inNextSeq != [] and fastq_read1_inNextSeq != []:
         path_fastq_read1 = fastq_read1_inNextSeq
@@ -85,9 +86,9 @@ for i, pancancer_file in enumerate(files_DONE_pan):
     # find bamfiles
     bam_file_dir = args.pan_ie_dir
     if glob.glob(bam_file_dir +"/**/"+patient_id+".bam") != []:
-        bam_file_path = glob.glob(bam_file_dir +"/**/"+patient_id+".bam")
+        bam_file_path = glob.glob(bam_file_dir +"/**/"+patient_id+".bam", recursive=True)
     elif glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam") != []:
-        bam_file_path = glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam")
+        bam_file_path = glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam", recursive=True)
 
     id_path_df.loc[i,"bam_path"] = Path(bam_file_path[0])
     #id_path_df.loc[i,"bai_path"] = Path(bam_file_path[0]+".bai")
@@ -96,9 +97,9 @@ for i, pancancer_file in enumerate(files_DONE_pan):
     # check that only one file exits! also for fastq / all data
     vcf_files_dir = args.pan_ie_dir
     if glob.glob( vcf_files_dir  +"/**/"+patient_id+".vcf") != []:
-        vcf_file_path = glob.glob( vcf_files_dir  +"/**/"+patient_id+".vcf")
+        vcf_file_path = glob.glob( vcf_files_dir  +"/**/"+patient_id+".vcf", recursive=True)
     elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf") != []:
-        vcf_file_path = glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf")
+        vcf_file_path = glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf", recursive=True)
 
     id_path_df.loc[i,"vcf_path"] = Path(vcf_file_path[0])
 
@@ -117,3 +118,6 @@ vcf_df.to_csv(args.id_vcf_path, sep=",",index=False)
 # for json generator
 id_xlsx_df = id_path_df[["patient_id", "xlsx_path"]]
 id_xlsx_df.to_csv(args.id_xlsx_paths, sep=",",index=False)
+# for meta data fmrest
+id_patient_df = id_path_df["patient_id"]
+id_patient_df.to_csv(args.id_patient, sep=",",index=False)
