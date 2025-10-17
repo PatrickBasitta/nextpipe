@@ -3,8 +3,8 @@
 import argparse
 import requests
 import json as js
-import functions_pan_etl.MVdataset_generator_utils as etl
-import functions_pan_etl.global_variables as gv
+import functions_etl.MVdataset_generator_utils as etl
+import functions_etl.global_variables as gv
 
 # set arguments
 parser = argparse.ArgumentParser()
