@@ -145,9 +145,7 @@ process process_bamfile {
     def awk3 = "awk -v OFS=',' '{num=num?num OFS s1 \$1 s1:s1 \$1 s1} {file=file?file OFS s1 \$2 s1:s1 \$2 s1} END{print num file}'"
     def sample_name = "${bam.getSimpleName()}"
     def  normal_pattern = "N"
-    //def tumor_pattern="T"
     def cmd1 = (sample_name =~ normal_pattern) ? awk1 : awk2
-    //def cmd2 = (sample_name =~ tumor_pattern) ? awk2 : ''
     """
      if [ ! -d ${grz_submission_dir}/${sample_id}/files/ ]
     then
@@ -414,7 +412,7 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
        //sorted_normal_tumor_paired_fq_data.view()
        
        // join bam json files and sort N first T last       
-       bam_data = bam_bed_out.bam_json
+       bam_data = bam_out.bam_json
        paired_bam_data = bam_data.groupTuple(by:0,sort:true).flatten().collect()
        //paired_bam_data.view()
        
