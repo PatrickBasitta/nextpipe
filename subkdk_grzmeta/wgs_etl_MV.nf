@@ -275,10 +275,10 @@ process make_json {
         --fastp_json_normal ${fastp_json_normal} \\
         --fq_sha256_json_normal ${sha256sum_fqs_normal} \\
         --fq_bytes_json_normal ${bytesize_fqs_normal} \\
-        --bam_json_normal ${bam_json_normal} \\
         --fastp_json_tumor ${fastp_json_tumor} \\
         --fq_sha256_json_tumor ${sha256sum_fqs_tumor} \\
         --fq_bytes_json_tumor ${bytesize_fqs_tumor} \\
+        --bam_json_normal ${bam_json_normal} \\
         --bam_json_tumor ${bam_json_tumor} \\
         --vcf_sha256_json ${json_sha256sum_vcf} \\
         --vcf_bytes_json ${json_bytesize_vcf} \\

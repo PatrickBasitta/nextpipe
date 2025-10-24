@@ -21,7 +21,7 @@ process extract_id_filepath {
 
     script:
     """
-    extract_id_filepath.py \\
+    pan_extract_id_filepath.py \\
         --target_dir_mvpan ${target_dir} \\
         --nextseq_data_dir ${NextSeq_data_dir} \\
         --novaseq_data_dir ${NovaSeq_data_dir} \\
@@ -288,7 +288,7 @@ process make_json {
 
     script:
     """
-    json_maker.py \\
+    pan_json_maker.py \\
         --sample_id ${sample_id} \\
         --xlsx_path ${xlsx} \\
         --fastp_json ${fastp_json} \\
@@ -326,6 +326,7 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        id_fastqs_ch = extract_id_filepath.out.id_fastqs | splitCsv(header: true) | map { row -> [row.patient_id,
                                                                                          file(row.fq_R1_path),
                                                                                          file(row.fq_R2_path) ]}
+       id_fastqs_ch.view()
        // channel for process_bamfile_bedfile
        id_bam_ch = extract_id_filepath.out.id_bam | splitCsv(header: true) | map { row -> [row.patient_id,
                                                                                    file(row.bam_path) ]}
