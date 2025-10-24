@@ -181,7 +181,7 @@ for i_nt in index_normal_tumor:
   
     # add info to sumbmission_grz - labData
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["labDataName"] = gv.wgs_labDataName[i_nt]#p_data["pathoProId"]
+                      ["labDataName"] = gv.wgs_labDataName[i_nt] #p_data["pathoProId"]
 
     # add info tissue ontology
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
