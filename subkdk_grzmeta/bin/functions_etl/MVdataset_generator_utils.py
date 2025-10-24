@@ -37,6 +37,7 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
         # add column identifier, genomicSource = "somatic" and LOH
         variants_to_report["identifier"] = ""
         variants_to_report["genomicSource"] = "somatic"
+        #variants_to_report["interpretation"] = ""
         variants_to_report["LOH"] = "not_available"
         
         # rename colums
@@ -69,8 +70,11 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
                                          "alt",
                                          "localization",
                                          "variantTypes",
+                                         "interpretation",
                                          "LOH"]]
         
+        final_data["interpretation"] = final_data["interpretation"].apply(lambda x: int(x))
+
         # VariantID-generator
         smallVariantId_lst = []
         for i in range(len(final_data)):
@@ -111,6 +115,7 @@ def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
         # add column identifier, genomicSource = "somatic" and LOH
         variants_to_report["identifier"] = ""
         variants_to_report["genomicSource"] = "somatic"
+        #variants_to_report["interpretation"] = ""
         variants_to_report["LOH"] = "not_available"
         
         # rename colums
@@ -211,8 +216,11 @@ def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
                                          "alt",
                                          "localization",
                                          "variantTypes",
+                                         "interpretation",
                                          "LOH"]]
         
+        final_data["interpretation"] = final_data["interpretation"].apply(lambda x: int(x))
+
         # VariantID-generator
         smallVariantId_lst = []
         for i in range(len(final_data)):
@@ -247,7 +255,7 @@ def pan_final_page_to_dict(filepath,excel_file,idx1):
             report_dict["average_coverage"] = pancancer_page_final.loc[0, "Average_coverage"] 
             
             # Coverage>100
-            report_dict["overage_above100"] = pancancer_page_final.loc[0, "Coverage>100"]
+            report_dict["coverage_above100"] = pancancer_page_final.loc[0, "Coverage>100"]
             
             # MSI as dict
             msi = dict()
@@ -293,7 +301,7 @@ def wxs_final_page_to_dict(filepath,excel_file,idx1):
             report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]   
             
             # cellularity
-            report_dict["cellularity"] = float(wxs_page_final.loc[0, "TZ"]) 
+            report_dict["cellularity"] = float(wxs_page_final.loc[0, "TZ (%)"]) 
             
             # Average_coverage !
             #report_dict["average_coverage"] = wxs_page_final.loc[0, "Average_coverage"] 
@@ -303,21 +311,28 @@ def wxs_final_page_to_dict(filepath,excel_file,idx1):
             
             # MSI as dict
             msi = dict()
-            msi["msi_status"] = wxs_page_final.loc[0, "MSI"]
+            msi["msi_status"] = wxs_page_final.loc[0, "MSI_UKB"]
             msi["Ergebnis_MSIsensor_pro"] = float(wxs_page_final.loc\
-                                          [0, "Ergebnis_MSIsensor_pro"])
+                                          [0, "Ergebnis_MSIsensor_pro(%)_UKB"])
+            msi["msi_OA"] = wxs_page_final.loc[0, "MSI_OA"]
 
             report_dict["msi"] = msi   
             
             # TMB
             tmb = dict()
-            tmb["tmb_status"] =  wxs_page_final.loc[0, "TMB"]
-            tmb["Anzahl_Mutationen_missense"] =  int(wxs_page_final.loc\
-                                                 [0, "Anzahl_Mutationen_missense"])
-            tmb["mutations_Mb"] =  float(wxs_page_final.loc\
-                                                 [0, "mutations_Mb"])
+            tmb["tmb_status"] =  wxs_page_final.loc[0, "TMB_UKB"]
+            tmb["Anzahl_Mutationen_missense"] =  wxs_page_final.loc\
+                                                 [0, "Anzahl_Mutationen_missense_UKB"]
+            tmb["mutations_Mb"] =  wxs_page_final.loc\
+                                                 [0, "mutations_Mb_UKB"]
+            tmb["tmb_OA"] = wxs_page_final.loc[0, "TMB_OA"]
+            tmb["mutations_Mb_OA"] = wxs_page_final.loc[0, "mutations_Mb_OA"]
              
-            report_dict["tmb"] = tmb 
+            report_dict["tmb"] = tmb
+
+            # HRD
+            hrd = dict()
+            hrd = wxs_page_final.loc[0, "HR deficiency score_OA"]
             
             return report_dict
                     
@@ -437,7 +452,8 @@ pan_submission_grz = {
     }],
 }
 
-wgs_submission_grz = {
+wes_submission_grz = {
+    "$schema": "https://raw.githubusercontent.com/BfArM-MVH/MVGenomseq/refs/tags/v1.2.1/GRZ/grz-schema.json",
     "submission" : {
         "submissionDate" : "",
         "submissionType" : "",
@@ -457,21 +473,34 @@ wgs_submission_grz = {
         "gender" : "",
         "relation" : "",
         "mvConsent" : {
-            "presentationDate" : "",
+            #"presentationDate" : "",
             "version" : "",
             "scope" : [{
                 "type" : "",
                 "date" : "",
-                "domain" : ""
-                }],
-            },
-        "researchConsents" : [{
-            "schemaVersion" : "",
-            "presentationDate" : "",
-            "scope" : ""
-            }],
+                "domain" : "mvSequencing"
+                },
+                {
+                "type" : "",
+                "date" : "",
+                "domain" : "reIdentification"
+                },
+                {
+                "type" : "",
+                "date" : "",
+                "domain" : "caseIdentification"
+                }
+            ],
+        },
+        "researchConsents" : [
+        ],
+        #"researchConsents" : [{
+        #    "schemaVersion" : "",
+        #    "presentationDate" : "",
+        #    "scope" : ""
+        #    }],
         "labData" : [{
-            "labDataName" : "normal",
+            "labDataName" : "",
             "tissueOntology" : {
                 "name" : "",
                 "version" : ""
@@ -498,14 +527,17 @@ wgs_submission_grz = {
                 "bioinformaticsPipelineName" : "",
                 "bioinformaticsPipelineVersion" : "",
                 "referenceGenome" : "",
-                "percentBasesAboveQualityThreshold" : "",
+                "percentBasesAboveQualityThreshold" : {
+                    "minimumQuality": 30,
+                    "percent": ""
+                 },
                 "meanDepthOfCoverage" : "",
                 "minCoverage" : "",
                 "targetedRegionsAboveMinCoverage" : "",
                 "nonCodingVariants" : "",
                 "callerUsed" : [{
                     "name" : "",
-                    "version" : ""
+                   "version" : ""
                     }],
                 "files" : [{
                     "filePath" : "",
@@ -514,7 +546,7 @@ wgs_submission_grz = {
                     "fileChecksum" : "",
                     "fileSizeInBytes" : "",
                     "readOrder" : "",
-                    #"readLenght" : "",
+                    "readLength" : "",
                     #"flowcellId" : "",
                     #"laneId" : ""
                     },
@@ -525,9 +557,16 @@ wgs_submission_grz = {
                     "fileChecksum" : "",
                     "fileSizeInBytes" : "",
                     "readOrder" : "",
-                    #"readLenght" : "",
+                    "readLength" : "",
                     #"flowcellId" : "",
                     #"laneId" : ""
+                    },
+                    {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : ""
                     }],
                },
           },
@@ -563,7 +602,10 @@ wgs_submission_grz = {
                 "bioinformaticsPipelineName" : "",
                 "bioinformaticsPipelineVersion" : "",
                 "referenceGenome" : "",
-                "percentBasesAboveQualityThreshold" : "",
+                "percentBasesAboveQualityThreshold" : {
+                     "minimumQuality": 30,
+                     "percent": ""
+                },
                 "meanDepthOfCoverage" : "",
                 "minCoverage" : "",
                 "targetedRegionsAboveMinCoverage" : "",
@@ -579,7 +621,7 @@ wgs_submission_grz = {
                     "fileChecksum" : "",
                     "fileSizeInBytes" : "",
                     "readOrder" : "",
-                    #"readLenght" : "",
+                    "readLength" : "",
                     #"flowcellId" : "",
                     #"laneId" : ""
                     },
@@ -590,11 +632,18 @@ wgs_submission_grz = {
                     "fileChecksum" : "",
                     "fileSizeInBytes" : "",
                     "readOrder" : "",
-                    #"readLenght" : "",
+                    "readLength" : "",
                     #"flowcellId" : "",
                     #"laneId" : ""
                     },
                     {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : ""
+                    },
+                     {
                     "filePath" : "",
                     "fileType" : "",
                     "checksumType" :"",
