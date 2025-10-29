@@ -78,6 +78,14 @@ if status == 200:
             sex = "Please check, because different entries exists!!!"
         # be aware: the value "other" is here excluded
         # print(sex)
+    else:
+        analysis = "WES"
+        firstname = ""
+        lastname = ""
+        dob = ""
+        orbis_id = "?"
+        sex = ""
+        entity = ""
 
     patient_data = {
                           "analysis": analysis,
