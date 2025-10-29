@@ -248,11 +248,12 @@ process make_json {
 
     conda "conda-forge::pandas=2.3.1 conda-forge::openpyxl=3.1.5 conda-forge::requests"
 
-    publishDir(path: "${params.outdir}/${sample_id}/", mode: "copy")
+    publishDir(path: "${outdir}/${sample_id}/", mode: "copy")
 
     input:
         tuple val(sample_id), path(xlsx), path(fastp_json_normal), path(sha256sum_fqs_normal), path(bytesize_fqs_normal), path(fastp_json_tumor), path(sha256sum_fqs_tumor), path(bytesize_fqs_tumor), path(bam_json_normal), path(targeted_bam_json_normal), path(bam_json_tumor),  path(targeted_bam_json_tumor), path(json_sha256sum_vcf), path(json_bytesize_vcf), path(patient_data)
         val(hgnc)
+        val(outdir)
 
     output:
         tuple val(sample_id), path("${sample_id}_submit.json"), emit: final_json
@@ -316,7 +317,7 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
        grz_submission_dir_ch
        hgnc_ch
        grz_bed_ch
-       
+       outdir_ch
        
     main:
 
@@ -469,7 +470,7 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
        // join data for json
        data_for_json = id_xlsx_ch.join(sorted_normal_tumor_paired_fq_data,by:0).join(sorted_normal_tumor_paired_bam_data,by:0).join(joined_vcf_data,by:0).join(patient_data.meta_data,by:0) 
        data_for_json.view()
-       make_json(data_for_json,hgnc_ch)
+       make_json(data_for_json,hgnc_ch,outdir_ch)
        
 
     //emit:
@@ -488,7 +489,7 @@ workflow {
     grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
     hgnc_ch = Channel.value(params.hgnc)
     grz_bed_ch = Channel.value(params.grz_bed)
-    //outdir_ch = Channel.value(params.outdir)
+    outdir_ch = Channel.value(params.outdir)
 
-    wgs_ETL_subKDK_grzSubmissionPreparation(target_dir_mvwgs_ch,NovaSeq_data_dir_ch,nxf_outputdir_ch,grz_submission_dir_ch,hgnc_ch,grz_bed_ch)
+    wgs_ETL_subKDK_grzSubmissionPreparation(target_dir_mvwgs_ch,NovaSeq_data_dir_ch,nxf_outputdir_ch,grz_submission_dir_ch,hgnc_ch,grz_bed_ch,outdir_ch)
 }
