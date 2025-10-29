@@ -432,8 +432,8 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
                                       def key = it[0]
                                       def val1 = it[1][0]
                                       def val2 = it[1][1]
-                                      def val2 = it[1][2]
-                                      def val2 = it[1][3]
+                                      def val3 = it[1][2]
+                                      def val4 = it[1][3]
                                       //output
                                       [key,val1,val2,val3,val4]}
        
