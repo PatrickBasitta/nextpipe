@@ -97,7 +97,7 @@ Oncology_Molecular_Report = { # wes data MV + adds
     "tmb_Anzahl_Mutationen_missense" : wes_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
     "msi_status" : wes_final_page_dict["msi"]["msi_status"],
     "msiErgebnis_MSIsensor_pro" : wes_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"],
-    #"HR_deficiency_score_OA" : wes_final_page_dict["HR_deficiency_score"]
+    #"HR_deficiency_score_OA" : wes_final_page_dict["HR_deficiency_score"],
     "hrdHigh" : "na",
     "lstHigh" : "na",
     "tailHigh" : "na"
@@ -201,6 +201,7 @@ bed_size = bed_bytesize["bed_bytesize"][0]["fileByteSize"]
 
 # index_number_files: len(3 files in normal, 4 files in tumor)
 index_num_files = [3,4]
+sampleconservation = [wes_final_page_dict["sampleConservation_N"],wes_final_page_dict["sampleConservation_T"]]
 # index 0 = normal, index 1 = tumor
 index_normal_tumor = [0,1]
 for i_nt in index_normal_tumor:
@@ -210,25 +211,46 @@ for i_nt in index_normal_tumor:
                       ["labDataName"] = gv.wes_labDataName[i_nt] #p_data["pathoProId"]
 
     # add info tissue ontology
-    etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueOntology"]["name"] = gv.wes_tissueOntology_name[i_nt]
+    if sampleconservation == "blood":
+        
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["name"] = "UBERON"
+    
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["version"] = "1.5"
 
-    etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueOntology"]["version"] = gv.wes_tissueOntology_version[i_nt]
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeId"] = "UBERON:0000178"
 
-    etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueTypeId"] = ""
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeName"] = "blood"
 
-    etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueTypeName"] = ""
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["sampleConservation"] = "fresh-tissue"
+
+    else:
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["name"] = gv.wes_tissueOntology_name[i_nt]
+
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["version"] = gv.wes_tissueOntology_version[i_nt]
+
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeId"] = ""
+
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeName"] = ""
+
+        etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["sampleConservation"] = sampleconservation[i_nt]
 
     # add further labData information
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sampleDate"] = ""
 
-    etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sampleConservation"] = wes_final_page_dict["sampleConservation_T"]
+    #etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
+    #                  ["sampleConservation"] = sampleconservation[i_nt]
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequenceType"] = gv.wes_sequenceType
@@ -285,6 +307,9 @@ for i_nt in index_normal_tumor:
     # add fastp qc info to submission_grz - "percentBasesAboveQualityThreshold"
     #with open(args.fastp_json, "r") as fastp_json:
     #    fastp_qc = js.load(fastp_json)
+
+    etl.wes_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
+                      ["percentBasesAboveQualityThreshold"]["minimumQuality"] = gv.wes_minimumQuality[i_nt]
 
     reads_q30_rate = round(fastp_qc_normal_tumor[i_nt]["summary"]["before_filtering"]["q30_rate"],2) * 100
 

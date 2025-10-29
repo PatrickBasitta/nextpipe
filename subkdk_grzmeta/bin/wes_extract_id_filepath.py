@@ -61,47 +61,47 @@ for i, wes_file in enumerate(files_DONE_wes):
     id_path_df.loc[i,"xlsx_path"] = Path(wes_file)
         
     # find fastq.gz files of patient with correct tissue
-    raw_data_dir_NextSeq = args.nextseq_data_dir
+    #raw_data_dir_NextSeq = args.nextseq_data_dir
     raw_data_dir_NovaSeq = args.novaseq_data_dir
     #raw_data_dir_NextSeq = nextseq_data_dir
     #raw_data_dir_NovaSeq = novaseq_data_dir
 
     # own name schema - normal
-    fastq_read1_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_1.fq.gz", recursive=True)
-    fastq_read2_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_2.fq.gz", recursive=True)
-    fastq_read1_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*N*_1.fq.gz", recursive=True)
-    fastq_read2_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*N*_2.fq.gz", recursive=True)
+    #fastq_read1_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_1.fq.gz", recursive=True)
+    #fastq_read2_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_2.fq.gz", recursive=True)
+    fastq_read1_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*N*_1.fq.gz", recursive=True)
+    fastq_read2_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*N*_2.fq.gz", recursive=True)
 
-    if fastq_read1_inNextSeq_n == [] and fastq_read2_inNextSeq_n == [] and\
-        fastq_read1_inNovaSeq_n == [] and fastq_read2_inNovaSeq_n == []:
+    #if fastq_read1_inNextSeq_n == [] and fastq_read2_inNextSeq_n == [] and\
+    if fastq_read1_inNovaSeq_n == [] and fastq_read2_inNovaSeq_n == []:
         # CF name schema - normal
-        fastq_read1_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_R1_*.fastq.gz", recursive=True)
-        fastq_read2_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_R2_*.fastq.gz", recursive=True)
-        fastq_read1_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*N*_R1_*.fastq.gz", recursive=True)
-        fastq_read2_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*N*_R2_*.fastq.gz", recursive=True)
+        #fastq_read1_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_R1_*.fastq.gz", recursive=True)
+        #fastq_read2_inNextSeq_n = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*N*_R2_*.fastq.gz", recursive=True)
+        fastq_read1_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*N*_R1_*.fastq.gz", recursive=True)
+        fastq_read2_inNovaSeq_n = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*N*_R2_*.fastq.gz", recursive=True)
 
     # own name schema - tumor
-    fastq_read1_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_1.fq.gz", recursive=True)
-    fastq_read2_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_2.fq.gz", recursive=True)
-    fastq_read1_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*T*_1.fq.gz", recursive=True)
-    fastq_read2_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*T*_2.fq.gz", recursive=True)
+    #fastq_read1_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_1.fq.gz", recursive=True)
+    #fastq_read2_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_2.fq.gz", recursive=True)
+    fastq_read1_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*T*_1.fq.gz", recursive=True)
+    fastq_read2_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*T*_2.fq.gz", recursive=True)
 
-    if fastq_read1_inNextSeq_t == [] and fastq_read2_inNextSeq_t == [] and\
-        fastq_read1_inNovaSeq_t == [] and fastq_read2_inNovaSeq_t == []:
+    #if fastq_read1_inNextSeq_t == [] and fastq_read2_inNextSeq_t == [] and\
+    if fastq_read1_inNovaSeq_t == [] and fastq_read2_inNovaSeq_t == []:
         # CF name schema - tumor
-        fastq_read1_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_R1_*.fastq.gz", recursive=True)
-        fastq_read2_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_R2_*.fastq.gz", recursive=True)
-        fastq_read1_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*T*_R1_*.fastq.gz", recursive=True)
-        fastq_read2_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*T*_R2_*.fastq.gz", recursive=True)
+        #fastq_read1_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_R1_*.fastq.gz", recursive=True)
+        #fastq_read2_inNextSeq_t = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*T*_R2_*.fastq.gz", recursive=True)
+        fastq_read1_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*T*_R1_*.fastq.gz", recursive=True)
+        fastq_read2_inNovaSeq_t = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*T*_R2_*.fastq.gz", recursive=True)
 
-    if fastq_read1_inNextSeq_n != [] and fastq_read2_inNextSeq_n != [] and\
-        fastq_read1_inNextSeq_t != [] and fastq_read2_inNextSeq_t != []:
-        path_fastq_read1_n = fastq_read1_inNextSeq_n
-        path_fastq_read2_n = fastq_read2_inNextSeq_n
-        path_fastq_read1_t = fastq_read1_inNextSeq_t
-        path_fastq_read2_t = fastq_read2_inNextSeq_t
-
-    elif fastq_read1_inNovaSeq_n != [] and fastq_read2_inNovaSeq_n != [] and\
+    #if fastq_read1_inNextSeq_n != [] and fastq_read2_inNextSeq_n != [] and\
+    #    fastq_read1_inNextSeq_t != [] and fastq_read2_inNextSeq_t != []:
+    #    path_fastq_read1_n = fastq_read1_inNextSeq_n
+    #    path_fastq_read2_n = fastq_read2_inNextSeq_n
+    #    path_fastq_read1_t = fastq_read1_inNextSeq_t
+    #    path_fastq_read2_t = fastq_read2_inNextSeq_t
+    #elif
+    if fastq_read1_inNovaSeq_n != [] and fastq_read2_inNovaSeq_n != [] and\
         fastq_read1_inNovaSeq_t != [] and fastq_read2_inNovaSeq_t != []:
         path_fastq_read1_n = fastq_read1_inNovaSeq_n
         path_fastq_read2_n = fastq_read2_inNovaSeq_n
@@ -126,28 +126,28 @@ for i, wes_file in enumerate(files_DONE_wes):
     for tc_pattern in matches_in_filename:
         #print(tc_pattern)
         if "N" in tc_pattern:
-            if glob.glob(nxf_dir +"/**/"+patient_id + tc_pattern + "*.bam", 
+            if glob.glob(nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
                recursive=True) != []:
                 bam_file_path_n = glob.glob\
-                (nxf_dir +"/**/"+patient_id + tc_pattern + "*.bam", 
+                (nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
                 recursive=True)
-            elif glob.glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-                 recursive=True) != []:
-                bam_file_path_n = glob.\
-                glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-                recursive=True)
+            #elif glob.glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
+            #     recursive=True) != []:
+            #    bam_file_path_n = glob.\
+            #    glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
+            #    recursive=True)
     # tumor
         elif "T" in tc_pattern:
-            if glob.glob(nxf_dir +"/**/"+patient_id + tc_pattern + "*.bam", 
+            if glob.glob(nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
                recursive=True) != []:
                 bam_file_path_t = glob.glob\
-                (nxf_dir +"/**/"+patient_id + tc_pattern + "*.bam", 
+                (nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
                 recursive=True)
-            elif glob.glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-                 recursive=True) != []:
-                bam_file_path_t = glob.\
-                glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-                recursive=True)
+            #elif glob.glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
+            #     recursive=True) != []:
+            #    bam_file_path_t = glob.\
+            #    glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
+            #    recursive=True)
                 
     id_path_df.loc[i,"bam_path_n"] = Path(bam_file_path_n[0])
     id_path_df.loc[i,"bai_path_n"] = Path(bam_file_path_n[0]+".bai")
@@ -157,10 +157,10 @@ for i, wes_file in enumerate(files_DONE_wes):
     # find vcf file wes
     # check that only one file exits! also for fastq / all data
     vcf_files_dir = nxf_dir
-    if glob.glob( vcf_files_dir  +"/**/"+patient_id+"*.vcf", recursive=True) != []:
-        vcf_file_path = glob.glob( vcf_files_dir  +"/**/"+patient_id+"*.vcf", recursive=True)
-    elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+"*.vcf", recursive=True) != []:
-        vcf_file_path = glob.glob( vcf_files_dir  +"/**/**/"+patient_id+"*.vcf", recursive=True)
+    if glob.glob( vcf_files_dir  +"/"+patient_id+"*.vcf", recursive=True) != []:
+        vcf_file_path = glob.glob( vcf_files_dir  +"/"+patient_id+"*.vcf", recursive=True)
+    #elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+"*.vcf", recursive=True) != []:
+    #    vcf_file_path = glob.glob( vcf_files_dir  +"/**/**/"+patient_id+"*.vcf", recursive=True)
 
     # due to tissue conservation more vcf files can exist - find the correct one
     # using matches_in_filename 

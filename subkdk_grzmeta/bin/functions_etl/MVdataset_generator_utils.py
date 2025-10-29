@@ -185,8 +185,8 @@ def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
                           variants_to_report.loc[i,"localization"] = "inRegulatoryElements"
             elif variants_to_report.loc\
                 [i,"variantTypes"] not in regulatroy_SO_term and variants_to_report.loc\
-                    [i,"variantTypes"] not in coding_SO_term and variants_to_report.loc\
-                      [i,"proteinChange"].startswith("p.") == False:
+                    [i,"variantTypes"] not in coding_SO_term and str(variants_to_report.loc\
+                      [i,"proteinChange"]).startswith("p.") == False:
                           variants_to_report.loc[i,"localization"] = "notInCodingAndNotInRegulatoryElements"
 
         # fields {inRegulatoryElements,notInCodingAndNotInRegulatoryElements} are
@@ -528,7 +528,7 @@ wes_submission_grz = {
                 "bioinformaticsPipelineVersion" : "",
                 "referenceGenome" : "",
                 "percentBasesAboveQualityThreshold" : {
-                    "minimumQuality": 30,
+                    "minimumQuality": "",
                     "percent": ""
                  },
                 "meanDepthOfCoverage" : "",
@@ -571,7 +571,7 @@ wes_submission_grz = {
                },
           },
           {
-            "labDataName" : "tumor",
+            "labDataName" : "",
             "tissueOntology" : {
                 "name" : "",
                 "version" : ""
@@ -603,7 +603,7 @@ wes_submission_grz = {
                 "bioinformaticsPipelineVersion" : "",
                 "referenceGenome" : "",
                 "percentBasesAboveQualityThreshold" : {
-                     "minimumQuality": 30,
+                     "minimumQuality": "",
                      "percent": ""
                 },
                 "meanDepthOfCoverage" : "",
@@ -644,6 +644,195 @@ wes_submission_grz = {
                     "fileSizeInBytes" : ""
                     },
                      {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : ""
+                    }],
+               },
+          }],
+    }],
+}
+
+wgs_submission_grz = {
+    "$schema": "https://raw.githubusercontent.com/BfArM-MVH/MVGenomseq/refs/tags/v1.2.1/GRZ/grz-schema.json",
+    "submission" : {
+        "submissionDate" : "",
+        "submissionType" : "",
+        "tanG": "",
+        "localCaseId" : "",
+        "coverageType" : "",
+        "submitterId" : "",
+        "genomicDataCenterId" : "",
+        "clinicalDataNodeId" : "",
+        "diseaseType" : "",
+        "genomicStudyType" : "",
+        "genomicStudySubtype" : "",
+        "labName" : ""
+         },
+    "donors" : [{
+        "donorPseudonym" : "",
+        "gender" : "",
+        "relation" : "",
+        "mvConsent" : {
+            #"presentationDate" : "",
+            "version" : "",
+            "scope" : [{
+                "type" : "",
+                "date" : "",
+                "domain" : "mvSequencing"
+                },
+                {
+                "type" : "",
+                "date" : "",
+                "domain" : "reIdentification"
+                },
+                {
+                "type" : "",
+                "date" : "",
+                "domain" : "caseIdentification"
+                }
+            ],
+        },
+        "researchConsents" : [
+        ],
+        #"researchConsents" : [{
+        #    "schemaVersion" : "",
+        #    "presentationDate" : "",
+        #    "scope" : ""
+        #    }],
+        "labData" : [{
+            "labDataName" : "",
+            "tissueOntology" : {
+                "name" : "",
+                "version" : ""
+                },
+            "tissueTypeId" : "",
+            "tissueTypeName" : "",
+            "sampleDate" : "",
+            "sampleConservation" : "",
+            "sequenceType" : "",
+            "sequenceSubtype" : "",
+            "fragmentationMethod" : "",
+            "libraryType" : "",
+            "libraryPrepKit" : "",
+            "libraryPrepKitManufacturer" : "",
+            "sequencerModel" : "",
+            "sequencerManufacturer" : "",
+            "kitName" : "",
+            "kitManufacturer" : "",
+            "enrichmentKitManufacturer" : "",
+            "enrichmentKitDescription" : "",
+            "barcode" : "",
+            "sequencingLayout" : "",
+            "sequenceData" : {
+                "bioinformaticsPipelineName" : "",
+                "bioinformaticsPipelineVersion" : "",
+                "referenceGenome" : "",
+                "percentBasesAboveQualityThreshold" : {
+                    "minimumQuality": "",
+                    "percent": ""
+                 },
+                "meanDepthOfCoverage" : "",
+                "minCoverage" : "",
+                "targetedRegionsAboveMinCoverage" : "",
+                "nonCodingVariants" : "",
+                "callerUsed" : [{
+                    "name" : "",
+                   "version" : ""
+                    }],
+                "files" : [{
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : "",
+                    "readOrder" : "",
+                    "readLength" : "",
+                    #"flowcellId" : "",
+                    #"laneId" : ""
+                    },
+                    {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : "",
+                    "readOrder" : "",
+                    "readLength" : "",
+                    #"flowcellId" : "",
+                    #"laneId" : ""
+                    }],
+               },
+          },
+          {
+            "labDataName" : "",
+            "tissueOntology" : {
+                "name" : "",
+                "version" : ""
+                },
+            "tissueTypeId" : "",
+            "tissueTypeName" : "",
+            "sampleDate" : "",
+            "sampleConservation" : "",
+            "sequenceType" : "",
+            "sequenceSubtype" : "",
+            "fragmentationMethod" : "",
+            "libraryType" : "",
+            "libraryPrepKit" : "",
+            "libraryPrepKitManufacturer" : "",
+            "sequencerModel" : "",
+            "sequencerManufacturer" : "",
+            "kitName" : "",
+            "kitManufacturer" : "",
+            "enrichmentKitManufacturer" : "",
+            "enrichmentKitDescription" : "",
+            "barcode" : "",
+            "sequencingLayout" : "",
+            "tumorCellCount" : [{
+                "count" : "",
+                "method" : ""
+                }],
+            "sequenceData" : {
+                "bioinformaticsPipelineName" : "",
+                "bioinformaticsPipelineVersion" : "",
+                "referenceGenome" : "",
+                "percentBasesAboveQualityThreshold" : {
+                     "minimumQuality": "",
+                     "percent": ""
+                },
+                "meanDepthOfCoverage" : "",
+                "minCoverage" : "",
+                "targetedRegionsAboveMinCoverage" : "",
+                "nonCodingVariants" : "",
+                "callerUsed" : [{
+                    "name" : "",
+                    "version" : ""
+                    }],
+                "files" : [{
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : "",
+                    "readOrder" : "",
+                    "readLength" : "",
+                    #"flowcellId" : "",
+                    #"laneId" : ""
+                    },
+                    {
+                    "filePath" : "",
+                    "fileType" : "",
+                    "checksumType" :"",
+                    "fileChecksum" : "",
+                    "fileSizeInBytes" : "",
+                    "readOrder" : "",
+                    "readLength" : "",
+                    #"flowcellId" : "",
+                    #"laneId" : ""
+                    },
+                    {
                     "filePath" : "",
                     "fileType" : "",
                     "checksumType" :"",

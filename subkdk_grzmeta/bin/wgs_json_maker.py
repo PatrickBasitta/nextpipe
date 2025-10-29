@@ -27,6 +27,8 @@ parser.add_argument("-e", "--vcf_bytes_json", type=str)
 #parser.add_argument("-j", "--bed_bytes_json", type=str)
 parser.add_argument("-p", "--patient_data_json", type=str)
 parser.add_argument("-q", "--hgnc", type=str)
+parser.add_argument("-w", "--targeted_bam_json_normal", type=str)
+parser.add_argument("-z", "--targeted_bam_json_tumor", type=str)
 args = parser.parse_args()
       
 # make pandas excel
@@ -95,7 +97,7 @@ Oncology_Molecular_Report = { # wgs data MV + adds
     "tmb_Anzahl_Mutationen_missense" : wgs_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
     "msi_status" : wgs_final_page_dict["msi"]["msi_status"],
     "msiErgebnis_MSIsensor_pro" : wgs_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"],
-    #"HR_deficiency_score_OA" : wgs_final_page_dict["HR_deficiency_score"]
+    "HR_deficiency_score_OA" : wgs_final_page_dict["HR_deficiency_score_OA"]
     "hrdHigh" : "na",
     "lstHigh" : "na",
     "tailHigh" : "na"
@@ -114,29 +116,29 @@ with open(args.patient_data_json, "r") as patient_data:
 # submission_grz
 etl.wgs_submission_grz["submission"]["submissionDate"] = "generated upon upload" #datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
 etl.wgs_submission_grz["submission"]["submissionType"] = gv.submissionType # test modus
-etl.wgs_submission_grz["submission"]["tanG"] = "data_from_MVtracker or MwTek"
-etl.wgs_submission_grz["submission"]["localCaseId"] = "UUID???"
-etl.wgs_submission_grz["submission"]["coverageType"] = "data_from_MVtracker or FileMaker"
+etl.wgs_submission_grz["submission"]["tanG"] = ""
+etl.wgs_submission_grz["submission"]["localCaseId"] = ""
+etl.wgs_submission_grz["submission"]["coverageType"] = "" # big status liste
 etl.wgs_submission_grz["submission"]["submitterId"] = gv.submitterId
 etl.wgs_submission_grz["submission"]["genomicDataCenterId"] = gv.genomicDataCenterId
 etl.wgs_submission_grz["submission"]["clinicalDataNodeId"] = gv.clinicalDataNodeId
 etl.wgs_submission_grz["submission"]["diseaseType"] = gv.diseaseType # assumed
 etl.wgs_submission_grz["submission"]["genomicStudyType"] = gv.genomicStudyType # assumed
-etl.wgs_submission_grz["submission"]["genomicStudySubtype"] = gv.genomicStudySubtype # assumed due to pancancer analysis
+etl.wgs_submission_grz["submission"]["genomicStudySubtype"] = gv.wxs_genomicStudySubtype
 etl.wgs_submission_grz["submission"]["labName"] = gv.labName
 
 # add broad consent information
-etl.wgs_submission_grz["donors"][0]["donorPseudonym"] = gv.donorPseudonym
+etl.wgs_submission_grz["donors"][0]["donorPseudonym"] = ""
 etl.wgs_submission_grz["donors"][0]["gender"] = p_data["gender"]
 etl.wgs_submission_grz["donors"][0]["relation"] = gv.relation
-etl.wgs_submission_grz["donors"][0]["mvConsent"]["presentationDate"] = "data_from_MVtracker"
-etl.wgs_submission_grz["donors"][0]["mvConsent"]["version"] = "data_from_MVtracker"
-etl.wgs_submission_grz["donors"][0]["mvConsent"]["scope"][0]["type"] = "data_from_MVtracker"
-etl.wgs_submission_grz["donors"][0]["mvConsent"]["scope"][0]["date"] = "data_from_MVtracker"
-etl.wgs_submission_grz["donors"][0]["mvConsent"]["scope"][0]["domain"] = "data_from_MVtracker"
-etl.wgs_submission_grz["donors"][0]["researchConsents"][0]["schemaVersion"] = "data_from_MVtracker"
-etl.wgs_submission_grz["donors"][0]["researchConsents"][0]["presentationDate"] = "data_from_MVtracker"
-etl.wgs_submission_grz["donors"][0]["researchConsents"][0]["scope"] = "data_from_MVtracker"
+#etl.wgs_submission_grz["donors"][0]["mvConsent"]["presentationDate"] = ""
+#etl.wgs_submission_grz["donors"][0]["mvConsent"]["version"] = ""
+#etl.wgs_submission_grz["donors"][0]["mvConsent"]["scope"][0]["type"] = ""
+#etl.wgs_submission_grz["donors"][0]["mvConsent"]["scope"][0]["date"] = ""
+#etl.wgs_submission_grz["donors"][0]["mvConsent"]["scope"][0]["domain"] = ""
+#etl.wgs_submission_grz["donors"][0]["researchConsents"][0]["schemaVersion"] = ""
+#etl.wgs_submission_grz["donors"][0]["researchConsents"][0]["presentationDate"] = ""
+#etl.wgs_submission_grz["donors"][0]["researchConsents"][0]["scope"] = ""
 
 # fastp info
 with open(args.fastp_json_normal, "r") as fastp_json_normal:
@@ -156,6 +158,15 @@ with open(args.bam_json_tumor, "r") as bam_json_tumor:
     
 bam_qc_normal_tumor = [bam_qc_normal, bam_qc_tumor]
 
+bam info targeted
+with open(args.targeted_bam_json_normal, "r") as targeted_bam_json_normal:
+    targeted_bam_qc_normal = js.load(targeted_bam_json_normal)
+
+with open(args.targeted_bam_json_tumor, "r") as targeted_bam_json_tumor:
+    targeted_bam_qc_tumor = js.load(targeted_bam_json_tumor)
+
+targeted_bam_qc_normal_tumor = [targeted_bam_qc_normal, targeted_bam_qc_tumor]
+
 #add fastq info to submission_grz
 with open(args.fq_sha256_json_normal, "r") as fq_sha256_json_normal:
     fq_sha256sum_normal = js.load(fq_sha256_json_normal)
@@ -173,8 +184,9 @@ with open(args.fq_bytes_json_tumor, "r") as fq_byte_json_tumor:
     
 fq_bytesize_normal_tumor = [fq_bytesize_normal, fq_bytesize_tumor ]
 
-# index_number_files
-index_num_files = [2,3]
+# index_number_files: len(2 files in normal, 2 files in tumor)
+index_num_files = [2,2]
+sampleconservation = [wgs_final_page_dict["sampleConservation_N"],wgs_final_page_dict["sampleConservation_T"]]
 # index 0 = normal, index 1 = tumor
 index_normal_tumor = [0,1]
 for i_nt in index_normal_tumor:
@@ -185,30 +197,30 @@ for i_nt in index_normal_tumor:
 
     # add info tissue ontology
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueOntology"]["name"] = gv.tissueOntology_name
+                      ["tissueOntology"]["name"] = gv.wgs_tissueOntology_name[i_nt]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueOntology"]["version"] = gv.tissueOntology_version
+                      ["tissueOntology"]["version"] = gv.wgs_tissueOntology_version[i_nt]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueTypeId"] = "data_from_FileMaker_Nexus_view"
+                      ["tissueTypeId"] = ""
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueTypeName"] = "from icd03 xml bfarm or FileMaker_nexus_view"
+                      ["tissueTypeName"] = ""
 
     # add further labData information
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sampleDate"] = "date of the probe: FileMaker_nexus_view"
+                      ["sampleDate"] = ""
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sampleConservation"] = "data_from_finalsheet_excel"
+                      ["sampleConservation"] = sampleconservation[i_nt]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sequenceType"] = gv.wgs_sequenceType # assumed due to pancancer analysis
+                      ["sequenceType"] = gv.wgs_sequenceType
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sequenceSubtype"] = gv.wgs_sequenceSubtype # assumed due to pancancer analysis
+                      ["sequenceSubtype"] = gv.wgs_sequenceSubtype[i_nt]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["fragmentationMethod"] = gv.wgs_fragmentationMethod #known
@@ -272,12 +284,15 @@ for i_nt in index_normal_tumor:
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
                       ["meanDepthOfCoverage"] = round(float(bam_qc_normal_tumor[i_nt]["bam_qc"][0]["mean_cov"]),2)
 
+    #etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
+    #                  ["minCoverage"] = round(float(bam_qc_normal_tumor[i_nt]["bam_qc"][0]["min_cov"]),0) # minCov of the BfarmQs
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
-                      ["minCoverage"] = round(float(bam_qc_normal_tumor[i_nt]["bam_qc"][0]["min_cov"]),0)
-
+                       ["minCoverage"] = gv.wgs_minCoverage[i_nt]
+    
+    # must be targeted
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
-                      ["targetedRegionsAboveMinCoverage"] = float(bam_qc_normal_tumor[i_nt]["bam_qc"][0]\
-                                                        ["target_above_mincov"])
+                      ["targetedRegionsAboveMinCoverage"] = float(targeted_bam_qc_normal_tumor[i_nt]["targeted_bam_qc"][0]\
+                                                        ["targets_above_mincov"])
 
     # add info of nonCodingVariants and caller information
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
@@ -291,7 +306,7 @@ for i_nt in index_normal_tumor:
 
     # the relative path of the grz_cli tool is always here sample_id/files/file
     #rel_path_grz_cli = args.sample_id+"/files/"
-    rel_path_grz_cli = args.sample_id+"/files/"
+    #rel_path_grz_cli = args.sample_id+"/files/"
 
     #add fastq info to submission_grz
     #with open(args.fq_256_json, "r") as fq_256:
@@ -327,17 +342,19 @@ for i_nt in index_normal_tumor:
             key, value = list(files_dict_cal_concat.items())[index_read]
 
             etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]["files"]\
-                              [index_read]["filePath"] = rel_path_grz_cli+files_dict_cal_concat[key]["file"]
+                              [index_read]["filePath"] = files_dict_cal_concat[key]["file"]
             etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]["files"]\
-                              [index_read]["fileType"] = "fastq"
+                              [index_read]["fileType"] = gv.wgs_files_fastq
             etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]["files"]\
-                              [index_read]["checksumType"] = "sha256sum"
+                              [index_read]["checksumType"] = gv.wgs_checksumType
             etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]["files"]\
                               [index_read]["fileChecksum"] = files_dict_cal_concat[key]["fileChecksum"]
             etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]["files"]\
-                              [index_read]["fileSizeInBytes"] = files_dict_cal_concat[key]["fileSizeInBytes"]
+                              [index_read]["fileSizeInBytes"] = int(files_dict_cal_concat[key]["fileSizeInBytes"])
             etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]["files"]\
                               [index_read]["readOrder"] = key
+            etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]["files"]\
+                              [index_read]["readLength"] = gv.wgs_readLength
 
 # add vcf info to submission_grz
 with open(args.vcf_sha256_json, "r") as vcf_sha256:
@@ -358,15 +375,15 @@ index_vcf = 2
 if len(etl.wgs_submission_grz["donors"][0]["labData"][index_tumor]["sequenceData"]["files"]) == index_num_files[index_tumor]:
     # index 2 for vcf
     etl.wgs_submission_grz["donors"][0]["labData"][index_tumor]["sequenceData"]["files"]\
-                      [index_vcf]["filePath"] = rel_path_grz_cli+vcf_name
+                      [index_vcf]["filePath"] = vcf_name
     etl.wgs_submission_grz["donors"][0]["labData"][index_tumor]["sequenceData"]["files"]\
-                      [index_vcf]["fileType"] = "vcf"
+                      [index_vcf]["fileType"] = gv.wgs_files_vcf
     etl.wgs_submission_grz["donors"][0]["labData"][index_tumor]["sequenceData"]["files"]\
-                      [index_vcf]["checksumType"] = "sha256sum"
+                      [index_vcf]["checksumType"] = gv.wgs_checksumType
     etl.wgs_submission_grz["donors"][0]["labData"][index_tumor]["sequenceData"]["files"]\
                       [index_vcf]["fileChecksum"] = vcf_sha256sum
     etl.wgs_submission_grz["donors"][0]["labData"][index_tumor]["sequenceData"]["files"]\
-                      [index_vcf]["fileSizeInBytes"] =  vcf_size
+                      [index_vcf]["fileSizeInBytes"] =  int(vcf_size)
 
 #add bed info to submission_grz
 #with open(args.bed_256_json, "r") as bed_256:
@@ -410,14 +427,15 @@ etl.wgs_submission_grz["donors"][0]["labData"][index_tumor]\
 
 wgs_json = {
        "analysis" : p_data["analysis"],
+       "mvtracker_uuid" : "",
        "pathoProId": p_data["pathoProId"],
        "nexusId": p_data["nexusId"],
        "molpathId": p_data["molpathId"],
-       "orbisId" :  p_data["orbisId"],
+       "patient_id" :  p_data["orbisId"],
        "firstname":p_data["firstname"],
        "lastame": p_data["lastname"],
        "dateofbrith": p_data["dateofbirth"],
-       "network" : "mv",
+       "network" : wgs_final_page_dict["network"],
        "diseaseType" : "oncological",
        "entity_excel" : wgs_final_page_dict["entity"],
        "entity_fm": p_data["entity"],
