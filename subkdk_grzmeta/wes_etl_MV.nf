@@ -300,6 +300,9 @@ process grz_dirs {
     input:
         val(sample_id)
         val(grz_submission_dir)
+
+    output:
+        val(grz_submission_dir), emit: done
     
     script:
     """
@@ -374,12 +377,14 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
        id_patient_ch.view()
 
        patient_id = id_patient_ch.flatten()
-       grz_dirs(patient_id,grz_submission_dir_ch)
+       grz_dirs_ch =  grz_dirs(patient_id,grz_submission_dir_ch)
+       sub_dir = grz_dirs_ch.done.unique().collect()
+       //sub_dir.view()
        patient_data = extract_patient_data(patient_id)
                                                                                
-       fastq_out = process_fastqs(id_fastqs_ch,grz_submission_dir_ch)
-       bam_out = process_bamfile(id_bam_ch,grz_submission_dir_ch,wes_bedfile_ch)
-       vcf_bed_out = process_vcf_bedfile(id_vcf_ch,grz_submission_dir_ch,wes_bedfile_ch)
+       fastq_out = process_fastqs(id_fastqs_ch,sub_dir)
+       bam_out = process_bamfile(id_bam_ch,sub_dir,wes_bedfile_ch)
+       vcf_bed_out = process_vcf_bedfile(id_vcf_ch,sub_dir,wes_bedfile_ch)
 
        //fastq_out.fastp_json.view()
        //fastq_out.sha256sum_fqs.view()
@@ -431,9 +436,9 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
        
        // join bam json files and sort N first T last       
        bam_data = bam_out.bam_json
-       //bam_data.count().view()
+       bam_data.view()
        paired_bam_data = bam_data.groupTuple() | map {it -> [it[0], it[1..-1].flatten()]}
-       //paired_bam_data.view()
+       paired_bam_data.view()
        //paired_bam_data.count().view()
        flat_paired_bam_data = paired_bam_data | map { it ->
                                       def key = it[0]

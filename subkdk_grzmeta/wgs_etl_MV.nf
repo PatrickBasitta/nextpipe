@@ -289,6 +289,9 @@ process grz_dirs {
     input:
         val(sample_id)
         val(grz_submission_dir)
+
+    output:
+        val(grz_submission_dir), emit: done
     
     script:
     """
@@ -363,12 +366,13 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
        id_patient_ch.view()
 
        patient_id = id_patient_ch.flatten()
-       grz_dirs(patient_id,grz_submission_dir_ch)
+       grz_dirs_ch =  grz_dirs(patient_id,grz_submission_dir_ch)
+       sub_dir = grz_dirs_ch.done.unique().collect()
        patient_data = extract_patient_data(patient_id)
                                                                                    
-       fastq_out = process_fastqs(id_fastqs_ch,grz_submission_dir_ch)
-       bam_out = process_bamfile(id_bam_ch,grz_submission_dir_ch,grz_bed_ch)
-       vcf_out = process_vcf(id_vcf_ch,grz_submission_dir_ch)
+       fastq_out = process_fastqs(id_fastqs_ch,sub_dir)
+       bam_out = process_bamfile(id_bam_ch,sub_dir,grz_bed_ch)
+       vcf_out = process_vcf(id_vcf_ch,sub_dir)
 
        //fastq_out.fastp_json.view()
        //fastq_out.sha256sum_fqs.view()
