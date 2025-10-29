@@ -383,7 +383,7 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
        fq_data = fastq_out.fastp_out
 
        //join paired normal tumor and sort N first T last
-       paired_fq_data = fq_data.groupTuple() | map {it -> [it[0], it[1..-1].flatten()]
+       paired_fq_data = fq_data.groupTuple() | map {it -> [it[0], it[1..-1].flatten()]}
        //paired_fq_data.view()
        flat_paired_fq_data = paired_fq_data | map { it -> 
                                       def key = it[0]
@@ -410,7 +410,7 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
                                                                 (it[5].name.findAll {it.contains('N')}) ? normal_lst.add(it[5]) : tumor_lst.add(it[5])
                                                                 (it[6].name.findAll {it.contains('N')}) ? normal_lst.add(it[6]) : tumor_lst.add(it[6])
                                                                 // output                                                                
-                                                                [key,normal_lst,tumor_lst]} ]} | map { it ->
+                                                                [key,normal_lst,tumor_lst]} | map { it ->
                                                                                               def key_fq = it[0]
                                                                                               def fp_n = it[1][0]
                                                                                               def sha_n = it[1][1]
@@ -425,7 +425,7 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
        
        // join bam json files and sort N first T last       
        bam_data = bam_out.bam_json
-       paired_bam_data = bam_data.groupTuple() | map {it -> [it[0], it[1..-1].flatten()
+       paired_bam_data = bam_data.groupTuple() | map {it -> [it[0], it[1..-1].flatten()]}
        //paired_bam_data.view()
 
        flat_paired_bam_data = paired_bam_data | map { it ->
@@ -450,14 +450,14 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
                                                                 (it[3].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[3]) : tumorbam_lst.add(it[3])
                                                                 (it[4].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[4]) : tumorbam_lst.add(it[4])
                                                                 // output
-                                                                [key,normalbam_lst,tumorbam_lst]} ]} | map { it ->
+                                                                [key,normalbam_lst,tumorbam_lst]} | map { it ->
                                                                                               def key_bam = it[0]
                                                                                               def bam_n = it[1][0]
                                                                                               def bam_n_t = it[1][1]
                                                                                               def bam_t = it[2][0]
                                                                                               def bam_t_t = it[2][1]
                                                                                               //output
-                                                                                              [key_bam,bam_n,bam_n_t,bam_t,bam_t_t]
+                                                                                              [key_bam,bam_n,bam_n_t,bam_t,bam_t_t]}
 
        //sorted_normal_tumor_paired_bam_data.view()
        
