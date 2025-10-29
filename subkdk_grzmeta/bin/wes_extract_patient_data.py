@@ -32,7 +32,7 @@ if status == 200:
     #get_all_records(token)
     get_record_LE = etl.get_record_Leistungserfassung(token,prefix,number,year,"WES")
     #print(get_record_LE)
-    if get_record_LE["response"]["dataInfo"]["foundCount"] == get_record_LE["response"]["dataInfo"]["returnedCount"]:
+    if get_record_LE["response"]["dataInfo"]["foundCount"] == get_record_LE["response"]["dataInfo"]["returnedCount"] and get_record_LE["response"]["dataInfo"]["foundCount"] != 0:
         #print(get_record_LE["response"]["data"][0]["fieldData"])
         firstname = get_record_LE["response"]["data"][0]["fieldData"]["Vorname"]
         lastname = get_record_LE["response"]["data"][0]["fieldData"]["Name"]
