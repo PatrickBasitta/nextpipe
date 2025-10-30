@@ -16,10 +16,10 @@ parser.add_argument("-x", "--xlsx_path", type=str)
 parser.add_argument("-f", "--fastp_json_normal", type=str)
 parser.add_argument("-a", "--fq_sha256_json_normal", type=str)
 parser.add_argument("-b", "--fq_bytes_json_normal", type=str)
-parser.add_argument("-c", "--bam_json_normal", type=str)
 parser.add_argument("-r", "--fastp_json_tumor", type=str)
 parser.add_argument("-s", "--fq_sha256_json_tumor", type=str)
 parser.add_argument("-t", "--fq_bytes_json_tumor", type=str)
+parser.add_argument("-c", "--bam_json_normal", type=str)
 parser.add_argument("-u", "--bam_json_tumor", type=str)
 parser.add_argument("-d", "--vcf_sha256_json", type=str)
 parser.add_argument("-e", "--vcf_bytes_json", type=str)
@@ -97,7 +97,7 @@ Oncology_Molecular_Report = { # wgs data MV + adds
     "tmb_Anzahl_Mutationen_missense" : wgs_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
     "msi_status" : wgs_final_page_dict["msi"]["msi_status"],
     "msiErgebnis_MSIsensor_pro" : wgs_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"],
-    "HR_deficiency_score_OA" : wgs_final_page_dict["HR_deficiency_score_OA"]
+    #"HR_deficiency_score_OA" : wgs_final_page_dict["HR_deficiency_score_OA"],
     "hrdHigh" : "na",
     "lstHigh" : "na",
     "tailHigh" : "na"
@@ -130,7 +130,7 @@ etl.wgs_submission_grz["submission"]["labName"] = gv.labName
 # add broad consent information
 etl.wgs_submission_grz["donors"][0]["donorPseudonym"] = ""
 etl.wgs_submission_grz["donors"][0]["gender"] = p_data["gender"]
-etl.wgs_submission_grz["donors"][0]["relation"] = gv.relation
+etl.wgs_submission_grz["donors"][0]["relation"] = gv.wgs_relation
 #etl.wgs_submission_grz["donors"][0]["mvConsent"]["presentationDate"] = ""
 #etl.wgs_submission_grz["donors"][0]["mvConsent"]["version"] = ""
 #etl.wgs_submission_grz["donors"][0]["mvConsent"]["scope"][0]["type"] = ""
@@ -158,7 +158,7 @@ with open(args.bam_json_tumor, "r") as bam_json_tumor:
     
 bam_qc_normal_tumor = [bam_qc_normal, bam_qc_tumor]
 
-bam info targeted
+# bam info targeted
 with open(args.targeted_bam_json_normal, "r") as targeted_bam_json_normal:
     targeted_bam_qc_normal = js.load(targeted_bam_json_normal)
 
@@ -184,8 +184,8 @@ with open(args.fq_bytes_json_tumor, "r") as fq_byte_json_tumor:
     
 fq_bytesize_normal_tumor = [fq_bytesize_normal, fq_bytesize_tumor ]
 
-# index_number_files: len(2 files in normal, 2 files in tumor)
-index_num_files = [2,2]
+# index_number_files: len(2 files in normal, 3 files in tumor)
+index_num_files = [2,3]
 sampleconservation = [wgs_final_page_dict["sampleConservation_N"],wgs_final_page_dict["sampleConservation_T"]]
 # index 0 = normal, index 1 = tumor
 index_normal_tumor = [0,1]
@@ -196,25 +196,46 @@ for i_nt in index_normal_tumor:
                       ["labDataName"] = gv.wgs_labDataName[i_nt] #p_data["pathoProId"]
 
     # add info tissue ontology
-    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueOntology"]["name"] = gv.wgs_tissueOntology_name[i_nt]
+    if sampleconservation[i_nt] == "blood":
+        
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["name"] = "UBERON"
 
-    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueOntology"]["version"] = gv.wgs_tissueOntology_version[i_nt]
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["version"] = "1.5"
 
-    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueTypeId"] = ""
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeId"] = "UBERON:0000178"
 
-    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["tissueTypeName"] = ""
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeName"] = "blood"
+
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["sampleConservation"] = "fresh-tissue"
+
+    else:
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["name"] = gv.wes_tissueOntology_name[i_nt]
+
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueOntology"]["version"] = gv.wes_tissueOntology_version[i_nt]
+
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeId"] = ""
+
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["tissueTypeName"] = ""
+
+        etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                          ["sampleConservation"] = sampleconservation[i_nt]
 
     # add further labData information
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sampleDate"] = ""
 
-    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sampleConservation"] = sampleconservation[i_nt]
+    #etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+    #                  ["sampleConservation"] = sampleconservation[i_nt]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequenceType"] = gv.wgs_sequenceType
@@ -271,11 +292,13 @@ for i_nt in index_normal_tumor:
     # add fastp qc info to submission_grz - "percentBasesAboveQualityThreshold"
     #with open(args.fastp_json, "r") as fastp_json:
     #    fastp_qc = js.load(fastp_json)
+    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
+                      ["percentBasesAboveQualityThreshold"]["minimumQuality"] = gv.wgs_minimumQuality[i_nt]
 
     reads_q30_rate = round(fastp_qc_normal_tumor[i_nt]["summary"]["before_filtering"]["q30_rate"],2) * 100
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]["sequenceData"]\
-                      ["percentBasesAboveQualityThreshold"] = round(float(reads_q30_rate),0)
+                      ["percentBasesAboveQualityThreshold"]["percent"] = round(float(reads_q30_rate),0)
 
     # add bamfile info to submission_grz
     #with open(args.bam_json, "r") as bam_json:
