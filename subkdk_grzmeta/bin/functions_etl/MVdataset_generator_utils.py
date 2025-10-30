@@ -194,7 +194,7 @@ def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
         
         # add HGNC_MV, due not present in xlsx (in PanCancer it is present)
         # make HGNC_code column
-        hgnc["HGNC_code"] = hgnc["HGNC"].str.extract(r"(\d+)")
+        hgnc["HGNC_code"] = hgnc["HGNC"]
         # make dict (sorts automatically)
         hgnc_dict = dict(zip(hgnc["ID"] ,hgnc["HGNC_code"]))
         # add hgnc code
