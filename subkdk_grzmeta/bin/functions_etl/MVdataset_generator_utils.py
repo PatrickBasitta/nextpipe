@@ -201,6 +201,11 @@ def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
         for i in range(len(variants_to_report["gene.display"])):
             variants_to_report.loc[i, "gene.code"] = hgnc_dict[variants_to_report.loc[i, "gene.display"]]
         
+        # convert np int64 to int
+        variants_to_report["interpretation_int"] = ""
+        for number in range(len(variants_to_report["interpretation"])):
+            variants_to_report.loc[number,"interpretation_int"] = int(variants_to_report.loc\
+                                                                     [number,"interpretation"])
         # get final columns to report
         final_data = variants_to_report[["identifier",
                                          "genomicSource",
@@ -216,7 +221,7 @@ def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
                                          "alt",
                                          "localization",
                                          "variantTypes",
-                                         "interpretation",
+                                         "interpretation_int",
                                          "LOH"]]
         
         final_data["interpretation"] = final_data["interpretation"].apply(lambda x: int(x))
