@@ -368,7 +368,7 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
 
        patient_id = id_patient_ch.flatten()
        grz_dirs_ch =  grz_dirs(patient_id,grz_submission_dir_ch)
-       sub_dir = grz_dirs_ch.done.unique().collect()
+       sub_dir = grz_dirs_ch.done.first()
        patient_data = extract_patient_data(patient_id)
                                                                                    
        fastq_out = process_fastqs(id_fastqs_ch,sub_dir)
