@@ -162,16 +162,16 @@ for i, wes_file in enumerate(files_DONE_wes):
     #elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+"*.vcf", recursive=True) != []:
     #    vcf_file_path = glob.glob( vcf_files_dir  +"/**/**/"+patient_id+"*.vcf", recursive=True)
 
-    # due to tissue conservation more vcf files can exist - find the correct one
+    # due to tissue conservation more vcf files can exist - find the correct one, not necessary!!!
     # using matches_in_filename 
-    vcf_file_path_final = []
-    if len(matches_in_filename) == 2:
-        for vcf_files in vcf_file_path:
-            if matches_in_filename[0] in vcf_files and \
-               matches_in_filename[1] in vcf_files:
-               vcf_file_path_final.append(vcf_files)
+    #vcf_file_path_final = []
+    #if len(matches_in_filename) == 2:
+    #    for vcf_files in vcf_file_path:
+    #        if matches_in_filename[0] in vcf_files and \
+    #           matches_in_filename[1] in vcf_files:
+    #           vcf_file_path_final.append(vcf_files)
    
-    id_path_df.loc[i,"vcf_path"] = Path(vcf_file_path_final[0])
+    id_path_df.loc[i,"vcf_path"] = Path(vcf_file_path[0])
     
 # make samplesheets
 # for qc_fastp and qc_samtools_depth
