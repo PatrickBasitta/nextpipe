@@ -224,8 +224,6 @@ def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
                                          "interpretation_int",
                                          "LOH"]]
         
-        final_data["interpretation"] = final_data["interpretation"].apply(lambda x: int(x))
-
         # VariantID-generator
         smallVariantId_lst = []
         for i in range(len(final_data)):
