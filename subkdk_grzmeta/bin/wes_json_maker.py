@@ -93,10 +93,10 @@ Oncology_Molecular_Report = { # wes data MV + adds
 "complexBiomarkers": [{
     "ploidy" : "na",
     "tmb" : wes_final_page_dict["tmb"]["tmb_status"],
-    "tmb_mutations_Mb" : wes_final_page_dict["tmb"]["mutations_Mb"],
-    "tmb_Anzahl_Mutationen_missense" : wes_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
+    "tmb_mutations_Mb" : float(wes_final_page_dict["tmb"]["mutations_Mb"]),
+    "tmb_Anzahl_Mutationen_missense" : int(wes_final_page_dict["tmb"]["Anzahl_Mutationen_missense"]),
     "msi_status" : wes_final_page_dict["msi"]["msi_status"],
-    "msiErgebnis_MSIsensor_pro" : wes_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"],
+    "msiErgebnis_MSIsensor_pro" : float(wes_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"]),
     #"HR_deficiency_score_OA" : wes_final_page_dict["HR_deficiency_score"],
     "hrdHigh" : "na",
     "lstHigh" : "na",

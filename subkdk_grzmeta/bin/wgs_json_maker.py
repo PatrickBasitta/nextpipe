@@ -93,10 +93,10 @@ Oncology_Molecular_Report = { # wgs data MV + adds
 "complexBiomarkers": [{
     "ploidy" : "na",
     "tmb" : wgs_final_page_dict["tmb"]["tmb_status"],
-    "tmb_mutations_Mb" : wgs_final_page_dict["tmb"]["mutations_Mb"],
-    "tmb_Anzahl_Mutationen_missense" : wgs_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
+    "tmb_mutations_Mb" : float(wgs_final_page_dict["tmb"]["mutations_Mb"]),
+    "tmb_Anzahl_Mutationen_missense" : int(wgs_final_page_dict["tmb"]["Anzahl_Mutationen_missense"]),
     "msi_status" : wgs_final_page_dict["msi"]["msi_status"],
-    "msiErgebnis_MSIsensor_pro" : wgs_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"],
+    "msiErgebnis_MSIsensor_pro" : float(wgs_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"]),
     #"HR_deficiency_score_OA" : wgs_final_page_dict["HR_deficiency_score_OA"],
     "hrdHigh" : "na",
     "lstHigh" : "na",
