@@ -22,7 +22,7 @@ args = parser.parse_args()
 #parent_directory = os.path.abspath('.')
 parent_directory = os.path.abspath(args.target_dir_jsons)
 #target_dirs = [f for f in os.listdir(parent_directory) if re.match(r'[0-9]', f)]
-files_DONE = glob.glob(parent_directory + "/*/" + "*_fertig.json", recursive=True)
+files_DONE = glob.glob(parent_directory + "/**/" + "*_fertig.json", recursive=True)
 
 print(files_DONE)
 

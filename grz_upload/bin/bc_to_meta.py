@@ -100,7 +100,8 @@ if args.genomic_study_subtype == "tumor-only" and args.library_type == "wes":
     del mj_data["submission"]["donors"][0]["labData"][0]["sequenceData"]["files"][2]
 
 # in normal-tumor mode - remove vcf
-del mj_data["submission"]["donors"][0]["labData"][tumor_index]["sequenceData"]["files"][2]
+if args.genomic_study_subtype == "tumor+germline" and args.library_type == "wxs":
+    del mj_data["submission"]["donors"][0]["labData"][tumor_index]["sequenceData"]["files"][2]
 
 # grz submission grz
 grz_meta = mj_data["submission"]
