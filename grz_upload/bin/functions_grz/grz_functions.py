@@ -35,6 +35,9 @@ def parse_icdo3_xml(xml_file,code):
                     for label in child[3]:
                         icdo3_text = label.text
 
+            else:
+                icdo3_text = "This code is not a ICD-O-3 code!!!"
+
     else:
         raise ValueError("ICD-O-3 code not valid!")
 
