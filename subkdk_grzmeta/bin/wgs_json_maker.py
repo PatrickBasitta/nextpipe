@@ -230,9 +230,10 @@ for i_nt in index_normal_tumor:
                           ["sampleConservation"] = sampleconservation[i_nt]
 
     # add further labData information
+    sampledate = [wgs_final_page_dict["sampledate_N"], wgs_final_page_dict["sampledate_T"]]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sampleDate"] = ""
+                      ["sampleDate"] = sampledate[i_nt]
 
     #etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
     #                  ["sampleConservation"] = sampleconservation[i_nt]
@@ -256,13 +257,13 @@ for i_nt in index_normal_tumor:
                       ["libraryPrepKitManufacturer"] = gv.wgs_libraryPrepKitManufacturer
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sequencerModel"] = gv.wgs_sequencerModel # or NextSeq550?
+                      ["sequencerModel"] = wgs_final_page_dict["sequencer"] # or NextSeq550?
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequencerManufacturer"] = gv.wgs_sequencerManufacturer # known
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["kitName"] = gv.wgs_kitName
+                      ["kitName"] = wgs_final_page_dict["kit_name"]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["kitManufacturer"] = gv.wgs_kitManufacturer
@@ -273,8 +274,10 @@ for i_nt in index_normal_tumor:
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["enrichmentKitDescription"] = gv.wgs_enrichmentKitDescription
 
+    barcode = [wgs_final_page_dict["barcode_N"], wgs_final_page_dict["barcode_T"]]
+
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["barcode"] = gv.wgs_barcode
+                      ["barcode"] = barcode[i_int]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequencingLayout"] = gv.wgs_sequencingLayout # known
