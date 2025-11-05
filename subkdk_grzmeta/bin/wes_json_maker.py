@@ -94,7 +94,7 @@ Oncology_Molecular_Report = { # wes data MV + adds
     "ploidy" : "na",
     "tmb" : wes_final_page_dict["tmb"]["tmb_status"],
     "tmb_mutations_Mb" : float(wes_final_page_dict["tmb"]["mutations_Mb"]),
-    "tmb_Anzahl_Mutationen_missense" : int(wes_final_page_dict["tmb"]["Anzahl_Mutationen_missense"]),
+    "tmb_Anzahl_Mutationen_missense" : wes_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
     "msi_status" : wes_final_page_dict["msi"]["msi_status"],
     "msiErgebnis_MSIsensor_pro" : float(wes_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"]),
     #"HR_deficiency_score_OA" : wes_final_page_dict["HR_deficiency_score"],
@@ -118,7 +118,7 @@ etl.wes_submission_grz["submission"]["submissionDate"] = "generated upon upload"
 etl.wes_submission_grz["submission"]["submissionType"] = gv.submissionType # test modus
 etl.wes_submission_grz["submission"]["tanG"] = ""
 etl.wes_submission_grz["submission"]["localCaseId"] = ""
-etl.wes_submission_grz["submission"]["coverageType"] = "" # big status liste
+etl.wes_submission_grz["submission"]["coverageType"] = gv.coverageType
 etl.wes_submission_grz["submission"]["submitterId"] = gv.submitterId
 etl.wes_submission_grz["submission"]["genomicDataCenterId"] = gv.genomicDataCenterId
 etl.wes_submission_grz["submission"]["clinicalDataNodeId"] = gv.clinicalDataNodeId
@@ -211,13 +211,13 @@ for i_nt in index_normal_tumor:
                       ["labDataName"] = gv.wes_labDataName[i_nt] #p_data["pathoProId"]
 
     # add info tissue ontology
-    if sampleconservation == "blood":
+    if sampleconservation[i_nt] == "blood" or sampleconservation[i_nt] == "blood ":
         
         etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                           ["tissueOntology"]["name"] = "UBERON"
     
         etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                          ["tissueOntology"]["version"] = "1.5"
+                          ["tissueOntology"]["version"] = "2025-08-15"
 
         etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                           ["tissueTypeId"] = "UBERON:0000178"
@@ -245,9 +245,10 @@ for i_nt in index_normal_tumor:
                           ["sampleConservation"] = sampleconservation[i_nt]
 
     # add further labData information
+    sampledate = [wes_final_page_dict["sampledate_N"], wes_final_page_dict["sampledate_T"]]
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sampleDate"] = ""
+                      ["sampleDate"] = sampledate[i_nt]
 
     #etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
     #                  ["sampleConservation"] = sampleconservation[i_nt]
@@ -271,13 +272,13 @@ for i_nt in index_normal_tumor:
                       ["libraryPrepKitManufacturer"] = gv.wes_libraryPrepKitManufacturer
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sequencerModel"] = gv.wes_sequencerModel # or NextSeq550?
+                      ["sequencerModel"] = wes_final_page_dict["sequencer"] # or NextSeq550?
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequencerManufacturer"] = gv.wes_sequencerManufacturer # known
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["kitName"] = gv.wes_kitName
+                      ["kitName"] = wes_final_page_dict["kit_name"]
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["kitManufacturer"] = gv.wes_kitManufacturer
@@ -288,8 +289,10 @@ for i_nt in index_normal_tumor:
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["enrichmentKitDescription"] = gv.wes_enrichmentKitDescription
 
+    barcode = [wes_final_page_dict["barcode_N"], wes_final_page_dict["barcode_T"]]
+
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["barcode"] = gv.wes_barcode
+                      ["barcode"] = barcode[i_nt]
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequencingLayout"] = gv.wes_sequencingLayout # known

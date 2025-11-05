@@ -301,8 +301,28 @@ def wxs_final_page_to_dict(filepath,excel_file,idx1):
                         
             # entity
             # entity_dict = dict()
-            report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]   
+            # report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]   
             
+            # sampledates
+            report_dict["sampledate_T"] = wxs_page_final.loc[0, "sampledate_T"]
+
+            report_dict["sampledate_N"] = wxs_page_final.loc[0, "sampledate_N"]
+
+            # kit_name
+            report_dict["kit_name"] = wxs_page_final.loc[0, "kit_name"]
+
+            # barcodes
+            report_dict["barcode_T"] = wxs_page_final.loc[0, "barcode_T"]
+
+            report_dict["barcode_N"] = wxs_page_final.loc[0, "barcode_N"]
+
+            # sequencer
+            report_dict["sequencer"] = wxs_page_final.loc[0, "sequencer"]
+
+            # entity
+            # entity_dict = dict()
+            report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]
+
             # cellularity
             report_dict["cellularity"] = float(wxs_page_final.loc[0, "TZ (%)"]) 
             
