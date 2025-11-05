@@ -42,7 +42,7 @@ process process_fastqs {
     conda "bioconda::fastp=1.0.1"
     
     memory = { Math.max(16, (task.attempt * read1.size() * 0.2 / 1000000000).toDouble()) .GB }
-    cpus 16
+    cpus 26
     cache 'lenient'
     errorStrategy { task.exitStatus in 250..253 ? 'terminate' : 'retry' }
     maxRetries 4
@@ -115,7 +115,7 @@ process process_bamfile {
 
     conda "bioconda::samtools=1.22.1"
     cache 'lenient'
-    cpus 8
+    cpus 16
     //memory "8 GB"
 
     input:
