@@ -466,7 +466,7 @@ wgs_json = {
        "entity_excel" : wgs_final_page_dict["entity"],
        "entity_fm": p_data["entity"],
        "molecularReportod" : Oncology_Molecular_Report,
-       "submission_grz" : etl.wgs_submission_grz
+       "submission" : etl.wgs_submission_grz
         }
 
    
