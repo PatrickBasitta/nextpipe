@@ -404,11 +404,11 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
                                                                 def tumor_lst = []
                                                                 // this logic is due that 6 files are expected (3x N, 3x T)
                                                                 (it[1].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normal_lst.add(it[1]) : tumor_lst.add(it[1])
-                                                                (it[2].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normal_lst.add(it[2]) : tumor_lst.add(it[2])
-                                                                (it[3].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normal_lst.add(it[3]) : tumor_lst.add(it[3])
-                                                                (it[4].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normal_lst.add(it[4]) : tumor_lst.add(it[4])
-                                                                (it[5].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normal_lst.add(it[5]) : tumor_lst.add(it[5])
-                                                                (it[6].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normal_lst.add(it[6]) : tumor_lst.add(it[6])
+                                                                (it[2].name.findAll {it.contains('N')} || it[2].name.findAll {it.contains('B')}) ? normal_lst.add(it[2]) : tumor_lst.add(it[2])
+                                                                (it[3].name.findAll {it.contains('N')} || it[3].name.findAll {it.contains('B')}) ? normal_lst.add(it[3]) : tumor_lst.add(it[3])
+                                                                (it[4].name.findAll {it.contains('N')} || it[4].name.findAll {it.contains('B')}) ? normal_lst.add(it[4]) : tumor_lst.add(it[4])
+                                                                (it[5].name.findAll {it.contains('N')} || it[5].name.findAll {it.contains('B')}) ? normal_lst.add(it[5]) : tumor_lst.add(it[5])
+                                                                (it[6].name.findAll {it.contains('N')} || it[6].name.findAll {it.contains('B')}) ? normal_lst.add(it[6]) : tumor_lst.add(it[6])
                                                                 // output                                                                
                                                                 [key,normal_lst,tumor_lst]} | map { it ->
                                                                                               def key_fq = it[0]
