@@ -445,10 +445,10 @@ workflow wgs_ETL_subKDK_grzSubmissionPreparation {
                                                                 def normalbam_lst = []
                                                                 def tumorbam_lst = []
                                                                 // this logic is due that 4 files are expected (2x N, 2x T)
-                                                                (it[1].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normalbam_lst.add(it[1]) : tumorbam_lst.add(it[1])
-                                                                (it[2].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normalbam_lst.add(it[2]) : tumorbam_lst.add(it[2])
-                                                                (it[3].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normalbam_lst.add(it[3]) : tumorbam_lst.add(it[3])
-                                                                (it[4].name.findAll {it.contains('N')} || it[1].name.findAll {it.contains('B')}) ? normalbam_lst.add(it[4]) : tumorbam_lst.add(it[4])
+                                                                (it[1].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[1]) : tumorbam_lst.add(it[1])
+                                                                (it[2].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[2]) : tumorbam_lst.add(it[2])
+                                                                (it[3].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[3]) : tumorbam_lst.add(it[3])
+                                                                (it[4].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[4]) : tumorbam_lst.add(it[4])
                                                                 // output
                                                                 [key,normalbam_lst,tumorbam_lst]} | map { it ->
                                                                                               def key_bam = it[0]
