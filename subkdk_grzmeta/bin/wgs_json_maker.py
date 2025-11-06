@@ -277,7 +277,7 @@ for i_nt in index_normal_tumor:
     barcode = [wgs_final_page_dict["barcode_N"], wgs_final_page_dict["barcode_T"]]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["barcode"] = barcode[i_int]
+                      ["barcode"] = barcode[i_nt]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequencingLayout"] = gv.wgs_sequencingLayout # known
