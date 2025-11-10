@@ -106,153 +106,157 @@ with open(args.patient_data_json, "r") as patient_data:
     p_data = js.load(patient_data)
 
 # submission_grz
-etl.submission_grz["submission"]["submissionDate"] = "generated upon upload" #datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
-etl.submission_grz["submission"]["submissionType"] = gv.submissionType # test modus
-etl.submission_grz["submission"]["tanG"] = "data_from_MVtracker or MwTek"
-etl.submission_grz["submission"]["localCaseId"] = "UUID???"
-etl.submission_grz["submission"]["coverageType"] = "data_from_MVtracker or FileMaker"
-etl.submission_grz["submission"]["submitterId"] = gv.submitterId
-etl.submission_grz["submission"]["genomicDataCenterId"] = gv.genomicDataCenterId
-etl.submission_grz["submission"]["clinicalDataNodeId"] = gv.clinicalDataNodeId
-etl.submission_grz["submission"]["diseaseType"] = gv.diseaseType # assumed
-etl.submission_grz["submission"]["genomicStudyType"] = gv.genomicStudyType # assumed
-etl.submission_grz["submission"]["genomicStudySubtype"] = gv.genomicStudySubtype # assumed due to pancancer analysis
+etl.pan_submission_grz["submission"]["submissionDate"] = "generated upon upload" #datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
+etl.pan_submission_grz["submission"]["submissionType"] = gv.submissionType
+etl.pan_submission_grz["submission"]["tanG"] = ""
+etl.pan_submission_grz["submission"]["localCaseId"] = ""
+etl.pan_submission_grz["submission"]["coverageType"] = gv.coverageType
+etl.pan_submission_grz["submission"]["submitterId"] = gv.submitterId
+etl.pan_submission_grz["submission"]["genomicDataCenterId"] = gv.genomicDataCenterId
+etl.pan_submission_grz["submission"]["clinicalDataNodeId"] = gv.clinicalDataNodeId
+etl.pan_submission_grz["submission"]["diseaseType"] = gv.diseaseType # assumed
+etl.pan_submission_grz["submission"]["genomicStudyType"] = gv.genomicStudyType # assumed
+etl.pan_submission_grz["submission"]["genomicStudySubtype"] = gv.pan_genomicStudySubtype # assumed due to pancancer analysis
 etl.submission_grz["submission"]["labName"] = gv.labName
 
 # add broad consent information
-etl.submission_grz["donors"][0]["donorPseudonym"] = gv.donorPseudonym
-etl.submission_grz["donors"][0]["gender"] = p_data["gender"]
-etl.submission_grz["donors"][0]["relation"] = gv.relation
-etl.submission_grz["donors"][0]["mvConsent"]["presentationDate"] = "data_from_MVtracker"
-etl.submission_grz["donors"][0]["mvConsent"]["version"] = "data_from_MVtracker"
-etl.submission_grz["donors"][0]["mvConsent"]["scope"][0]["type"] = "data_from_MVtracker"
-etl.submission_grz["donors"][0]["mvConsent"]["scope"][0]["date"] = "data_from_MVtracker"
-etl.submission_grz["donors"][0]["mvConsent"]["scope"][0]["domain"] = "data_from_MVtracker"
-etl.submission_grz["donors"][0]["researchConsents"][0]["schemaVersion"] = "data_from_MVtracker"
-etl.submission_grz["donors"][0]["researchConsents"][0]["presentationDate"] = "data_from_MVtracker"
-etl.submission_grz["donors"][0]["researchConsents"][0]["scope"] = "data_from_MVtracker"
+etl.pan_submission_grz["donors"][0]["donorPseudonym"] = gv.donorPseudonym
+etl.pan_submission_grz["donors"][0]["gender"] = p_data["gender"]
+etl.pan_submission_grz["donors"][0]["relation"] = gv.pan_relation
+#etl.pan_submission_grz["donors"][0]["mvConsent"]["presentationDate"] = ""
+#etl.pan_submission_grz["donors"][0]["mvConsent"]["version"] = ""
+#etl.pan_submission_grz["donors"][0]["mvConsent"]["scope"][0]["type"] = ""
+#etl.pan_submission_grz["donors"][0]["mvConsent"]["scope"][0]["date"] = ""
+#etl.pan_submission_grz["donors"][0]["mvConsent"]["scope"][0]["domain"] = ""
+#etl.pan_submission_grz["donors"][0]["researchConsents"][0]["schemaVersion"] = ""
+#etl.pan_submission_grz["donors"][0]["researchConsents"][0]["presentationDate"] = ""
+#etl.pan_submission_grz["donors"][0]["researchConsents"][0]["scope"] = ""
+
 
 # add info to sumbmission_grz - labData
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["labDataName"] = p_data["pathoProId"]
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["labDataName"] = gv.pan_labDataName
 
 # add info tissue ontology
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["tissueOntology"]["name"] = gv.tissueOntology_name
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["tissueOntology"]["name"] = gv.pan_tissueOntology_name
 
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["tissueOntology"]["version"] = gv.tissueOntology_version
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["tissueOntology"]["version"] = gv.pan_tissueOntology_version
 
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["tissueTypeId"] = "data_from_FileMaker_Nexus_view"
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["tissueTypeId"] = ""
 
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["tissueTypeName"] = "from icd03 xml bfarm or FileMaker_nexus_view"
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["tissueTypeName"] = ""
 
 # add further labData information
 
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["sampleDate"] = "date of the probe: FileMaker_nexus_view"
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["sampleDate"] = pan_final_page_dict["sampledate_T"]
 
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["sampleConservation"] = "data_from_finalsheet_excel"
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["sampleConservation"] = pan_final_page_dict["sampleConservation_T"]
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["sequenceType"] = gv.pan_sequenceType # assumed due to pancancer analysis
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["sequenceSubtype"] = gv.pan_sequenceSubtype # assumed due to pancancer analysis
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["fragmentationMethod"] = gv.pan_fragmentationMethod #known
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["libraryType"] = gv.pan_library_type # get from excel as well
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["libraryPrepKit"] = gv.pan_libraryPrepKit
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["libraryPrepKitManufacturer"] = gv.pan_libraryPrepKitManufacturer
 
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["sequencerModel"] = gv.pan_sequencerModel # or NextSeq550?
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["sequencerModel"] = pan_final_page_dict["sequencer"] # or NextSeq550?
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["sequencerManufacturer"] = gv.pan_sequencerManufacturer # known
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["kitName"] = gv.pan_kitName
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["kitManufacturer"] = gv.pan_kitManufacturer
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["enrichmentKitManufacturer"] = gv.pan_enrichmentKitManufacturer
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["enrichmentKitDescription"] = gv.pan_enrichmentKitDescription
 
-etl.submission_grz["donors"][0]["labData"][0]\
-                  ["barcode"] = gv.pan_barcode
+etl.pan_submission_grz["donors"][0]["labData"][0]\
+                  ["barcode"] = pan_final_page_dict["barcode"]
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["sequencingLayout"] = gv.pan_sequencingLayout # known
 
 # add cellularity
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["tumorCellCount"][0]\
                   ["count"] = int(pan_final_page_dict["cellularity"])
 
-etl.submission_grz["donors"][0]["labData"][0]\
+etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["tumorCellCount"][0]\
                   ["method"] = gv.pan_tumorCellCount_method
 
 # add sequenceData info to grz_submission
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["bioinformaticsPipelineName"] = gv.pan_bioinformaticsPipelineName
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["bioinformaticsPipelineVersion"] = gv.pan_bioinformaticsPipelineVersion
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["referenceGenome"] = gv.pan_referenceGenome
 
 # add fastp qc info to submission_grz - "percentBasesAboveQualityThreshold"
 with open(args.fastp_json, "r") as fastp_json:
     fastp_qc = js.load(fastp_json)
 
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+                      ["percentBasesAboveQualityThreshold"]["minimumQuality"] = gv.pan_minimumQuality
+
 reads_q30_rate = round(fastp_qc["summary"]["before_filtering"]["q30_rate"],2) * 100
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
-                  ["percentBasesAboveQualityThreshold"] = round(float(reads_q30_rate),0)
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+                  ["percentBasesAboveQualityThreshold"]["percent"] = round(float(reads_q30_rate),0)
 
 # add bamfile info to submission_grz
 with open(args.bam_json, "r") as bam_json:
     bam_qc = js.load(bam_json)
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["meanDepthOfCoverage"] = round(float(bam_qc["bam_qc"][0]["mean_cov"]),2)
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
-                  ["minCoverage"] = round(float(bam_qc["bam_qc"][0]["min_cov"]),0)
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+                  ["minCoverage"] = gv.pan_minCoverage
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["targetedRegionsAboveMinCoverage"] = float(bam_qc["bam_qc"][0]\
-                                                        ["target_above_mincov"])
+                                                        ["targets_above_mincov"])
 
 # add info of nonCodingVariants and caller information
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["nonCodingVariants"] = gv.pan_nonCodingVariants
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["callerUsed"][0]["name"] = gv.pan_callerUsed_name
 
-etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]\
+etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]\
                   ["callerUsed"][0]["version"] = gv.pan_callerUsed_version
 
 # the relative path of the grz_cli tool is always here sample_id/files/file
-rel_path_grz_cli = args.sample_id+"/files/"
+#rel_path_grz_cli = args.sample_id+"/files/"
 
 #add fastq info to submission_grz
 with open(args.fq_256_json, "r") as fq_256:
@@ -280,25 +284,28 @@ files_dict_cal_concat = {
                         }
 
 indices_reads = [0,1]
-if len(etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
+if len(etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
     # index 0 for read1
     # index 1 for read2
     for index_read in indices_reads:
         print(index_read)
         key, value = list(files_dict_cal_concat.items())[index_read]
 
-        etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
-                          [index_read]["filePath"] = rel_path_grz_cli+files_dict_cal_concat[key]["file"]
-        etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+        etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+                          [index_read]["filePath"] = files_dict_cal_concat[key]["file"]
+        etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                           [index_read]["fileType"] = gv.pan_files_fastq
-        etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+        etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                           [index_read]["checksumType"] = gv.pan_checksumType
-        etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+        etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                           [index_read]["fileChecksum"] = files_dict_cal_concat[key]["fileChecksum"]
-        etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+        etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                           [index_read]["fileSizeInBytes"] = files_dict_cal_concat[key]["fileSizeInBytes"]
-        etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+        etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                           [index_read]["readOrder"] = key
+        etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+                          [index_read]["readLength"] = gv.pan_readLength
+
 
 #add vcf info to submission_grz
 with open(args.vcf_256_json, "r") as vcf_256:
@@ -317,16 +324,16 @@ vcf_size = vcf_bytesize["vcf_bytesize"][0]["fileByteSize"]
 index_vcf = 2
 if len(etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
     # index 2 for vcf
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
-                      [index_vcf]["filePath"] = rel_path_grz_cli+vcf_name
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+                      [index_vcf]["filePath"] = vcf_name
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_vcf]["fileType"] = gv.pan_files_vcf
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_vcf]["checksumType"] = gv.pan_checksumType
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_vcf]["fileChecksum"] = vcf_sha256sum
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
-                      [index_vcf]["fileSizeInBytes"] =  vcf_size
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+                      [index_vcf]["fileSizeInBytes"] =  int(vcf_size)
 
 #add bed info to submission_grz
 with open(args.bed_256_json, "r") as bed_256:
@@ -346,35 +353,36 @@ bed_size = bed_bytesize["bed_bytesize"][0]["fileByteSize"]
 index_bed = 3
 if len(etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
 
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
-                      [index_bed]["filePath"] = rel_path_grz_cli+os.path.basename(bed_name)
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+                      [index_bed]["filePath"] = os.path.basename(bed_name)
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_bed]["fileType"] = gv.pan_files_bed
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_bed]["checksumType"] = gv.pan_checksumType
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_bed]["fileChecksum"] = bed_sha256sum
-    etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
-                      [index_bed]["fileSizeInBytes"] =  bed_size
+    etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
+                      [index_bed]["fileSizeInBytes"] =  int(bed_size)
 
 
 #if patient_id == patient_id_check:
 
 pancancer_json = {
        "analysis" : p_data["analysis"],
+       "mvtracker_uuid" : "",
        "pathoProId": p_data["pathoProId"],
        "nexusId": p_data["nexusId"],
        "molpathId": p_data["molpathId"],
-       "orbisId" :  p_data["orbisId"],
+       "patient_id" :  p_data["orbisId"],
        "firstname":p_data["firstname"],
        "lastame": p_data["lastname"],
        "dateofbrith": p_data["dateofbirth"],
-       "network" : "mv",
+       "network" : pan_final_page_dict["network"],
        "diseaseType" : "oncological",
        "entity_excel" : pan_final_page_dict["entity"],
        "entity_fm": p_data["entity"],
        "molecularReportod" : Oncology_Molecular_Report,
-       "submission_grz" : etl.submission_grz
+       "submission" : etl.pan_submission_grz
         }
     
 with open(args.sample_id + "_submit.json", "w") as file:

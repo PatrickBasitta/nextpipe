@@ -10,7 +10,7 @@ import glob
 # using argparse for positinal arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--target_dir_mvpan", type=str)
-parser.add_argument("-a", "--nextseq_data_dir", type=str)
+#parser.add_argument("-a", "--nextseq_data_dir", type=str)
 parser.add_argument("-c", "--novaseq_data_dir", type=str)
 parser.add_argument("-p", "--pan_ie_dir", type=str)
 parser.add_argument("-x", "--id_xlsx_paths", type=str)
@@ -24,34 +24,40 @@ args = parser.parse_args()
 # target dirs Pan
 #parent_directory = os.path.abspath('.')
 parent_directory = os.path.abspath(args.target_dir_mvpan)
-target_dirs = [f for f in os.listdir(parent_directory) if re.match(r'[0-9]', f)]
+files_DONE_pan = glob.glob(parent_directory + "/" + "*_final_processed_P.xlsx", recursive=True)
 
+# when working with windows file path
+# target_dirs = [f for f in os.listdir(parent_directory) if re.match(r'[0-9]', f)]
 # dirs done
-dirs_done = []
-for dirs in target_dirs:
-       if str(dirs).endswith("_fertig"):
-           dirs_done.append(parent_directory+"/"+dirs)
+# dirs_done = []
+# for dirs in target_dirs:
+#       if str(dirs).endswith("_fertig"):
+#           dirs_done.append(parent_directory+"/"+dirs)
 
 # get all Pan DONE files from target dir(s)
-files_DONE_pan = []
-for date_dirs_done in dirs_done:
-    print(date_dirs_done)
-    for done in os.listdir(date_dirs_done):
-        print(done)
-        if str(done).endswith("_fertig"):
-            check_is_dir = date_dirs_done  + "/" +done
-            if not os.path.isdir(check_is_dir):
-                raise ValueError(f"'{check_is_dir}' is not a directory.")
+#files_DONE_pan = []
+#for date_dirs_done in dirs_done:
+#    print(date_dirs_done)
+#    for done in os.listdir(date_dirs_done):
+#        print(done)
+#        if str(done).endswith("_fertig"):
+#            check_is_dir = date_dirs_done  + "/" +done
+#            if not os.path.isdir(check_is_dir):
+#                raise ValueError(f"'{check_is_dir}' is not a directory.")
+#
+#            paths = glob.glob(date_dirs_done  + "/" + done +  "/*/FINAL_OUTPUT/*_final_processed_P.xlsx")
+#            for path in paths:
+#                files_DONE_pan.append(str(path))
 
-            paths = glob.glob(date_dirs_done  + "/" + done +  "/*/FINAL_OUTPUT/*_final_processed_P.xlsx")
-            for path in paths:
-                files_DONE_pan.append(str(path))
 
 # make id_path_df for json generator
 size_of_df = len(files_DONE_pan)
 id_path_df = pd.DataFrame("", index=list(range(0,size_of_df)),
-                          columns = ["patient_id", "xlsx_path", "fq_R1_path",
-                                     "fq_R2_path", "bam_path", #"bai_path",
+                          columns = ["patient_id",
+                                     "xlsx_path",
+                                     "fq_R1_path",
+                                     "fq_R2_path",
+                                     "bam_path", #"bai_path",
                                      "vcf_path"])
 
 for i, pancancer_file in enumerate(files_DONE_pan):
@@ -60,23 +66,30 @@ for i, pancancer_file in enumerate(files_DONE_pan):
     # get case id and set xlsx_path
     basename = os.path.basename(pancancer_file)
     patient_id = basename.split("_")[0] # get check !!!
-    id_path_df.loc[i,"patient_id"] = str(patient_id)
+
+    # check
+    if basename.count(patient_id) == 1:
+        id_path_df.loc[i,"patient_id"] = str(patient_id)
+    else:
+        raise ValueError(f"Please check the following patient '{patient_id}'")
+
     id_path_df.loc[i,"xlsx_path"] = Path(pancancer_file)
 
     # find fastq.gz files of patient - function
-    raw_data_dir_NextSeq = args.nextseq_data_dir
+    # raw_data_dir_NextSeq = args.nextseq_data_dir
     raw_data_dir_NovaSeq = args.novaseq_data_dir
 
-    fastq_read1_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_1.fq.gz", recursive=True)
-    fastq_read2_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_2.fq.gz", recursive=True)
-    fastq_read1_inNovaSeq = glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*_1.fq.gz", recursive=True)
-    fastq_read2_inNovaSeq= glob.glob(raw_data_dir_NovaSeq+"/**/"+patient_id+"*_2.fq.gz", recursive=True)
+    #fastq_read1_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_1.fq.gz", recursive=True)
+    #fastq_read2_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_2.fq.gz", recursive=True)
+    fastq_read1_inNovaSeq = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*_1.fq.gz", recursive=True)
+    fastq_read2_inNovaSeq= glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*_2.fq.gz", recursive=True)
 
-    if fastq_read1_inNextSeq != [] and fastq_read2_inNextSeq != []:
-        path_fastq_read1 = fastq_read1_inNextSeq
-        path_fastq_read2 = fastq_read2_inNextSeq
+    #if fastq_read1_inNextSeq != [] and fastq_read2_inNextSeq != []:
+    #    path_fastq_read1 = fastq_read1_inNextSeq
+    #    path_fastq_read2 = fastq_read2_inNextSeq
 
-    elif fastq_read1_inNovaSeq != [] and fastq_read2_inNovaSeq != []:
+    #elif
+    if fastq_read1_inNovaSeq != [] and fastq_read2_inNovaSeq != []:
         path_fastq_read1 = fastq_read1_inNovaSeq
         path_fastq_read2 = fastq_read2_inNovaSeq
 
@@ -85,10 +98,10 @@ for i, pancancer_file in enumerate(files_DONE_pan):
 
     # find bamfiles
     bam_file_dir = args.pan_ie_dir
-    if glob.glob(bam_file_dir +"/**/"+patient_id+".bam") != []:
-        bam_file_path = glob.glob(bam_file_dir +"/**/"+patient_id+".bam", recursive=True)
-    elif glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam") != []:
-        bam_file_path = glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam", recursive=True)
+    if glob.glob(bam_file_dir +"/"+patient_id+".bam") != []:
+        bam_file_path = glob.glob(bam_file_dir +"/"+patient_id+".bam", recursive=True)
+    #elif glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam") != []:
+    #    bam_file_path = glob.glob(bam_file_dir +"/**/**/"+patient_id+".bam", recursive=True)
 
     id_path_df.loc[i,"bam_path"] = Path(bam_file_path[0])
     #id_path_df.loc[i,"bai_path"] = Path(bam_file_path[0]+".bai")
@@ -96,10 +109,10 @@ for i, pancancer_file in enumerate(files_DONE_pan):
     # find vcf file PanCancer
     # check that only one file exits! also for fastq / all data
     vcf_files_dir = args.pan_ie_dir
-    if glob.glob( vcf_files_dir  +"/**/"+patient_id+".vcf") != []:
-        vcf_file_path = glob.glob( vcf_files_dir  +"/**/"+patient_id+".vcf", recursive=True)
-    elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf") != []:
-        vcf_file_path = glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf", recursive=True)
+    if glob.glob( vcf_files_dir  +"/"+patient_id+".vcf") != []:
+        vcf_file_path = glob.glob( vcf_files_dir  +"/"+patient_id+".vcf", recursive=True)
+    #elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf") != []:
+    #    vcf_file_path = glob.glob( vcf_files_dir  +"/**/**/"+patient_id+".vcf", recursive=True)
 
     id_path_df.loc[i,"vcf_path"] = Path(vcf_file_path[0])
 

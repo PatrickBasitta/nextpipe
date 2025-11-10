@@ -32,7 +32,7 @@ if status == 200:
     #get_all_records(token)
     get_record_LE = etl.get_record_Leistungserfassung(token,prefix,number,year,"PanCancer DNA")
     #print(get_record_LE)
-    if get_record_LE["response"]["dataInfo"]["foundCount"] == get_record_LE["response"]["dataInfo"]["returnedCount"]:
+    if get_record_LE["response"]["dataInfo"]["foundCount"] == get_record_LE["response"]["dataInfo"]["returnedCount"] and get_record_LE["response"]["dataInfo"]["foundCount"] != 0:
         #print(get_record_LE["response"]["data"][0]["fieldData"])
         firstname = get_record_LE["response"]["data"][0]["fieldData"]["Vorname"]
         lastname = get_record_LE["response"]["data"][0]["fieldData"]["Name"]
@@ -62,7 +62,8 @@ if status == 200:
         if len(set(orbis_id_lst)) == 1:
             orbis_id = set(orbis_id_lst)
         else:
-            raise ValueError("Multiple orbis_ids available!")
+            #raise ValueError("Multiple orbis_ids available!")
+            orbis_id = "?"
         #print(list(orbis_id)[0])
 
         if len(set(gender_lst)) == 1:
@@ -73,9 +74,19 @@ if status == 200:
             else:
                 sex = "unknown"
         else:
-            raise ValueError("Gender is not clear, different entries exist!!!")
+            #raise ValueError("Gender is not clear, different entries exist!!!")
+            sex = "Please check, because different entries exists!!!"
         # be aware: the value "other" is here excluded
         # print(sex)
+    else:
+        analysis = "PanCancer DNA"
+        firstname = ""
+        lastname = ""
+        dob = ""
+        orbis_id = "?"
+        sex = ""
+        entity = ""
+
 
     patient_data = {
                           "analysis": analysis,
