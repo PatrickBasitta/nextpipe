@@ -55,6 +55,13 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
                                         "Consequence": "variantTypes"
                                         })
         
+        # convert np int64 to int
+        variants_to_report= variants_to_report.reset_index(drop="TRUE")
+        variants_to_report["interpretation_int"] = ""
+        for number in range(len(variants_to_report["interpretation"])):
+            variants_to_report.loc[number,"interpretation_int"] = int(variants_to_report.loc\
+                                                                   [number,"interpretation"])
+
         # get final columns to report
         final_data = variants_to_report[["identifier",
                                          "genomicSource",
@@ -70,11 +77,9 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
                                          "alt",
                                          "localization",
                                          "variantTypes",
-                                         "interpretation",
+                                         "interpretation_int",
                                          "LOH"]]
         
-        final_data["interpretation"] = final_data["interpretation"].apply(lambda x: int(x))
-
         # VariantID-generator
         smallVariantId_lst = []
         for i in range(len(final_data)):
@@ -247,18 +252,36 @@ def pan_final_page_to_dict(filepath,excel_file,idx1):
 
             report_dict = dict()
             
+             # network
+            report_dict["network"] = pancancer_page_final.loc[0,"network"]
+           
+            # sampleConservation_T
+            report_dict["sampleConservation_T"] = pancancer_page_final.loc[0,"sampleConservation_T"]
+
+            # sampledates
+            report_dict["sampledate_T"] = pancancer_page_final.loc[0, "sampledate_T"]
+
+            # kit_name
+            report_dict["kit_name"] = pancancer_page_final.loc[0, "kit_name"]
+
             # entity
             # entity_dict = dict()
             report_dict["entity"] = pancancer_page_final.loc[0, "Entitaet"]   
             
+            # barcodes
+            report_dict["barcode_T"] = pancancer_page_final.loc[0, "barcode_T"]
+
             # cellularity
-            report_dict["cellularity"] = pancancer_page_final.loc[0, "TZ"] 
-            
+            report_dict["cellularity"] = pancancer_page_final.loc[0, "TZ (%)"]
+
+            # sequencer
+            report_dict["sequencer"] = pancancer_page_final.loc[0, "sequencer"]
+             
             # Average_coverage
             report_dict["average_coverage"] = pancancer_page_final.loc[0, "Average_coverage"] 
             
             # Coverage>100
-            report_dict["coverage_above100"] = pancancer_page_final.loc[0, "Coverage>100"]
+            report_dict["coverage_above100"] = pancancer_page_final.loc[0, "Coverage>100 (in %)"]
             
             # MSI as dict
             msi = dict()
@@ -361,6 +384,7 @@ def wxs_final_page_to_dict(filepath,excel_file,idx1):
                     
 
 pan_submission_grz = {
+    "$schema": "https://raw.githubusercontent.com/BfArM-MVH/MVGenomseq/refs/tags/v1.2.1/GRZ/grz-schema.json",
     "submission" : {
         "submissionDate" : "",
         "submissionType" : "",
@@ -380,19 +404,27 @@ pan_submission_grz = {
         "gender" : "",
         "relation" : "",
         "mvConsent" : {
-            "presentationDate" : "",
+            #"presentationDate" : "",
             "version" : "",
             "scope" : [{
                 "type" : "",
                 "date" : "",
-                "domain" : ""
-                }],
-            },
-        "researchConsents" : [{
-            "schemaVersion" : "",
-            "presentationDate" : "",
-            "scope" : ""
-            }],
+                "domain" : "mvSequencing"
+                },
+                {
+                "type" : "",
+                "date" : "",
+                "domain" : "reIdentification"
+                },
+                {
+                "type" : "",
+                "date" : "",
+                "domain" : "caseIdentification"
+                }
+            ],
+        },
+        "researchConsents" : [
+        ],
         "labData" : [{
             "labDataName" : "",
             "tissueOntology" : {
@@ -425,7 +457,10 @@ pan_submission_grz = {
                 "bioinformaticsPipelineName" : "",
                 "bioinformaticsPipelineVersion" : "",
                 "referenceGenome" : "",
-                "percentBasesAboveQualityThreshold" : "",
+                "percentBasesAboveQualityThreshold" : {
+                     "minimumQuality": "",
+                     "percent": ""
+                },
                 "meanDepthOfCoverage" : "",
                 "minCoverage" : "",
                 "targetedRegionsAboveMinCoverage" : "",
@@ -441,7 +476,7 @@ pan_submission_grz = {
                     "fileChecksum" : "",
                     "fileSizeInBytes" : "",
                     "readOrder" : "",
-                    #"readLenght" : "",
+                    "readLength" : "",
                     #"flowcellId" : "",
                     #"laneId" : ""
                     },
@@ -452,7 +487,7 @@ pan_submission_grz = {
                     "fileChecksum" : "",
                     "fileSizeInBytes" : "",
                     "readOrder" : "",
-                    #"readLenght" : "",
+                    "readLength" : "",
                     #"flowcellId" : "",
                     #"laneId" : ""
                     },
@@ -463,7 +498,7 @@ pan_submission_grz = {
                     "fileChecksum" : "",
                     "fileSizeInBytes" : ""
                     },
-                    {
+                     {
                     "filePath" : "",
                     "fileType" : "",
                     "checksumType" :"",
@@ -475,7 +510,8 @@ pan_submission_grz = {
     }],
 }
 
-wes_submission_grz = {
+
+wgs_submission_grz = {
     "$schema": "https://raw.githubusercontent.com/BfArM-MVH/MVGenomseq/refs/tags/v1.2.1/GRZ/grz-schema.json",
     "submission" : {
         "submissionDate" : "",
