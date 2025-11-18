@@ -61,7 +61,7 @@ elif "final" in excel_file.sheet_names:
                               
 # write to mv_data - use
 Oncology_Molecular_Report = { # wes data MV + adds
-"smallVariatns" : smallVariatns_records,
+"SmallVariants" : smallVariatns_records,
 "copyNumberVariants" : [{
     "identifier" : "na",
     "genomicSource" : "na",

@@ -53,7 +53,7 @@ elif "final" in excel_file.sheet_names:
                               
 # write to mv_data - use
 Oncology_Molecular_Report = { # pancancer data MV + adds
-"smallVariatns" : smallVariatns_records,
+"SmallVariants" : smallVariatns_records,
 "copyNumberVariants" : [{
     "identifier" : "na",
     "genomicSource" : "na",
@@ -117,10 +117,10 @@ etl.pan_submission_grz["submission"]["clinicalDataNodeId"] = gv.clinicalDataNode
 etl.pan_submission_grz["submission"]["diseaseType"] = gv.diseaseType # assumed
 etl.pan_submission_grz["submission"]["genomicStudyType"] = gv.genomicStudyType # assumed
 etl.pan_submission_grz["submission"]["genomicStudySubtype"] = gv.pan_genomicStudySubtype # assumed due to pancancer analysis
-etl.submission_grz["submission"]["labName"] = gv.labName
+etl.pan_submission_grz["submission"]["labName"] = gv.labName
 
 # add broad consent information
-etl.pan_submission_grz["donors"][0]["donorPseudonym"] = gv.donorPseudonym
+etl.pan_submission_grz["donors"][0]["donorPseudonym"] = gv.pan_donorPseudonym
 etl.pan_submission_grz["donors"][0]["gender"] = p_data["gender"]
 etl.pan_submission_grz["donors"][0]["relation"] = gv.pan_relation
 #etl.pan_submission_grz["donors"][0]["mvConsent"]["presentationDate"] = ""
@@ -168,7 +168,7 @@ etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["fragmentationMethod"] = gv.pan_fragmentationMethod #known
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
-                  ["libraryType"] = gv.pan_library_type # get from excel as well
+                  ["libraryType"] = gv.pan_libraryType # get from excel as well
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["libraryPrepKit"] = gv.pan_libraryPrepKit
@@ -183,7 +183,7 @@ etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["sequencerManufacturer"] = gv.pan_sequencerManufacturer # known
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
-                  ["kitName"] = gv.pan_kitName
+                  ["kitName"] = pan_final_page_dict["kit_name"]
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["kitManufacturer"] = gv.pan_kitManufacturer
@@ -195,7 +195,7 @@ etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["enrichmentKitDescription"] = gv.pan_enrichmentKitDescription
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
-                  ["barcode"] = pan_final_page_dict["barcode"]
+                  ["barcode"] = pan_final_page_dict["barcode_T"]
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["sequencingLayout"] = gv.pan_sequencingLayout # known
@@ -300,7 +300,7 @@ if len(etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"
         etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                           [index_read]["fileChecksum"] = files_dict_cal_concat[key]["fileChecksum"]
         etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
-                          [index_read]["fileSizeInBytes"] = files_dict_cal_concat[key]["fileSizeInBytes"]
+                          [index_read]["fileSizeInBytes"] = int(files_dict_cal_concat[key]["fileSizeInBytes"])
         etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                           [index_read]["readOrder"] = key
         etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
@@ -322,7 +322,7 @@ vcf_sha256sum = vcf_checksum["vcf_checksum"][0]["fileChecksum"]
 vcf_size = vcf_bytesize["vcf_bytesize"][0]["fileByteSize"]
 
 index_vcf = 2
-if len(etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
+if len(etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
     # index 2 for vcf
     etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_vcf]["filePath"] = vcf_name
@@ -351,7 +351,7 @@ bed_sha256sum = bed_checksum["bedfile_checksum"][0]["fileChecksum"]
 bed_size = bed_bytesize["bed_bytesize"][0]["fileByteSize"]
 
 index_bed = 3
-if len(etl.submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
+if len(etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]) == 4:
 
     etl.pan_submission_grz["donors"][0]["labData"][0]["sequenceData"]["files"]\
                       [index_bed]["filePath"] = os.path.basename(bed_name)

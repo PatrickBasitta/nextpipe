@@ -261,6 +261,7 @@ process make_json {
 
     input:
         tuple val(sample_id), path(xlsx), path(fastp_json), path(sha256sum_fqs), path(bytesize_fqs), path(bam_json), path(json_sha256sum_vcf), path(json_bytesize_vcf), path(json_sha256sum_bed), path(json_bytesize_bed), path(patient_data)
+        val(outdir)
   
     output:
         tuple val(sample_id), path("${sample_id}_submit.json"), emit: final_json
@@ -318,6 +319,7 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        pan_IE_dir_ch
        pan_bedfile_ch
        grz_submission_dir_ch
+       outdir_ch
        
        
     main:
@@ -367,7 +369,7 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        // join data for json       
        data_for_json = id_xlsx_ch.join(fq_data,by:0).join(bam_data,by:0).join(joined_vcf_data_bed,by:0).join(patient_data.meta_data,by:0)
        data_for_json.view()
-       make_json(data_for_json)
+       make_json(data_for_json,outdir_ch)
        
 
     //emit:
@@ -386,5 +388,5 @@ workflow {
     grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
     outdir_ch = Channel.value(params.outdir)
 
-    pan_ETL_subKDK_grzSubmissionPreparation(target_dir_mvpan_ch,NovaSeq_data_dir_ch,pan_IE_dir_ch,pan_bedfile_ch,grz_submission_dir_ch)
+    pan_ETL_subKDK_grzSubmissionPreparation(target_dir_mvpan_ch,NovaSeq_data_dir_ch,pan_IE_dir_ch,pan_bedfile_ch,grz_submission_dir_ch,outdir_ch)
 }

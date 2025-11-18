@@ -37,7 +37,6 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
         # add column identifier, genomicSource = "somatic" and LOH
         variants_to_report["identifier"] = ""
         variants_to_report["genomicSource"] = "somatic"
-        #variants_to_report["interpretation"] = ""
         variants_to_report["LOH"] = "not_available"
         
         # rename colums
@@ -58,9 +57,9 @@ def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
         # convert np int64 to int
         variants_to_report= variants_to_report.reset_index(drop="TRUE")
         variants_to_report["interpretation_int"] = ""
-        for number in range(len(variants_to_report["interpretation"])):
+        for number in range(len(variants_to_report["Interpretation"])):
             variants_to_report.loc[number,"interpretation_int"] = int(variants_to_report.loc\
-                                                                   [number,"interpretation"])
+                                                                   [number,"Interpretation"])
 
         # get final columns to report
         final_data = variants_to_report[["identifier",
@@ -286,17 +285,17 @@ def pan_final_page_to_dict(filepath,excel_file,idx1):
             # MSI as dict
             msi = dict()
             msi["msi_status"] = pancancer_page_final.loc[0, "MSI"]
-            msi["msiAnzahlMarkerStabil"] = int(pancancer_page_final.loc\
-                                          [0, "Anzahl_Marker_stabil"])
-            msi["msiAnzahlMarkerInstabil"] = int(pancancer_page_final.loc\
-                                          [0, "Anzahl_Marker_instabil"])
-            msi["msiAnzahlMarkerfail"] = int(pancancer_page_final.loc\
-                                          [0, "Anzahl_Marker_fail"])
+            msi["msiAnzahlMarkerStabil"] = pancancer_page_final.loc\
+                                          [0, "Anzahl_Marker_stabil"]
+            msi["msiAnzahlMarkerInstabil"] = pancancer_page_final.loc\
+                                          [0, "Anzahl_Marker_instabil"]
+            msi["msiAnzahlMarkerfail"] = pancancer_page_final.loc\
+                                          [0, "Anzahl_Marker_fail"]
             report_dict["msi"] = msi    
             # TMB
             tmb = dict()
             tmb["tmb_status"] =  pancancer_page_final.loc[0, "TMB"]
-            tmb["tmb_mutations_Mb"] =  int(pancancer_page_final.loc[0, "mutations_Mb"])
+            tmb["tmb_mutations_Mb"] =  pancancer_page_final.loc[0, "mutations_Mb"]
             report_dict["tmb"] = tmb 
             
             return report_dict
@@ -511,7 +510,7 @@ pan_submission_grz = {
 }
 
 
-wgs_submission_grz = {
+wes_submission_grz = {
     "$schema": "https://raw.githubusercontent.com/BfArM-MVH/MVGenomseq/refs/tags/v1.2.1/GRZ/grz-schema.json",
     "submission" : {
         "submissionDate" : "",
