@@ -79,7 +79,7 @@ if status == 200:
         # be aware: the value "other" is here excluded
         # print(sex)
     else:
-        analysis = "WES"
+        analysis = "WGS"
         firstname = ""
         lastname = ""
         dob = ""
