@@ -267,9 +267,41 @@ process make_json {
 
     output:
         tuple val(sample_id), path("${sample_id}_submit.json"), emit: final_json
+        tuple val(sample_id), path("${sample_id}.log"), emit: id_log
 
     script:
+    def file_names = [
+        "${sample_id}",
+        "${xlsx.getSimpleName()}", 
+        "${fastp_json_normal.getSimpleName()}", 
+        "${sha256sum_fqs_normal.getSimpleName()}", 
+        "${bytesize_fqs_normal.getSimpleName()}", 
+        "${fastp_json_tumor.getSimpleName()}", 
+        "${sha256sum_fqs_tumor.getSimpleName()}", 
+        "${bytesize_fqs_tumor.getSimpleName()}", 
+        "${bam_json_normal.getSimpleName()}", 
+        "${bam_json_tumor.getSimpleName()}", 
+        "${json_sha256sum_vcf.getSimpleName()}", 
+        "${json_bytesize_vcf.getSimpleName()}", 
+        "${patient_data.getSimpleName()}", 
+        "${sha256sum_bed.getSimpleName()}", 
+        "${size_bed.getSimpleName()}"
+        ]
     """
+    id=${file_names[0]}
+  
+    if [[ "\${id}" ==  "${sample_id}" ]]; then
+        for file_name in ${file_names.join(" ")}; do
+            extracted_id=\$(echo \$file_name | cut -d'_' -f1)
+            if [[ "\$extracted_id" != "${sample_id}" ]]; then
+                echo "sample_id \${id} does not match file \$file_name" >> ${sample_id}.log
+                exit 1
+            else
+                echo "sample_id \${id} does match file \$file_name" >> ${sample_id}.log
+            fi
+        done
+    fi
+
     wes_json_maker.py \\
         --sample_id ${sample_id} \\
         --xlsx_path ${xlsx} \\
