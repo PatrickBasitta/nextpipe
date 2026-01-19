@@ -42,7 +42,7 @@ process process_fastqs {
     conda "bioconda::fastp=1.0.1"
     
     memory = { Math.max(16, (task.attempt * read1.size() * 0.2 / 1000000000).toDouble()) .GB }
-    cpus 16
+    //cpus 16
     cache 'lenient'
     errorStrategy { task.exitStatus in 250..253 ? 'terminate' : 'retry' }
     maxRetries 4
@@ -89,7 +89,7 @@ process process_fastqs {
         --in2 ${read2} \\
         --out1 ${read1.getSimpleName()}.fastp_1.fq.gz \\
         --out2 ${read2.getSimpleName()}.fastp_2.fq.gz \\
-        --thread ${task.cpus} \\
+        --thread 8 \\
         --json ${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.json \\
         --html ${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.html \\
         2> >(tee ${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.log >&2)
@@ -115,7 +115,7 @@ process process_bamfile {
 
     conda "bioconda::samtools=1.22.1"
     cache 'lenient'
-    cpus 8
+    //cpus 8
     //memory "8 GB"
 
     input:
@@ -136,7 +136,7 @@ process process_bamfile {
     def  normal_pattern = "N"
     def cmd1 = (sample_name =~ normal_pattern) ? awk1 : awk2
     """ 
-    samtools depth -b ${wes_bedfile} ${bam} --threads ${task.cpus} -o ${bam.getSimpleName()}_depth.stats
+    samtools depth -b ${wes_bedfile} ${bam} --threads 4 -o ${bam.getSimpleName()}_depth.stats
     cat ${bam.getSimpleName()}_depth.stats | ${cmd1} > ${bam.getSimpleName()}_qc_cov.csv
     echo "min_cov,max_cov,mean_cov,targets_above_mincov" > header.csv
     cat  header.csv ${bam.getSimpleName()}_qc_cov.csv | ${awk3} > ${bam.getSimpleName()}_bam_qc.csv
