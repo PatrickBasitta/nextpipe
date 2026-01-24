@@ -102,6 +102,7 @@ process SAM_SORT_BAM {
 }
 
 process SAM_INDEX_AND_DEPTH {
+    
     tag "$sample_ID"
     cpus 16
     memory = { Math.max(16, (task.attempt * sorted_bam.size() * 0.2 / 1000000000).toDouble()) .GB }
@@ -118,6 +119,7 @@ process SAM_INDEX_AND_DEPTH {
         tuple val(sample_ID), path("${sorted_bam.getSimpleName()}_markdup_bam_qc.csv") , emit: bam_qc
         tuple val(sample_ID), path("${sorted_bam.getSimpleName()}_markdup_bam.json"), emit: bam_json
         tuple val(sample_ID), path("${sorted_bam.getSimpleName()}_picard_markdup_duplication_metrics.txt"), emit: picard_metrics
+        tuple val(sample_ID), path("${sorted_bam.getSimpleName()}.mosdepth.summary.txt"), emit: mosdepth_summary
 
     script:
     def awk1 = "awk -v OFS=',' '{sum+=\$4; ++n; if(\$4>=30){c++}} END{print sum/n, c/n}'"
@@ -153,6 +155,30 @@ process SAM_INDEX_AND_DEPTH {
     """
 }
 
+process MOSDEPTH_SUMMARY {
+
+    tag "$sample_ID"
+    cpus 16
+    memory = { Math.max(16, (task.attempt * sorted_bam.size() * 0.2 / 1000000000).toDouble()) .GB }
+    debug true
+
+    publishDir "${params.outdir}/${sample_ID}/3_bamqc", mode: "copy"
+
+    input:
+        tuple val(sample_ID), path(mosdepth_summary)
+
+    output:
+         tuple val(sample_ID), path("${mosdepth_summary.getSimpleName()}_mosdepth_mean.csv"), emit: mosdepth_result
+    
+    script:
+    """
+    mosdepth_summary.py \\
+         --mosdepth_summary ${mosdepth_summary} \\
+         --output ${mosdepth_summary.getSimpleName()}_mosdepth_mean.csv
+    """
+
+}
+
 // Channels
 csv_ch = Channel.fromPath(params.input_csv) | splitCsv(header: true) | map { row-> tuple(row.sampleid, file(row.read1), file(row.read2)) }
 reference_ch = Channel.value(params.reference)
@@ -165,6 +191,7 @@ workflow {
     DECOMPRESS_FASTQ_GZ(FASTP_PAIRED.out.fp_trimmed_reads)
     BWA_MEM(bwa_index,DECOMPRESS_FASTQ_GZ.out.d_fp_trimmed_reads)
     SAM_SORT_BAM(BWA_MEM.out.bam)
-    SAM_INDEX_AND_DEPTH(SAM_SORT_BAM.out.sorted_bam,wes_bedfile_ch,tmpdir_ch)   
+    SAM_INDEX_AND_DEPTH(SAM_SORT_BAM.out.sorted_bam,wes_bedfile_ch,tmpdir_ch)
+    MOSDEPTH_SUMMARY(SAM_INDEX_AND_DEPTH.out.mosdepth_summary)   
 }
 
