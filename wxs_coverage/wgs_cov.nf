@@ -7,6 +7,9 @@ log.info """\
     .stripIndent(true)
 
 process FASTP_PAIRED {
+
+    conda "bioconda::fastp=1.0.1"
+
     tag "$sample_ID"
     cpus 16
     memory = { Math.max(16, (task.attempt * read1.size() * 0.2 / 1000000000).toDouble()) .GB }
@@ -58,6 +61,9 @@ process DECOMPRESS_FASTQ_GZ {
 }
 
 process BWA_MEM {
+
+    conda "bioconda::samtools=1.22.1 bioconda::bwa"
+
     tag "$sample_ID"
     cpus 16
     memory = { Math.max(16, (task.attempt * d_fp_trimmed_read1.size() * 0.2 / 1000000000).toDouble()) .GB }
@@ -82,6 +88,9 @@ process BWA_MEM {
 }
 
 process SAM_SORT_BAM {
+
+    conda "bioconda::samtools=1.22.1"
+
     tag "$sample_ID"
     cpus 8
     memory = { Math.max(16, (task.attempt * bam.size() * 0.2 / 1000000000).toDouble()) .GB }
@@ -102,6 +111,9 @@ process SAM_SORT_BAM {
 }
 
 process SAM_INDEX_AND_DEPTH {
+
+    conda "bioconda::samtools=1.22.1 bioconda::sambamba bioconda::mosdepth bioconda::picard"
+
     tag "$sample_ID"
     cpus 8
     memory = { Math.max(16, (task.attempt * sorted_bam.size() * 0.2 / 1000000000).toDouble()) .GB }
