@@ -52,7 +52,7 @@ process bam_sort_index {
 process bam_qc {
     
     tag "${sorted_bam.getSimpleName()}"
-    cpus { sorted_bam.size() > 35.GB ? 2 : 16 }
+    cpus { sorted_bam.size() > 35.GB ? 4 : 16 }
     memory { sorted_bam.size() > 35.GB ? '64 GB' : '32 GB' }
     //memory = { Math.max(16, (task.attempt * sorted_bam.size() * 0.2 / 1000000000).toDouble()) .GB }
     debug true
@@ -65,7 +65,7 @@ process bam_qc {
     input:
         tuple val(sample_ID), path(sorted_bam), path(sorted_bai)
         val(wes_bedfile)
-        val(tmpdir)
+        //val(tmpdir)
         val(library_type)
         val(grz_bedfile)
 
@@ -80,7 +80,8 @@ process bam_qc {
     //def cmd2 = (sample_name =~ /[normal_pattern]/) ? awk3 : awk4
     """
     # markdup with sambamba
-    sambamba markdup -t ${task.cpus} --tmpdir ${tmpdir} ${sorted_bam} ${sorted_bam.getSimpleName()}_markdup.bam
+    mkdir tmp
+    sambamba markdup -t ${task.cpus} --tmpdir tmp ${sorted_bam} ${sorted_bam.getSimpleName()}_markdup.bam
     # bam QC with samtools
     if [[ "${sample_name}" =~ [NB] && "${library_type}" == "wes" ]]; then
         cov_value=30
@@ -248,7 +249,7 @@ process determine_sex {
         tuple val(sample_ID), path(normal_bam), path(normal_bam_bai), path(tumor_bam), path(tumor_bam_bai)
 
     output:
-        tuple val(sample_ID), path("${tumor_bam.getSimpleName()}_result_determine_sex.txt")
+        tuple val(sample_ID), path("${tumor_bam.getSimpleName()}_result_determine_sex.txt"), emit: gender
 
     script:
 
@@ -281,18 +282,322 @@ process determine_sex {
     """
 }
 
+// ascat obtained from https://github.com/nf-core/modules/blob/master/modules/nf-core/ascat/main.nf and modified
+
+process ascat {
+    tag "${sample_ID}"
+    cpus 8
+
+    conda "bioconda::ascat=3.2.0 bioconda::cancerit-allelecount=4.3.0"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/4c/4cf02c7911ee5e974ce7db978810770efbd8d872ff5ab3462d2a11bcf022fab5/data'
+        : 'community.wave.seqera.io/library/ascat_cancerit-allelecount:c3e8749fa4af0e99'}"
+
+    publishDir "${params.outdir}/${params.library_type}_${sample_ID}/ascat_cnv", mode: "copy"
+
+    input:
+    tuple val(sample_ID), path(input_normal), path(index_normal), path(input_tumor), path(index_tumor), path(gender)
+    path allele_files
+    path loci_files
+    path bed_file
+    path fasta
+    path gc_file
+    path rt_file
+
+    output:
+    tuple val(sample_ID), path("*alleleFrequencies_chr*.txt"), emit: allelefreqs
+    tuple val(sample_ID), path("*BAF.txt"),                    emit: bafs
+    tuple val(sample_ID), path("*cnvs.txt"),                   emit: cnvs
+    tuple val(sample_ID), path("*LogR.txt"),                   emit: logrs
+    tuple val(sample_ID), path("*metrics.txt"),                emit: metrics
+    tuple val(sample_ID), path("*png"),                        emit: png
+    tuple val(sample_ID), path("*purityploidy.txt"),           emit: purityploidy
+    tuple val(sample_ID), path("*segments.txt"),               emit: segments
+    path "versions.yml",                                      emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def prefix = task.ext.prefix ?: "${input_tumor.getSimpleName()}"
+    def gender_file = "${gender}"
+    def genomeVersion = "hg38"
+    def purity = "NULL"
+    def ploidy = "NULL"
+    def gc_input = gc_file            ? "${gc_file}"               : "NULL"
+    def rt_input = rt_file            ? "${rt_file}"               : "NULL"
+    def minCounts = 20
+    def bed_file_arg  = bed_file      ? "BED_file = '${bed_file}',": ""
+    def chrom_names_arg = ""
+    def min_base_qual = 20
+    def min_map_qual = 35
+    """
+    #!/usr/bin/env Rscript
+    library(RColorBrewer)
+    library(ASCAT)
+    options(bitmapType='cairo')
+
+    if(dir.exists("${allele_files}")) {
+        # expected production use of a directory
+        allele_path   = normalizePath("${allele_files}")
+        allele_prefix = paste0(allele_path, "/", "${allele_files}", "_chr")
+    } else if(file.exists("${allele_files}")) {
+        # expected testing use of a single file
+        allele_path   = basename(normalizePath("${allele_files}"))
+        allele_prefix = sub('_chr[0-9]+\\\\.txt\$', "_chr", allele_path)
+    } else {
+        stop("The specified allele files do not exist.")
+    }
+
+    if(length(Sys.glob(paste0(allele_prefix,"*")) ) == 0) {
+        stop(paste("No allele files found matching", allele_prefix))
+    }
+
+    if(dir.exists("${loci_files}")) {
+        # expected production use of a directory
+        loci_path   = normalizePath("${loci_files}")
+        loci_prefix = paste0(loci_path, "/", "${loci_files}", "_chr")
+    } else if(file.exists("${loci_files}")) {
+        # expected testing use of a single file
+        loci_path   = basename(normalizePath("${loci_files}"))
+        loci_prefix = sub('_chr[0-9]+\\\\.txt\$', "_chr", loci_path)
+    } else {
+        stop("The specified loci files do not exist.")
+    }
+
+    if(length(Sys.glob(paste0(loci_prefix,"*")) ) == 0) {
+        stop(paste("No loci files found matching", loci_prefix))
+    }
+
+   # Extract gender
+   sex <- read.table(file="${gender_file}", header=FALSE)
+   if (length(sex) == 1) {
+      if (sex == "female") {
+        gender_value <- "XX"
+      } else if ( sex == "male") {
+        gender_value <- "XY"
+      } else {
+        stop("File contains unexpected content.")
+      }
+    } else {
+      stop("File does not contain exactly one line.")
+    }
+
+   # Prepare from BAM files
+    ascat.prepareHTS(
+        tumourseqfile = "${input_tumor}",
+        normalseqfile = "${input_normal}",
+        tumourname = paste0("${prefix}", ".tumour"),
+        normalname = paste0("${prefix}", ".normal"),
+        allelecounter_exe = "alleleCounter",
+        alleles.prefix = allele_prefix,
+        loci.prefix = loci_prefix,
+        gender = gender_value,
+        genomeVersion = "${genomeVersion}",
+        nthreads = ${task.cpus},
+        minCounts = ${minCounts},
+        min_base_qual = ${min_base_qual},
+        min_map_qual = ${min_map_qual},
+        ${bed_file_arg}
+        seed = 42
+    )
+
+    # Load the data
+    ascat.bc = ascat.loadData(
+        Tumor_LogR_file = paste0("${prefix}", ".tumour_tumourLogR.txt"),
+        Tumor_BAF_file = paste0("${prefix}", ".tumour_tumourBAF.txt"),
+        Germline_LogR_file = paste0("${prefix}", ".tumour_normalLogR.txt"),
+        Germline_BAF_file = paste0("${prefix}", ".tumour_normalBAF.txt"),
+        genomeVersion = "${genomeVersion}",
+        gender = "${gender}"
+    )
+
+    # Plot the raw data
+    ascat.plotRawData(ascat.bc, img.prefix = paste0("${prefix}", ".before_correction."))
+
+    # Optional LogRCorrection
+    if("${gc_input}" != "NULL") {
+
+        if(dir.exists("${gc_input}")) {
+            # sarek production use of an unzipped folder containing one file
+            gc_input = list.files("${gc_input}", recursive = TRUE, full.names = TRUE)
+            if(length(gc_input) != 1 | !file.exists(gc_input)) {
+                stop("A single gc_input should be provided!")
+            }
+        } else if(file.exists("${gc_input}")) {
+            gc_input = normalizePath("${gc_input}")
+        } else {
+            stop("gc_input must be a file or folder containing one file")
+        }
+
+        if("${rt_input}" != "NULL"){
+
+            if(dir.exists("${rt_input}")) {
+                # sarek production use of an unzipped folder containing one file
+                rt_input = list.files("${rt_input}", recursive = TRUE, full.names = TRUE)
+                if(length(rt_input) != 1 | !file.exists(rt_input)) {
+                    stop("A single rt_input should be provided!")
+                }
+            } else if(file.exists("${rt_input}")) {
+                rt_input = normalizePath("${rt_input}")
+            } else {
+                stop("rt_input must be a file or folder containing one file")
+            }
+
+            ascat.bc = ascat.correctLogR(ascat.bc, GCcontentfile = gc_input, replictimingfile = rt_input)
+            # Plot raw data after correction
+            ascat.plotRawData(ascat.bc, img.prefix = paste0("${prefix}", ".after_correction_gc_rt."))
+        }
+        else {
+            ascat.bc = ascat.correctLogR(ascat.bc, GCcontentfile = gc_input, replictimingfile = ${rt_input})
+            # Plot raw data after correction
+            ascat.plotRawData(ascat.bc, img.prefix = paste0("${prefix}", ".after_correction_gc."))
+        }
+    }
+
+    # Segment the data
+    ascat.bc = ascat.aspcf(ascat.bc, seed=42)
+
+    # Plot the segmented data
+    ascat.plotSegmentedData(ascat.bc)
+
+    # Run ASCAT to fit every tumor to a model, inferring ploidy, normal cell contamination,
+    # and discrete copy numbers
+    # If psi and rho are manually set:
+    if (!is.null(${purity}) && !is.null(${ploidy})){
+        ascat.output <- ascat.runAscat(ascat.bc, gamma=1, rho_manual=${purity}, psi_manual=${ploidy})
+    } else if(!is.null(${purity}) && is.null(${ploidy})){
+        ascat.output <- ascat.runAscat(ascat.bc, gamma=1, rho_manual=${purity})
+    } else if(!is.null(${ploidy}) && is.null(${purity})){
+        ascat.output <- ascat.runAscat(ascat.bc, gamma=1, psi_manual=${ploidy})
+    } else {
+        ascat.output <- ascat.runAscat(ascat.bc, gamma=1)
+    }
+
+    # Extract metrics from ASCAT profiles
+    QC = ascat.metrics(ascat.bc,ascat.output)
+
+    # Write out segmented regions (including regions with one copy of each allele)
+    write.table(ascat.output[["segments"]], file=paste0("${prefix}", ".segments.txt"), sep="\t", quote=F, row.names=F)
+
+    # Write out CNVs in bed format
+    cnvs=ascat.output[["segments"]][2:6]
+    write.table(cnvs, file=paste0("${prefix}",".cnvs.txt"), sep="\t", quote=F, row.names=F, col.names=T)
+
+    # Write out purity and ploidy info
+    summary <- tryCatch({
+            matrix(c(ascat.output[["aberrantcellfraction"]], ascat.output[["ploidy"]]), ncol=2, byrow=TRUE)}, error = function(err) {
+                # error handler picks up where error was generated
+                print(paste("Could not find optimal solution:  ",err))
+                return(matrix(c(0,0),nrow=1,ncol=2,byrow = TRUE))
+        }
+    )
+    colnames(summary) <- c("AberrantCellFraction","Ploidy")
+    write.table(summary, file=paste0("${prefix}",".purityploidy.txt"), sep="\t", quote=F, row.names=F, col.names=T)
+
+    write.table(QC, file=paste0("${prefix}", ".metrics.txt"), sep="\t", quote=F, row.names=F)
+
+    # Version export
+    f <- file("versions.yml","w")
+    alleleCounter_version = system(paste("alleleCounter --version"), intern = T)
+    ascat_version = as.character(packageVersion('ASCAT'))
+    writeLines(paste0('"', "${task.process}", '"', ":"), f)
+    writeLines(paste("    ascat:", ascat_version), f)
+    writeLines(paste("    alleleCounter:", alleleCounter_version), f)
+    close(f)
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${sample_ID}"
+    """
+    touch ${prefix}.after_correction.gc_rt.test.tumour.germline.png
+    touch ${prefix}.after_correction.gc_rt.test.tumour.tumour.png
+    touch ${prefix}.before_correction.test.tumour.germline.png
+    touch ${prefix}.before_correction.test.tumour.tumour.png
+    touch ${prefix}.cnvs.txt
+    touch ${prefix}.metrics.txt
+    touch ${prefix}.normal_alleleFrequencies_chr21.txt
+    touch ${prefix}.normal_alleleFrequencies_chr22.txt
+    touch ${prefix}.purityploidy.txt
+    touch ${prefix}.segments.txt
+    touch ${prefix}.tumour.ASPCF.png
+    touch ${prefix}.tumour.sunrise.png
+    touch ${prefix}.tumour_alleleFrequencies_chr21.txt
+    touch ${prefix}.tumour_alleleFrequencies_chr22.txt
+    touch ${prefix}.tumour_normalBAF.txt
+    touch ${prefix}.tumour_normalLogR.txt
+    touch ${prefix}.tumour_tumourBAF.txt
+    touch ${prefix}.tumour_tumourLogR.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bioconductor-ascat: \$(Rscript -e "library(ASCAT); cat(as.character(packageVersion('ASCAT')))")
+        alleleCounter: \$(alleleCounter --version)
+    END_VERSIONS
+    """
+}
+
+process scarhrd {
+
+    tag "${sample_ID}"
+
+    conda "bioconda::r-sequenza=3.0.0=r41h3342da4_4 conda-forge::r-devtools=2.4.5=r41hc72bb7e_1"
+
+    publishDir "${params.outdir}/${params.library_type}_${sample_ID}/scarhrd", mode: "copy"
+
+    input:
+      tuple val(sample_ID), path(segments), path(purityploidy)
+
+    output:
+      path("${segments.getSimpleName()}.tumour_HRDresults.txt"), emit: scarhrd_results
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    library(devtools)
+    install_github('sztup/scarHRD',build_vignettes = TRUE)
+    install_github('aroneklund/copynumber')
+
+    library(data.table)
+    library(scarHRD)
+    # prepare scarHRD input
+    # get segments and ploidy values
+    dt1 <- fread("${segments}", header = TRUE, sep = "\t")
+    dt2 <- fread("${purityploidy}", header = TRUE, sep = "\t")
+    # extract ploidy
+    ploidyValue <- sprintf("%.1f", dt2[[2]][1])
+    # add ploidy to segments file
+    dt1[, ploidyValue := ploidyValue]
+    # calulcate total_cn and add to segments file
+    dt1[, total_cn := nMajor + nMinor]
+    # reorder segments file
+    dt3 <- dt1[, .(sample, chr, startpos, endpos, total_cn, nMajor, nMinor, ploidyValue)]
+    # set new column names for scarHRD
+    setnames(dt3, c("SampleID", "Chromosome", "Start_position", "End_position", "total_cn", "A_cn", "B_cn", "ploidy"))
+    # write scarHRD input file
+    fwrite(dt3, file = "scarhrd_input.csv", sep = "\t", quote = FALSE, col.names = TRUE)
+    # run scarHRD
+    scarHRD_input <- "scarhrd_input.csv"
+    scar_score(scarHRD_input, reference = "grch38", seqz=FALSE, chr.in.names=FALSE)
+    """
+}
+
 workflow postprocessing_wes_custom_oa {
 
     take:
        target_dir_ch
        wes_bedfile_ch
-       tmpdir_ch
+       //tmpdir_ch
        ref_genome_fasta_ch
        ref_genome_fai_ch
        ref_genome_dict_ch
        library_type_ch
        outdir_ch
        grz_bedfile_ch 
+       wes_allele_files_ch
+       wes_loci_files_ch
+       wes_gc_file
+       wes_rt_file
 
     main:
 
@@ -320,7 +625,7 @@ workflow postprocessing_wes_custom_oa {
 
        // BAM QC
        sorted_and_indexed_bam = bam_sort_index(id_bam_qc_ch)
-       bam_qc(sorted_and_indexed_bam.si_bam,wes_bedfile_ch,tmpdir_ch,library_type_ch,grz_bedfile_ch)
+       bam_qc(sorted_and_indexed_bam.si_bam,wes_bedfile_ch,library_type_ch,grz_bedfile_ch)
        //bam_qc.out.filtered_bam.view() 
        // join and sort tumor normal bam
 
@@ -344,7 +649,15 @@ workflow postprocessing_wes_custom_oa {
        msisensor_pro(idx_filtered_bam,ref_genome_fasta_ch)
 
        // Determine sex
-       determine_sex(idx_filtered_bam)                                                  
+       gender = determine_sex(idx_filtered_bam)
+       //gender.view()
+
+       // Ascat and scarHRD
+       idx_filtered_bam_gender = idx_filtered_bam.join(gender, by:0)
+       //idx_filtered_bam_gender.view()
+       ascat(idx_filtered_bam_gender,wes_allele_files_ch,wes_loci_files_ch,wes_bedfile_ch,ref_genome_fasta_ch,wes_gc_file,wes_rt_file)
+       segments_purityploidy = ascat.out.segments.join(ascat.out.purityploidy, by:0)
+       scarhrd(segments_purityploidy)                                                  
 }
 
 workflow {
@@ -352,13 +665,28 @@ workflow {
     // set channels
     target_dir_ch = Channel.fromPath(params.target_dir, type: "dir")
     wes_bedfile_ch = Channel.value(params.wes_bedfile)
-    tmpdir_ch = Channel.value(params.tmpdir)
+    //tmpdir_ch = Channel.value(params.tmpdir)
     ref_genome_fasta_ch = Channel.value(params.ref_genome_fasta)
     ref_genome_fai_ch = Channel.value(params.ref_genome_fai)
     ref_genome_dict_ch = Channel.value(params.ref_genome_dict)
     library_type_ch = Channel.value(params.library_type)
     outdir_ch = Channel.value(params.outdir)
     grz_bedfile_ch = Channel.value(params.grz_bedfile)
+    wes_allele_files_ch = Channel.value(params.wes_allele_files)
+    wes_loci_files_ch = Channel.value(params.wes_loci_files)
+    wes_gc_file = Channel.value(params.wes_gc_file)
+    wes_rt_file = Channel.value(params.wes_rt_file)
 
-    postprocessing_wes_custom_oa(target_dir_ch,wes_bedfile_ch,tmpdir_ch,ref_genome_fasta_ch,ref_genome_fai_ch,ref_genome_dict_ch,library_type_ch,outdir_ch,grz_bedfile_ch)
+    postprocessing_wes_custom_oa(target_dir_ch,
+                                 wes_bedfile_ch,
+                                 ref_genome_fasta_ch,
+                                 ref_genome_fai_ch,
+                                 ref_genome_dict_ch,
+                                 library_type_ch,
+                                 outdir_ch,
+                                 grz_bedfile_ch,
+                                 wes_allele_files_ch,
+                                 wes_loci_files_ch,
+                                 wes_gc_file,
+                                 wes_rt_file)
 }
