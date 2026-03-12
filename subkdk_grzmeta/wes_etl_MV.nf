@@ -113,10 +113,12 @@ process process_bamfile {
     debug true
     //errorStrategy 'ignore'
 
-    conda "bioconda::samtools=1.22.1"
+    conda "bioconda::samtools=1.22.1 bioconda::sambamba bioconda::mosdepth"
     cache 'lenient'
-    //cpus 8
-    //memory "8 GB"
+    cpus { bam.size() > 35.GB ? 8 : 16 }
+    memory { bam.size() > 35.GB ? '64 GB' : '32 GB' }
+
+    publishDir(path: "${params.outdir}/${sample_id}/coverage", mode: "copy")
 
     input:
     tuple val(sample_id), path(bam), path(bai)
@@ -127,6 +129,7 @@ process process_bamfile {
     tuple val(sample_id), path("${bam.getSimpleName()}_depth.stats"), emit: sam_qc
     tuple val(sample_id), path("${bam.getSimpleName()}_bam_qc.csv") , emit: bam_qc
     tuple val(sample_id), path("${bam.getSimpleName()}_bam.json"), emit: bam_json
+    tuple val(sample_id), path("${bam.getSimpleName()}.samtools.depth"), path("${bam.getSimpleName()}.mosdepth.region"), path("${bam.getSimpleName()}.mosdepth.summary"), path("${bam.getSimpleName()}.bamqc")
             
     script:
     def awk1 = "awk -v OFS=',' '{sum+=\$3; ++n; if(\$3>max){max=\$3}; if(\$3<min||min==0){min=\$3};if(\$3>=30){c++}} END{print min, max, sum/n, c/n}'"
@@ -136,10 +139,10 @@ process process_bamfile {
     def  normal_pattern = "N"
     def cmd1 = (sample_name =~ normal_pattern) ? awk1 : awk2
     """ 
-    samtools depth -b ${wes_bedfile} ${bam} --threads 4 -o ${bam.getSimpleName()}_depth.stats
+    samtools depth -b ${wes_bedfile} ${bam} --threads ${task.cpus} -o ${bam.getSimpleName()}_depth.stats
     cat ${bam.getSimpleName()}_depth.stats | ${cmd1} > ${bam.getSimpleName()}_qc_cov.csv
     echo "min_cov,max_cov,mean_cov,targets_above_mincov" > header.csv
-    cat  header.csv ${bam.getSimpleName()}_qc_cov.csv | ${awk3} > ${bam.getSimpleName()}_bam_qc.csv
+    cat header.csv ${bam.getSimpleName()}_qc_cov.csv | ${awk3} > ${bam.getSimpleName()}_bam_qc.csv
     qc_info=\$(cat ${bam.getSimpleName()}_bam_qc.csv)
     bamfile="${bam},"
     full_info=\$bamfile\$qc_info
@@ -150,6 +153,57 @@ process process_bamfile {
                             | (.[] | select(length > 0) | . / ",") as \$input
                             | {"file": \$input[0], "min_cov": \$input[5], "max_cov": \$input[6], "mean_cov": \$input[7], "targets_above_mincov": \$input[8]}]}
                               ' > ${bam.getSimpleName()}_bam.json
+
+    
+    # bam QC with samtools
+    if [[ "${sample_name}" =~ [NB] ]]; then
+        cov_value=30
+    elif [[ "${sample_name}" =~ [T] ]]; then
+        cov_value=100
+    else
+        echo "No matching filename or wrong library_type"
+        exit 1
+    fi
+
+    # markdup with sambamba
+    mkdir tmp
+    sambamba markdup -t ${task.cpus} --tmpdir tmp ${bam} ${bam.getSimpleName()}_markdup.bam
+
+    # bam QC with samtools depth without duplicates 
+    samtools index -@ ${task.cpus} ${bam.getSimpleName()}_markdup.bam -o ${bam.getSimpleName()}_markdup.bam.bai
+    samtools view -b -F 1024 -@ ${task.cpus} ${bam.getSimpleName()}_markdup.bam > filtered_${bam.getSimpleName()}_markdup.bam
+    samtools depth -b ${wes_bedfile} -aa -@ ${task.cpus} -s filtered_${bam.getSimpleName()}_markdup.bam > filtered_${bam.getSimpleName()}_markdup.depth
+    cat  filtered_${bam.getSimpleName()}_markdup.depth | awk -v OFS=',' -v threshold=\$cov_value '{sum+=\$3; ++n; if(\$3>=threshold){c++}} END {print sum/n, c/n}' > filtered_${bam.getSimpleName()}_markdup.cov
+
+    # prepare output samtools depth
+    echo "file,mean_cov,targets_above_mincov" > bamqc_header.csv
+    sam_results=\$(cat filtered_${bam.getSimpleName()}_markdup.cov)
+    sam_file=\$(echo "samtools_depth")
+    sam_file_results=\$(echo \$sam_file,\$sam_results)
+    echo \$sam_file_results > sam_file_results.csv
+    cat bamqc_header.csv sam_file_results.csv > ${bam.getSimpleName()}.samtools.depth
+
+    # bam QC with mosdepth (for comparison)
+    mosdepth --by ${wes_bedfile} ${bam.getSimpleName()}_markdup ${bam.getSimpleName()}_markdup.bam
+    zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk '{len = \$3 - \$2; sum += len * \$4; total += len} END {print sum/total}' > ${bam.getSimpleName()}.mosdepth.depth
+    zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk -v mincov=\$cov_value '{len = \$3 - \$2; total += len; if (\$4 >= mincov) covered += len} END {print (covered/total)}' > ${bam.getSimpleName()}.mosdepth.ontargets
+    paste -d',' ${bam.getSimpleName()}.mosdepth.depth ${bam.getSimpleName()}.mosdepth.ontargets > ${bam.getSimpleName()}.mosdepth.region
+    cat ${bam.getSimpleName()}_markdup.mosdepth.summary.txt | awk '\$1=="total_region" {print \$4}' > ${bam.getSimpleName()}.mosdepth.summary
+
+    # prepare output mosdepth region
+    mosdepth_region_results=\$(cat ${bam.getSimpleName()}.mosdepth.region)
+    mosdepth_region_file=\$(echo "mosdepth_region")
+    mosdepth_region_file_results=\$(echo \$mosdepth_region_file,\$mosdepth_region_results)
+    echo \$mosdepth_region_file_results > mosdepth_region_file_results.csv
+    # prepare output mosdepth summary
+    mosdepth_summary_results=\$(cat ${bam.getSimpleName()}.mosdepth.summary)
+    mosdepth_summary_file=\$(echo "mosdepth_summary")
+    mosdepth_summary_file_results=\$(echo \$mosdepth_summary_file,\$mosdepth_summary_results)
+    echo \$mosdepth_summary_file_results > mosdepth_summary_file_results.csv
+    # join results   
+    cat ${bam.getSimpleName()}.samtools.depth  >> ${bam.getSimpleName()}.bamqc
+    cat mosdepth_region_file_results.csv >> ${bam.getSimpleName()}.bamqc
+    cat mosdepth_summary_file_results.csv >> ${bam.getSimpleName()}.bamqc 
     """
 }
 
@@ -292,7 +346,7 @@ process make_json {
   
     if [[ "\${id}" ==  "${sample_id}" ]]; then
         for file_name in ${file_names.join(" ")}; do
-            extracted_id=\$(echo \$file_name | cut -d'_' -f1)
+            extracted_id=\$(echo \$file_name | cut -d'_' -f1 | cut -d'-' -f1-2)
             if [[ "\$extracted_id" != "${sample_id}" ]]; then
                 echo "sample_id \${id} does not match file \$file_name" >> ${sample_id}.log
                 exit 1
