@@ -63,23 +63,57 @@ print(uuid_block)
 if pid == str(uuid_block[0]["patient_id"]):
     uuid = uuid_block[0]["process_id"]
 else:
-    raise ValueError("UUIDs do not match!!!")
+    raise ValueError("PIDs do not match!!!")
 
 # add uuid
 mj_data["mvtracker_uuid"] = uuid
 mj_data["submission"]["submission"]["localCaseId"] = uuid
-mj_data["submission"]["donors"][0]["donorPseudonym"] = uuid
+#mj_data["submission"]["donors"][0]["donorPseudonym"] = uuid
+
+# get tanG
+if pid == str(uuid_block[0]["patient_id"]):
+    vn = uuid_block[0]["kvnr"]
+else:
+    raise ValueError("PIDs do not match!!!")
+
+#grz_data_center
+vn_url = gv.url_vn
+vn_url_grz_knvr_uuid = vn_url+vn+"&an="+uuid
+vn_block = grz.get_vn(vn_url_grz_knvr_uuid)
+
+if vn_block["success"]:
+    tang = vn_block["vn"]
+else:
+    raise valueError("response error")
+
+mj_data["submission"]["submission"]["tanG"] = tang
 
 # add icd-o-3
-tumor_index = 1
-xml_file = args.icdo3_xml
-#print(xml_file)
-code = mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeId"]
-#print(code)
-icdo3_txt = grz.parse_icdo3_xml(xml_file,code)
-mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeName"] = icdo3_txt
+if args.genomic_study_subtype == "tumor+germline" or args.genomic_study_subtype == "tumor-only" and args.library_type == "wxs":
+    tumor_index = 1
+    xml_file = args.icdo3_xml
+    #print(xml_file)
+    code = mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeId"]
+    #print(code)
+    icdo3_txt = grz.parse_icdo3_xml(xml_file,code)
+    mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeName"] = icdo3_txt
 
-# add tanG?
+if args.genomic_study_subtype == "tumor-only" and args.library_type == "panel":
+    xml_file = args.icdo3_xml
+    #print(xml_file)
+    code = mj_data["submission"]["donors"][0]["labData"][0]["tissueTypeId"]
+    #print(code)
+    icdo3_txt = grz.parse_icdo3_xml(xml_file,code)
+    mj_data["submission"]["donors"][0]["labData"][0]["tissueTypeName"] = icdo3_txt
+
+if args.genomic_study_subtype == "tumor-only" and args.library_type == "wxs":
+    tumor_index = 1
+    xml_file = args.icdo3_xml
+    #print(xml_file)
+    code = mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeId"]
+    #print(code)
+    icdo3_txt = grz.parse_icdo3_xml(xml_file,code)
+    mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeName"] = icdo3_txt
 
 # patho meta - all
 patho_meta = mj_data
@@ -94,14 +128,21 @@ with open(args.sample_id + "_patho_meta.json", "w") as file:
 # grz meta - submission
 # removes labData[0] == normal part
 # removes vcf file at index file[2]
-if args.genomic_study_subtype == "tumor-only" and args.library_type == "wes":
+if args.genomic_study_subtype == "tumor-only" and args.library_type == "wxs":
     del mj_data["submission"]["donors"][0]["labData"][0]
     # tumor index 0 in tumor-only mode - remove vcf
     del mj_data["submission"]["donors"][0]["labData"][0]["sequenceData"]["files"][2]
 
 # in normal-tumor mode - remove vcf
 if args.genomic_study_subtype == "tumor+germline" and args.library_type == "wxs":
+    normal_index = 0
+    tumor_index =1
+    del mj_data["submission"]["donors"][0]["labData"][normal_index]["sequenceData"]["files"][2]
     del mj_data["submission"]["donors"][0]["labData"][tumor_index]["sequenceData"]["files"][2]
+
+# in tumor-only and panel mode - remove vcf
+if args.genomic_study_subtype == "tumor-only" and args.library_type == "panel":
+    del mj_data["submission"]["donors"][0]["labData"][0]["sequenceData"]["files"][2]
 
 # grz submission grz
 grz_meta = mj_data["submission"]
