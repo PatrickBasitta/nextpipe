@@ -26,6 +26,8 @@ process add_bc_uuid_icdo3 {
     debug true
     cache 'lenient'
 
+    maxForks 1
+
     secret 'PASSWORD'
     secret 'USERNAME'
     secret 'ca_cert'
@@ -66,7 +68,7 @@ process grz_validate_encrypt {
     debug true
     cache 'lenient'
 
-    conda "bioconda::grz-cli" 
+    conda "bioconda::grz-cli=1.3.1 bioconda::grz-common=1.3.1 bioconda::grz-pydantic-models=2.3.1" 
 
     input:
         tuple val(sample_id), path(metadata)
