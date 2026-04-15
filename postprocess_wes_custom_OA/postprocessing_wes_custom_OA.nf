@@ -52,7 +52,7 @@ process bam_sort_index {
 process bam_qc {
     
     tag "${sorted_bam.getSimpleName()}"
-    cpus { sorted_bam.size() > 35.GB ? 4 : 16 }
+    cpus { sorted_bam.size() > 35.GB ? 8 : 16 }
     memory { sorted_bam.size() > 35.GB ? '64 GB' : '32 GB' }
     //memory = { Math.max(16, (task.attempt * sorted_bam.size() * 0.2 / 1000000000).toDouble()) .GB }
     debug true
@@ -282,6 +282,43 @@ process determine_sex {
     """
 }
 
+process extract_purple_gender {
+
+    tag "${sample_ID}"
+    errorStrategy 'retry'
+
+    cpus 1
+    memory "2 GB"
+
+    publishDir "${params.outdir}/${params.library_type}_${sample_ID}/coverage", mode: "copy"
+
+    input:
+        tuple val(sample_ID), path(purple_qc)
+
+    output:
+        tuple val(sample_ID), path("${purple_qc.getSimpleName()}_result_purple_sex.txt"), emit: purple_gender
+        
+    script:
+    """
+    ambergender=\$(awk -F'\t' '\$1=="AmberGender" {print \$2}' ${purple_qc})
+    cobaltgender=\$(awk -F'\t' '\$1=="CobaltGender" {print \$2}' ${purple_qc})
+
+    if [[ "\$ambergender" == "\$cobaltgender" ]]; then
+        if [[ "\$ambergender" == "FEMALE" ]]; then
+            echo "female" > ${purple_qc.getSimpleName()}_result_purple_sex.txt           
+        elif [[ "\$ambergender" == "MALE" ]]; then
+            echo "male" > ${purple_qc.getSimpleName()}_result_purple_sex.txt            
+        else
+            echo "\$ambergender is neither female nor male!"
+            exit 1
+        fi
+    else
+        echo "\$ambergender does not match \$cobaltgender"
+        exit 1
+    fi
+    """
+}
+
 // ascat obtained from https://github.com/nf-core/modules/blob/master/modules/nf-core/ascat/main.nf and modified
 
 process ascat {
@@ -296,7 +333,7 @@ process ascat {
     publishDir "${params.outdir}/${params.library_type}_${sample_ID}/ascat_cnv", mode: "copy"
 
     input:
-    tuple val(sample_ID), path(input_normal), path(index_normal), path(input_tumor), path(index_tumor), path(gender)
+    tuple val(sample_ID), path(input_normal), path(index_normal), path(input_tumor), path(index_tumor), path(purple_gender)
     path allele_files
     path loci_files
     path bed_file
@@ -320,7 +357,9 @@ process ascat {
 
     script:
     def prefix = task.ext.prefix ?: "${input_tumor.getSimpleName()}"
-    def gender_file = "${gender}"
+    //def gender_value = file("${gender}").readLines().first()
+    def gender_file = "${purple_gender}"
+    //def gender_value = file(gender_file).readLines().first()
     def genomeVersion = "hg38"
     def purity = "NULL"
     def ploidy = "NULL"
@@ -409,7 +448,7 @@ process ascat {
         Germline_LogR_file = paste0("${prefix}", ".tumour_normalLogR.txt"),
         Germline_BAF_file = paste0("${prefix}", ".tumour_normalBAF.txt"),
         genomeVersion = "${genomeVersion}",
-        gender = "${gender}"
+        gender = gender_value
     )
 
     # Plot the raw data
@@ -619,9 +658,7 @@ workflow postprocessing_wes_custom_oa {
        id_bam_qc_ch.view()
 
        // channel purple
-       //id_purple_chord_ch = extract_id_bam_filepath.out.id_purple | splitCsv(header: true) | map { row -> [row.patient_id,file(row.purple_snv),file(row.purple_sv)]}
-     
-       //id_purple_chord_ch.view()
+       id_purple_qc_ch = extract_id_bam_filepath.out.id_purple | splitCsv(header: true) | map { row -> [row.patient_id,file(row.purple_qc)]}
 
        // BAM QC
        sorted_and_indexed_bam = bam_sort_index(id_bam_qc_ch)
@@ -629,7 +666,7 @@ workflow postprocessing_wes_custom_oa {
        //bam_qc.out.filtered_bam.view() 
        // join and sort tumor normal bam
 
-       // Prepare fpr msisensor pro
+       // Prepare for msisensor pro
        joined_bams = bam_qc.out.filtered_bam.groupTuple() 
        //joined_bams.view()
        sorted_joined_bams = joined_bams.map { id, files ->
@@ -648,15 +685,19 @@ workflow postprocessing_wes_custom_oa {
        // Msisensor pro
        msisensor_pro(idx_filtered_bam,ref_genome_fasta_ch)
 
-       // Determine sex
-       gender = determine_sex(idx_filtered_bam)
+       // Determine sex has to be fixed !
+       // gender = determine_sex(idx_filtered_bam)
        //gender.view()
 
+       // Extract gender from purple_qc
+       gender_purple = extract_purple_gender(id_purple_qc_ch)
+
        // Ascat and scarHRD
-       idx_filtered_bam_gender = idx_filtered_bam.join(gender, by:0)
-       //idx_filtered_bam_gender.view()
+       idx_filtered_bam_gender = idx_filtered_bam.join(gender_purple, by:0)
+       idx_filtered_bam_gender.view()
        ascat(idx_filtered_bam_gender,wes_allele_files_ch,wes_loci_files_ch,wes_bedfile_ch,ref_genome_fasta_ch,wes_gc_file,wes_rt_file)
        segments_purityploidy = ascat.out.segments.join(ascat.out.purityploidy, by:0)
+       segments_purityploidy.view()
        scarhrd(segments_purityploidy)                                                  
 }
 
