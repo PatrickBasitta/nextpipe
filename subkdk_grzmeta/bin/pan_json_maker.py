@@ -7,7 +7,7 @@ import json as js
 import functions_etl.MVdataset_generator_utils as etl
 import functions_etl.global_variables as gv
 import requests
-#import datetime
+import datetime
 
 # using argparse for positinal arguments
 parser = argparse.ArgumentParser()
@@ -84,9 +84,9 @@ Oncology_Molecular_Report = { # pancancer data MV + adds
     }],
 "complexBiomarkers": [{
     "ploidy" : "na",
-    "tmb" : pan_final_page_dict["tmb"]["tmb_status"],
-    "tmb_mutations_Mb" : pan_final_page_dict["tmb"]["tmb_mutations_Mb"],
-    "msi_status" : pan_final_page_dict["msi"]["msi_status"],
+    "tmb" : str(pan_final_page_dict["tmb"]["tmb_status"]),
+    "tmb_mutations_Mb" : float(pan_final_page_dict["tmb"]["tmb_mutations_Mb"]),
+    "msi_status" : str(pan_final_page_dict["msi"]["msi_status"]),
     "msiAnzahlMarkerStabil" : pan_final_page_dict["msi"]["msiAnzahlMarkerStabil"],
     "msiAnzahlMarkerInstabil" : pan_final_page_dict["msi"]["msiAnzahlMarkerInstabil"],
     "msiAnzahlMarkerfail" : pan_final_page_dict["msi"]["msiAnzahlMarkerfail"],
@@ -106,7 +106,7 @@ with open(args.patient_data_json, "r") as patient_data:
     p_data = js.load(patient_data)
 
 # submission_grz
-etl.pan_submission_grz["submission"]["submissionDate"] = "generated upon upload" #datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
+etl.pan_submission_grz["submission"]["submissionDate"] = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
 etl.pan_submission_grz["submission"]["submissionType"] = gv.submissionType
 etl.pan_submission_grz["submission"]["tanG"] = ""
 etl.pan_submission_grz["submission"]["localCaseId"] = ""

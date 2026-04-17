@@ -9,7 +9,7 @@ import functions_etl.global_variables as gv
 import requests
 import re
 import math
-#import datetime
+import datetime
 
 # using argparse for positinal arguments
 parser = argparse.ArgumentParser()
@@ -157,7 +157,7 @@ with open(args.patient_data_json, "r") as patient_data:
     p_data = js.load(patient_data)
 
 # submission_grz
-etl.wes_submission_grz["submission"]["submissionDate"] = "generated upon upload" #datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
+etl.wes_submission_grz["submission"]["submissionDate"] = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
 etl.wes_submission_grz["submission"]["submissionType"] = gv.submissionType # test modus
 etl.wes_submission_grz["submission"]["tanG"] = ""
 etl.wes_submission_grz["submission"]["localCaseId"] = ""
@@ -171,7 +171,7 @@ etl.wes_submission_grz["submission"]["genomicStudySubtype"] = gv.wxs_genomicStud
 etl.wes_submission_grz["submission"]["labName"] = gv.labName
 
 # add broad consent information
-etl.wes_submission_grz["donors"][0]["donorPseudonym"] = ""
+etl.wes_submission_grz["donors"][0]["donorPseudonym"] = gv.wes_donorPseudonym
 etl.wes_submission_grz["donors"][0]["gender"] = p_data["gender"]
 etl.wes_submission_grz["donors"][0]["relation"] = gv.wes_relation
 #etl.wes_submission_grz["donors"][0]["mvConsent"]["presentationDate"] = ""

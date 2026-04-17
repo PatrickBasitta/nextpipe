@@ -41,7 +41,7 @@ process process_fastqs {
     conda "bioconda::fastp=1.0.1"
 
     memory = { Math.max(16, (task.attempt * read1.size() * 0.2 / 1000000000).toDouble()) .GB }
-    cpus 16
+    cpus 8
     cache 'lenient'
     errorStrategy { task.exitStatus in 250..253 ? 'terminate' : 'retry' }
     maxRetries 4
@@ -53,8 +53,7 @@ process process_fastqs {
     output:
         //tuple val(sample_id), path("${sample_id}_fq_sha256sum.json")        , emit: sha256sum_fqs
         //tuple val(sample_id), path("${sample_id}_fq_bytesize.json")         , emit: bytesize_fqs
-        //tuple val(sample_id), path("${read1.getSimpleName()}.fastp_1.fq.gz"), emit: fastp_1_fq
-        //tuple val(sample_id), path("${read2.getSimpleName()}.fastp_2.fq.gz"), emit: fastp_2_fq
+        tuple val(sample_id), path("${read1.getSimpleName()}.fastp_1.fq.gz"), path("${read2.getSimpleName()}.fastp_2.fq.gz"), emit: fq_trimmed_reads
         //tuple val(sample_id), path("${sample_id}.merged.fastq.gz"          ), emit: fastp_merged_fq
         //tuple val(sample_id), path("${sample_id}.fastp.json")               , emit: fastp_json
         //tuple val(sample_id), path("${sample_id}.fastp.html"),                emit: fastp_html
@@ -107,16 +106,63 @@ process process_fastqs {
     """
 }
 
+process postprocess_fastqs {
+    
+    tag "${sample_id}"
+    cpus 16
+    memory = { Math.max(16, (task.attempt * fp_trimmed_read1.size() * 0.2 / 1000000000).toDouble()) .GB }
+    debug true
+
+    input:
+        tuple val(sample_id), path(fp_trimmed_read1), path(fp_trimmed_read2)
+        val(grz_submission_dir)
+
+    output:
+        tuple val(sample_id), path("d_fp_trimmed_${fp_trimmed_read1.getSimpleName()}_1.fq"), path("d_fp_trimmed_${fp_trimmed_read2.getSimpleName()}_2.fq"), emit: d_fp_trimmed_reads
+    
+    script:
+    """
+    gzip -dc ${fp_trimmed_read1} > d_fp_trimmed_${fp_trimmed_read1.getSimpleName()}_1.fq
+    gzip -dc ${fp_trimmed_read2} > d_fp_trimmed_${fp_trimmed_read2.getSimpleName()}_2.fq
+    """
+}
+
+process bwa_mem {
+ 
+    tag "${sample_id}"
+    cpus 16
+    memory = { Math.max(16, (task.attempt * d_fp_trimmed_read1.size() * 0.2 / 1000000000).toDouble()) .GB }
+    debug true
+    
+    conda "bioconda::bwa bioconda::samtools=1.22.1"
+
+    input:
+        path(reference)
+        tuple val(sample_id), path(d_fp_trimmed_read1), path(d_fp_trimmed_read2)
+        val(grz_submission_dir)
+   
+    output:
+        tuple val(sample_id), path("${d_fp_trimmed_read1.getSimpleName()}.bam"), emit: bwa_mem_bam
+     
+    script:
+    def idxbase = reference[0].baseName
+    """
+    bwa mem -t ${task.cpus} ${idxbase} ${d_fp_trimmed_read1} ${d_fp_trimmed_read2} | samtools view -Shb -o ./${d_fp_trimmed_read1.getSimpleName()}.bam
+    """
+}
+
 process process_bamfile {
 
     tag "${sample_id}"
     debug true
     //errorStrategy 'ignore'
 
-    conda "bioconda::samtools=1.22.1"
+    conda "bioconda::samtools=1.22.1 bioconda::sambamba bioconda::mosdepth"
     cache 'lenient'
     cpus 8
     //memory "8 GB"
+
+    publishDir(path: "${params.outdir}/${sample_id}/coverage", mode: "copy")
 
     input:
     tuple val(sample_id), path(bam)
@@ -126,12 +172,14 @@ process process_bamfile {
     output:
     tuple val(sample_id), path("${bam.getSimpleName()}_depth.stats"), emit: sam_qc
     tuple val(sample_id), path("${bam.getSimpleName()}_bam_qc.csv") , emit: bam_qc
-    tuple val(sample_id), path("${bam.getSimpleName()}_bam.json")   , emit: bam_json
+    tuple val(sample_id), path("${bam.getSimpleName().replaceFirst('^d_fp_trimmed_', '')}_bam.json")   , emit: bam_json
+    tuple val(sample_id), path("${bam.getSimpleName()}.samtools.depth"), path("${bam.getSimpleName()}.mosdepth.region"), path("${bam.getSimpleName()}.mosdepth.summary"), path("${bam.getSimpleName()}.bamqc")
                 
     script:
     def awk1 = "awk -v OFS=',' '{sum+=\$3; ++n; if(\$3>max){max=\$3}; if(\$3<min||min==0){min=\$3};if(\$3>=100){c++}} END{print min, max, sum/n, c/n}'" 
     def awk2 = "awk -v OFS=',' '{num=num?num OFS s1 \$1 s1:s1 \$1 s1} {file=file?file OFS s1 \$2 s1:s1 \$2 s1} END{print num file}'"
-    """   
+    """
+    #samtools view -h ${bam} | samtools view -b -o fixed_${bam}   
     samtools sort ${bam} -o sorted_${bam}
     samtools index sorted_${bam} sorted_${bam}.bai
     samtools depth -b ${pan_bedfile} sorted_${bam} --threads ${task.cpus} -o ${bam.getSimpleName()}_depth.stats
@@ -147,8 +195,52 @@ process process_bamfile {
                             | . / "\n"
                             | (.[] | select(length > 0) | . / ",") as \$input
                             | {"file": \$input[0], "min_cov": \$input[5], "max_cov": \$input[6], "mean_cov": \$input[7], "targets_above_mincov": \$input[8]}]}
-                              ' > ${bam.getSimpleName()}_bam.json
-    
+                              ' > ${bam.getSimpleName().replaceFirst('^d_fp_trimmed_', '')}_bam.json
+
+    # markdup with sambamba
+    mkdir tmp
+    sambamba markdup -t ${task.cpus} --tmpdir tmp sorted_${bam} ${bam.getSimpleName()}_markdup.bam
+    #picard MarkDuplicates \\
+    #    -I sorted_${bam} \\
+    #    -O ${bam.getSimpleName()}_markdup.bam \\
+    #    -M ${bam.getSimpleName()}_markdup_metrics.txt \\
+    #    --TMP_DIR tmp 
+
+    # bam QC with samtools depth without duplicates 
+    samtools index -@ ${task.cpus} ${bam.getSimpleName()}_markdup.bam -o ${bam.getSimpleName()}_markdup.bam.bai
+    samtools view -b -F 1024 -@ ${task.cpus} ${bam.getSimpleName()}_markdup.bam > filtered_${bam.getSimpleName()}_markdup.bam
+    samtools depth -b ${pan_bedfile} -aa -@ ${task.cpus} -s filtered_${bam.getSimpleName()}_markdup.bam > filtered_${bam.getSimpleName()}_markdup.depth
+    cat  filtered_${bam.getSimpleName()}_markdup.depth | awk -v OFS=',' -v threshold=100 '{sum+=\$3; ++n; if(\$3>=threshold){c++}} END {print sum/n, c/n}' > filtered_${bam.getSimpleName()}_markdup.cov
+
+    # prepare output samtools depth
+    echo "file,mean_cov,targets_above_mincov" > bamqc_header.csv
+    sam_results=\$(cat filtered_${bam.getSimpleName()}_markdup.cov)
+    sam_file=\$(echo "samtools_depth")
+    sam_file_results=\$(echo \$sam_file,\$sam_results)
+    echo \$sam_file_results > sam_file_results.csv
+    cat bamqc_header.csv sam_file_results.csv > ${bam.getSimpleName()}.samtools.depth
+
+    # bam QC with mosdepth (for comparison)
+    mosdepth --by ${pan_bedfile} ${bam.getSimpleName()}_markdup ${bam.getSimpleName()}_markdup.bam
+    zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk '{len = \$3 - \$2; sum += len * \$4; total += len} END {print sum/total}' > ${bam.getSimpleName()}.mosdepth.depth
+    zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk -v mincov=100 '{len = \$3 - \$2; total += len; if (\$4 >= mincov) covered += len} END {print (covered/total)}' > ${bam.getSimpleName()}.mosdepth.ontargets
+    paste -d',' ${bam.getSimpleName()}.mosdepth.depth ${bam.getSimpleName()}.mosdepth.ontargets > ${bam.getSimpleName()}.mosdepth.region
+    cat ${bam.getSimpleName()}_markdup.mosdepth.summary.txt | awk '\$1=="total_region" {print \$4}' > ${bam.getSimpleName()}.mosdepth.summary
+
+    # prepare output mosdepth region
+    mosdepth_region_results=\$(cat ${bam.getSimpleName()}.mosdepth.region)
+    mosdepth_region_file=\$(echo "mosdepth_region")
+    mosdepth_region_file_results=\$(echo \$mosdepth_region_file,\$mosdepth_region_results)
+    echo \$mosdepth_region_file_results > mosdepth_region_file_results.csv
+    # prepare output mosdepth summary
+    mosdepth_summary_results=\$(cat ${bam.getSimpleName()}.mosdepth.summary)
+    mosdepth_summary_file=\$(echo "mosdepth_summary")
+    mosdepth_summary_file_results=\$(echo \$mosdepth_summary_file,\$mosdepth_summary_results)
+    echo \$mosdepth_summary_file_results > mosdepth_summary_file_results.csv
+    # join results   
+    cat ${bam.getSimpleName()}.samtools.depth  >> ${bam.getSimpleName()}.bamqc
+    cat mosdepth_region_file_results.csv >> ${bam.getSimpleName()}.bamqc
+    cat mosdepth_summary_file_results.csv >> ${bam.getSimpleName()}.bamqc     
     """
 }
 
@@ -265,9 +357,37 @@ process make_json {
   
     output:
         tuple val(sample_id), path("${sample_id}_submit.json"), emit: final_json
+        tuple val(sample_id), path("${sample_id}.log"), emit: id_log
 
     script:
+    def file_names = [
+        "${sample_id}",
+        "${xlsx.getSimpleName()}", 
+        "${fastp_json.getSimpleName()}", 
+        "${sha256sum_fqs.getSimpleName()}", 
+        "${bytesize_fqs.getSimpleName()}", 
+        "${bam_json.getSimpleName()}", 
+        "${json_sha256sum_vcf.getSimpleName()}", 
+        "${json_bytesize_vcf.getSimpleName()}",
+        "${json_sha256sum_bed.getSimpleName()}",
+        "${json_bytesize_bed.getSimpleName()}", 
+        "${patient_data.getSimpleName()}" 
+        ]
     """
+    id=${file_names[0]}
+  
+    if [[ "\${id}" ==  "${sample_id}" ]]; then
+        for file_name in ${file_names.join(" ")}; do
+            extracted_id=\$(echo \$file_name | cut -d'_' -f1 | cut -d'-' -f1-2)
+            if [[ "\$extracted_id" != "${sample_id}" ]]; then
+                echo "sample_id \${id} does not match file \$file_name" >> ${sample_id}.log
+                exit 1
+            else
+                echo "sample_id \${id} does match file \$file_name" >> ${sample_id}.log
+            fi
+        done
+    fi  
+
     pan_json_maker.py \\
         --sample_id ${sample_id} \\
         --xlsx_path ${xlsx} \\
@@ -320,6 +440,7 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        pan_bedfile_ch
        grz_submission_dir_ch
        outdir_ch
+       bwa_index_ch
        
        
     main:
@@ -354,7 +475,14 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        patient_data = extract_patient_data(patient_id)
                                                                                 
        fastq_out = process_fastqs(id_fastqs_ch,sub_dir)
-       bam_out = process_bamfile(id_bam_ch,sub_dir,pan_bedfile_ch)
+       
+       // prepare for bwa-mem
+       trimmed_fq_reads = fastq_out.fq_trimmed_reads
+       //trimmed_fq_reads.view()
+       
+       bwa_mem_ready_fqs = postprocess_fastqs(trimmed_fq_reads,sub_dir)
+       bam_new = bwa_mem(bwa_index_ch,bwa_mem_ready_fqs.d_fp_trimmed_reads,sub_dir)
+       bam_out = process_bamfile(bam_new.bwa_mem_bam,sub_dir,pan_bedfile_ch)
        vcf_bed_out = process_vcf_bedfile(id_vcf_ch,sub_dir,pan_bedfile_ch)
        
        fq_data = fastq_out.fastp_out
@@ -368,7 +496,7 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
    
        // join data for json       
        data_for_json = id_xlsx_ch.join(fq_data,by:0).join(bam_data,by:0).join(joined_vcf_data_bed,by:0).join(patient_data.meta_data,by:0)
-       data_for_json.view()
+       //data_for_json.view()
        make_json(data_for_json,outdir_ch)
        
 
@@ -387,6 +515,8 @@ workflow {
     pan_bedfile_ch = Channel.value(params.bedfile)
     grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
     outdir_ch = Channel.value(params.outdir)
+    //bwa_index_ch = file('/projects/reference/sarek_reference/gatk_grch38/Homo_sapiens/GATK/GRCh38/Sequence/BWAIndex/Homo_sapiens_assembly38.fasta.64.{alt,amb,ann,bwt,pac,sa}')
+    bwa_index_ch = file(params.bwa_index) 
 
-    pan_ETL_subKDK_grzSubmissionPreparation(target_dir_mvpan_ch,NovaSeq_data_dir_ch,pan_IE_dir_ch,pan_bedfile_ch,grz_submission_dir_ch,outdir_ch)
+    pan_ETL_subKDK_grzSubmissionPreparation(target_dir_mvpan_ch,NovaSeq_data_dir_ch,pan_IE_dir_ch,pan_bedfile_ch,grz_submission_dir_ch,outdir_ch,bwa_index_ch)
 }

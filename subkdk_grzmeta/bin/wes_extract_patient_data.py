@@ -13,18 +13,19 @@ parser.add_argument("-o", "--patient_meta_data", type=str)
 args = parser.parse_args()
 
 # Get token for FileMaker API Operations
-url = gv.url_token
-token,status = etl.get_token(url)
+#url = gv.url_token has to be fixed
+#token,status = etl.get_token(url) has to be fixed
 
 # Get record firstname, lastname, dob, orbis_id
 # possible prefixes:
 #    without prefix = E
 #    others are: J,JS,M,MS,P,G
-sample_id = args.patient_id
-sample_id_fmrest = etl.adjust_id_for_fmrest_request(sample_id)
-prefix = list(sample_id_fmrest)[0]
-number = list(sample_id_fmrest)[1]
-year = list(sample_id_fmrest)[2]
+#sample_id = args.patient_id
+#sample_id_fmrest = etl.adjust_id_for_fmrest_request(sample_id)
+#prefix = list(sample_id_fmrest)[0]
+#number = list(sample_id_fmrest)[1]
+#year = list(sample_id_fmrest)[2]
+status = 1
 #print(prefix,number,year)
 #print(sample_id_fmrest)
 if status == 200:
@@ -87,12 +88,21 @@ if status == 200:
         sex = ""
         entity = ""
 
+else:
+    analysis = "WES"
+    firstname = ""
+    lastname = ""
+    dob = ""
+    orbis_id = "?"
+    sex = ""
+    entity = ""
+
     patient_data = {
                           "analysis": analysis,
                           "firstname": firstname,
                           "lastname": lastname,
                           "dateofbirth": dob,
-                          "pathoProId": "/".join(sample_id_fmrest),
+                          "pathoProId": "", #"/".join(sample_id_fmrest),
                           "nexusId": "",
                           "molpathId": "",
                           "orbisId": list(orbis_id)[0].replace(" ", ""),

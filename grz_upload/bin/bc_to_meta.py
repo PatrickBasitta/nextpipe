@@ -24,7 +24,15 @@ with open(args.bc_file, 'r') as bcf:
 with open(args.meta_json, 'r') as mj:
     mj_data = json.load(mj)
 
+# pid
+pid = str(args.patient_id)
 
+# add mv consent
+mv_consent = grz.get_mv_consent(gv.url_mv,pid)
+mv_consent_data_wo_presentation_date = {j: i for j, i in mv_consent.items() if j != "presentationDate"}
+mj_data["submission"]["donors"][0]["mvConsent"] = mv_consent_data_wo_presentation_date
+
+# add bc consent
 mj_data["submission"]["donors"][0]["researchConsents"] = [bc_data]
 
 # removes metaData UKB and KDK part
@@ -50,7 +58,7 @@ mj_data["submission"]["donors"][0]["researchConsents"] = [bc_data]
 #print(json.dumps(mj_data,indent=4))
 
 # get uuid
-pid = str(args.patient_id)
+#pid = str(args.patient_id)
 #print(pid)
 uuid_url = gv.url_uuid
 #print(uuid_url)
@@ -106,14 +114,14 @@ if args.genomic_study_subtype == "tumor-only" and args.library_type == "panel":
     icdo3_txt = grz.parse_icdo3_xml(xml_file,code)
     mj_data["submission"]["donors"][0]["labData"][0]["tissueTypeName"] = icdo3_txt
 
-if args.genomic_study_subtype == "tumor-only" and args.library_type == "wxs":
-    tumor_index = 1
-    xml_file = args.icdo3_xml
+#if args.genomic_study_subtype == "tumor-only" and args.library_type == "wxs":
+#    tumor_index = 1
+#    xml_file = args.icdo3_xml
     #print(xml_file)
-    code = mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeId"]
+#    code = mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeId"]
     #print(code)
-    icdo3_txt = grz.parse_icdo3_xml(xml_file,code)
-    mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeName"] = icdo3_txt
+#    icdo3_txt = grz.parse_icdo3_xml(xml_file,code)
+#    mj_data["submission"]["donors"][0]["labData"][tumor_index]["tissueTypeName"] = icdo3_txt
 
 # patho meta - all
 patho_meta = mj_data
@@ -135,9 +143,9 @@ if args.genomic_study_subtype == "tumor-only" and args.library_type == "wxs":
 
 # in normal-tumor mode - remove vcf
 if args.genomic_study_subtype == "tumor+germline" and args.library_type == "wxs":
-    normal_index = 0
+    #normal_index = 0
     tumor_index =1
-    del mj_data["submission"]["donors"][0]["labData"][normal_index]["sequenceData"]["files"][2]
+    #del mj_data["submission"]["donors"][0]["labData"][normal_index]["sequenceData"]["files"][2]
     del mj_data["submission"]["donors"][0]["labData"][tumor_index]["sequenceData"]["files"][2]
 
 # in tumor-only and panel mode - remove vcf

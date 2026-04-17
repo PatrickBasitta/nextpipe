@@ -285,12 +285,12 @@ def pan_final_page_to_dict(filepath,excel_file,idx1):
             # MSI as dict
             msi = dict()
             msi["msi_status"] = pancancer_page_final.loc[0, "MSI"]
-            msi["msiAnzahlMarkerStabil"] = pancancer_page_final.loc\
-                                          [0, "Anzahl_Marker_stabil"]
-            msi["msiAnzahlMarkerInstabil"] = pancancer_page_final.loc\
-                                          [0, "Anzahl_Marker_instabil"]
-            msi["msiAnzahlMarkerfail"] = pancancer_page_final.loc\
-                                          [0, "Anzahl_Marker_fail"]
+            msi["msiAnzahlMarkerStabil"] = int(pancancer_page_final.loc\
+                                          [0, "Anzahl_Marker_stabil"])
+            msi["msiAnzahlMarkerInstabil"] = int(pancancer_page_final.loc\
+                                          [0, "Anzahl_Marker_instabil"])
+            msi["msiAnzahlMarkerfail"] = int(pancancer_page_final.loc\
+                                          [0, "Anzahl_Marker_fail"])
             report_dict["msi"] = msi    
             # TMB
             tmb = dict()
@@ -403,24 +403,6 @@ pan_submission_grz = {
         "gender" : "",
         "relation" : "",
         "mvConsent" : {
-            #"presentationDate" : "",
-            "version" : "",
-            "scope" : [{
-                "type" : "",
-                "date" : "",
-                "domain" : "mvSequencing"
-                },
-                {
-                "type" : "",
-                "date" : "",
-                "domain" : "reIdentification"
-                },
-                {
-                "type" : "",
-                "date" : "",
-                "domain" : "caseIdentification"
-                }
-            ],
         },
         "researchConsents" : [
         ],
@@ -531,32 +513,9 @@ wes_submission_grz = {
         "gender" : "",
         "relation" : "",
         "mvConsent" : {
-            #"presentationDate" : "",
-            "version" : "",
-            "scope" : [{
-                "type" : "",
-                "date" : "",
-                "domain" : "mvSequencing"
-                },
-                {
-                "type" : "",
-                "date" : "",
-                "domain" : "reIdentification"
-                },
-                {
-                "type" : "",
-                "date" : "",
-                "domain" : "caseIdentification"
-                }
-            ],
         },
         "researchConsents" : [
         ],
-        #"researchConsents" : [{
-        #    "schemaVersion" : "",
-        #    "presentationDate" : "",
-        #    "scope" : ""
-        #    }],
         "labData" : [{
             "labDataName" : "",
             "tissueOntology" : {
@@ -734,32 +693,9 @@ wgs_submission_grz = {
         "gender" : "",
         "relation" : "",
         "mvConsent" : {
-            #"presentationDate" : "",
-            "version" : "",
-            "scope" : [{
-                "type" : "",
-                "date" : "",
-                "domain" : "mvSequencing"
-                },
-                {
-                "type" : "",
-                "date" : "",
-                "domain" : "reIdentification"
-                },
-                {
-                "type" : "",
-                "date" : "",
-                "domain" : "caseIdentification"
-                }
-            ],
         },
         "researchConsents" : [
         ],
-        #"researchConsents" : [{
-        #    "schemaVersion" : "",
-        #    "presentationDate" : "",
-        #    "scope" : ""
-        #    }],
         "labData" : [{
             "labDataName" : "",
             "tissueOntology" : {
@@ -1045,7 +981,7 @@ def parse_icdo3_xml(xml_file,code):
                     for label in child[1]:
                         icdo3_text = label.text
 
-            elif code.count(".") == 0 and child.get("code") == "C22":#code:
+            elif code.count(".") == 0 and child.get("code") == code: #"C22":#code:
                 if child[3].attrib["kind"] == "preferred":
                     for label in child[3]:
                         icdo3_text = label.text

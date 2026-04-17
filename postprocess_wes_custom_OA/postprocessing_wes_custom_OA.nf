@@ -10,6 +10,8 @@ process extract_id_bam_filepath {
     //conda "conda-forge::pandas=2.2.3"
     conda "conda-forge::python=3.9.15 conda-forge::pandas=2.0.3"
     container "biocontainers/mulled-v2-0594c09780adaaa41fe60b1869ba41c8905a0c98:24a8102d6795963b77f04bb83cc82c081e4a2adc-0"
+    
+    publishDir "${params.outdir}/", mode: "copy", pattern: "snvs_path.csv"
 
     input:
       path(target_dir)
@@ -17,13 +19,15 @@ process extract_id_bam_filepath {
     output:
       path("bam_path.csv")     , emit: id_bam
       path("purple_path.csv")  , emit: id_purple
+      path("snvs_path.csv")  , emit: id_snvs
       
     script:
     """
     id_bam_path.py \\
         --target_dir ${target_dir} \\
         --id_bam_path bam_path.csv \\
-        --id_purple_path purple_path.csv
+        --id_purple_path purple_path.csv \\
+        --id_snvs_path snvs_path.csv
     """  
 }
 
@@ -659,6 +663,9 @@ workflow postprocessing_wes_custom_oa {
 
        // channel purple
        id_purple_qc_ch = extract_id_bam_filepath.out.id_purple | splitCsv(header: true) | map { row -> [row.patient_id,file(row.purple_qc)]}
+
+       // channel cio snvs
+       id_snvs_ch = extract_id_bam_filepath.out.id_snvs | splitCsv(header: true) | map { row -> [row.sample,file(row.vcf)]}
 
        // BAM QC
        sorted_and_indexed_bam = bam_sort_index(id_bam_qc_ch)

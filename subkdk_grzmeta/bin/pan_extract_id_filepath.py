@@ -81,8 +81,8 @@ for i, pancancer_file in enumerate(files_DONE_pan):
 
     #fastq_read1_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_1.fq.gz", recursive=True)
     #fastq_read2_inNextSeq = glob.glob(raw_data_dir_NextSeq +"/**/"+patient_id+"*_2.fq.gz", recursive=True)
-    fastq_read1_inNovaSeq = glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*_1.fq.gz", recursive=True)
-    fastq_read2_inNovaSeq= glob.glob(raw_data_dir_NovaSeq+"/fastq_grz/"+patient_id+"*_2.fq.gz", recursive=True)
+    fastq_read1_inNovaSeq = glob.glob(raw_data_dir_NovaSeq+"/"+patient_id+"*_1.fq.gz", recursive=True)
+    fastq_read2_inNovaSeq= glob.glob(raw_data_dir_NovaSeq+"/"+patient_id+"*_2.fq.gz", recursive=True)
 
     #if fastq_read1_inNextSeq != [] and fastq_read2_inNextSeq != []:
     #    path_fastq_read1 = fastq_read1_inNextSeq

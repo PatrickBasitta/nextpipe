@@ -1,6 +1,8 @@
 nextflow.enable.dsl=2
 
 process extract_id_filepath {
+
+    cpus 1    
    
     tag "${target_dir}"
     debug true
@@ -178,10 +180,11 @@ process process_bamfile {
     debug true
     //errorStrategy 'ignore'
 
-    conda "bioconda::samtools=1.22.1 bioconda::fgbio bioconda::umi_tools bioconda::mosdepth"
+    conda "bioconda::samtools=1.22.1 bioconda::sambamba bioconda::fgbio bioconda::umi_tools bioconda::mosdepth"
     cache 'lenient'
-    cpus 8
-    //memory "8 GB"
+    
+    cpus { bam.size() > 10.GB ? 8 : 16 }
+    memory { bam.size() > 10.GB ? ' 32 GB' : '24 GB' }
 
     publishDir(path: "${params.outdir}/${sample_id}/coverage", mode: "copy")
 
@@ -194,7 +197,7 @@ process process_bamfile {
     tuple val(sample_id), path("${bam.getSimpleName()}_depth.stats"), emit: sam_qc
     tuple val(sample_id), path("${bam.getSimpleName()}_bam_qc.csv") , emit: bam_qc
     tuple val(sample_id), path("${bam.getSimpleName().replaceFirst('^fp_trimmed_', '')}_bam.json")   , emit: bam_json
-    tuple val(sample_id), path("${bam.getSimpleName()}.samtools.depth"), path("${bam.getSimpleName()}.mosdepth.region"), path("${bam.getSimpleName()}.mosdepth.summary"), path("${bam.getSimpleName()}.bamqc")
+    tuple val(sample_id), path("${bam.getSimpleName()}.bamqc")
                 
     script:
     def awk1 = "awk -v OFS=',' '{sum+=\$3; ++n; if(\$3>max){max=\$3}; if(\$3<min||min==0){min=\$3};if(\$3>=100){c++}} END{print min, max, sum/n, c/n}'" 
@@ -249,7 +252,7 @@ process process_bamfile {
     mosdepth --by ${pan_bedfile} ${bam.getSimpleName()}_markdup ${bam.getSimpleName()}_markdup.bam
     zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk '{len = \$3 - \$2; sum += len * \$4; total += len} END {print sum/total}' > ${bam.getSimpleName()}.mosdepth.depth
     zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk -v mincov=100 '{len = \$3 - \$2; total += len; if (\$4 >= mincov) covered += len} END {print (covered/total)}' > ${bam.getSimpleName()}.mosdepth.ontargets
-    paste -d',' ${bam.getSimpleName()}.mosdepth.depth ${bam.getSimpleName()}.mosdepth.ontargets > ${sorted_bam.getSimpleName()}.mosdepth.region
+    paste -d',' ${bam.getSimpleName()}.mosdepth.depth ${bam.getSimpleName()}.mosdepth.ontargets > ${bam.getSimpleName()}.mosdepth.region
     cat ${bam.getSimpleName()}_markdup.mosdepth.summary.txt | awk '\$1=="total_region" {print \$4}' > ${bam.getSimpleName()}.mosdepth.summary
     # prepare output mosdepth region
     mosdepth_region_results=\$(cat ${bam.getSimpleName()}.mosdepth.region)
@@ -283,9 +286,13 @@ process process_bamfile {
         --extract-umi-method=tag \\
         --umi-tag=RX \\
         --method=directional \\
+        --chimeric-pairs=discard \\
+        --unpaired-reads=discard \\
+        --mapping-quality 30 \\
         -I ${bam.getSimpleName()}_umi_tagged.bam \\
         -S ${bam.getSimpleName()}_dedup.bam \\
-        --temp-dir tmp_dedup
+        --temp-dir tmp_dedup \\
+        --output-stats=${bam.getSimpleName()}_dedup.stats
 
     # bam QC with samtools depth without duplicates 
     samtools index -@ ${task.cpus} ${bam.getSimpleName()}_dedup.bam -o ${bam.getSimpleName()}_dedup.bam.bai
@@ -572,13 +579,13 @@ workflow pan_ETL_subKDK_grzSubmissionPreparation {
        bam_data = bam_out.bam_json
        //bam_data.view()
 
-       //#joined_vcf_data_bed = vcf_bed_out.json_sha256sum_vcf.join(vcf_bed_out.json_bytesize_vcf,by:0).join(vcf_bed_out.json_sha256_size_bed,by:0)
+       joined_vcf_data_bed = vcf_bed_out.json_sha256sum_vcf.join(vcf_bed_out.json_bytesize_vcf,by:0).join(vcf_bed_out.json_sha256_size_bed,by:0)
        //joined_vcf_data_bed.view()
    
        // join data for json       
-       //#data_for_json = id_xlsx_ch.join(fq_data,by:0).join(bam_data,by:0).join(joined_vcf_data_bed,by:0).join(patient_data.meta_data,by:0)
+       data_for_json = id_xlsx_ch.join(fq_data,by:0).join(bam_data,by:0).join(joined_vcf_data_bed,by:0).join(patient_data.meta_data,by:0)
        //data_for_json.view()
-       //#make_json(data_for_json,outdir_ch)
+       make_json(data_for_json,outdir_ch)
        
 
     //emit:
