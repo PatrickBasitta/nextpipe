@@ -148,7 +148,6 @@ process process_bamfile {
     def  normal_pattern = "N"
     //def tumor_pattern="T"
     def cmd1 = (sample_name =~ normal_pattern) ? awk1 : awk2
-    //def cmd2 = (sample_name =~ tumor_pattern) ? awk2 : ''
     """
      if [ ! -d ${grz_submission_dir}/${sample_id}/files/ ]
     then
