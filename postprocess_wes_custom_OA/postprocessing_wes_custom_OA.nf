@@ -27,7 +27,7 @@ process extract_id_bam_filepath {
         --target_dir ${target_dir} \\
         --id_bam_path bam_path.csv \\
         --id_purple_path purple_path.csv \\
-        --id_snvs_path snvs_path.csv
+        --id_snvs_path samplesheet.csv
     """  
 }
 
