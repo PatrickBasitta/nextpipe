@@ -84,10 +84,12 @@ purple_df = id_path_df[["patient_id","purple_qc"]]
 purple_df.to_csv(args.id_purple_path, sep=",",index=False)
 
 cio_vip_somatic_df = id_path_df[["patient_id", "somatic_snvs"]]
+cio_vip_somatic_df["patient_id"] = cio_vip_somatic_df["patient_id"].astype(str) + "_Tpavesomatic"
 cio_vip_somatic_df = cio_vip_somatic_df.rename(columns={
                                                         "patient_id": "sample",
                                                         "somatic_snvs": "vcf"})
 cio_vip_germline_df = id_path_df[["patient_id", "germline_snvs"]]
+cio_vip_germline_df["patient_id"] = cio_vip_germline_df["patient_id"].astype(str) + "_Tpavegermline"
 cio_vip_germline_df = cio_vip_germline_df.rename(columns={
                                                         "patient_id": "sample",
                                                         "germline_snvs": "vcf"})
