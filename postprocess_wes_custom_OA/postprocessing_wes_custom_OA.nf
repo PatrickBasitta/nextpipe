@@ -11,7 +11,7 @@ process extract_id_bam_filepath {
     conda "conda-forge::python=3.9.15 conda-forge::pandas=2.0.3"
     container "biocontainers/mulled-v2-0594c09780adaaa41fe60b1869ba41c8905a0c98:24a8102d6795963b77f04bb83cc82c081e4a2adc-0"
     
-    publishDir "${params.outdir}/", mode: "copy", pattern: "snvs_path.csv"
+    publishDir "${params.outdir}/", mode: "copy", pattern: "cio_samplesheet.csv"
 
     input:
       path(target_dir)
@@ -19,7 +19,7 @@ process extract_id_bam_filepath {
     output:
       path("bam_path.csv")     , emit: id_bam
       path("purple_path.csv")  , emit: id_purple
-      path("snvs_path.csv")  , emit: id_snvs
+      path("cio_samplesheet.csv")  , emit: id_snvs
       
     script:
     """
@@ -27,7 +27,7 @@ process extract_id_bam_filepath {
         --target_dir ${target_dir} \\
         --id_bam_path bam_path.csv \\
         --id_purple_path purple_path.csv \\
-        --id_snvs_path samplesheet.csv
+        --id_snvs_path cio_samplesheet.csv
     """  
 }
 
@@ -57,7 +57,7 @@ process bam_qc {
     
     tag "${sorted_bam.getSimpleName()}"
     cpus { sorted_bam.size() > 35.GB ? 8 : 16 }
-    memory { sorted_bam.size() > 35.GB ? '64 GB' : '32 GB' }
+    memory { sorted_bam.size() > 35.GB ? '128 GB' : '32 GB' }
     //memory = { Math.max(16, (task.attempt * sorted_bam.size() * 0.2 / 1000000000).toDouble()) .GB }
     debug true
     cache 'lenient'
