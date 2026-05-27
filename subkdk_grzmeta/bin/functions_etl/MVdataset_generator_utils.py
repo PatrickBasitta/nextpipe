@@ -257,6 +257,12 @@ def pan_final_page_to_dict(filepath,excel_file,idx1):
             # sampleConservation_T
             report_dict["sampleConservation_T"] = pancancer_page_final.loc[0,"sampleConservation_T"]
 
+            # ICD-O-3_Topo
+            report_dict["ICD-O-3_Topo"] =  pancancer_page_final.loc[0,"ICD-O-3_Topo"]
+
+            # ICD-O-3_Topo
+            report_dict["ICD-O-3_Morpho"] =  pancancer_page_final.loc[0,"ICD-O-3_Morpho"]
+
             # sampledates
             report_dict["sampledate_T"] = pancancer_page_final.loc[0, "sampledate_T"]
 

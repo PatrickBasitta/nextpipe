@@ -145,7 +145,7 @@ etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["tissueOntology"]["version"] = gv.pan_tissueOntology_version
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
-                  ["tissueTypeId"] = ""
+                  ["tissueTypeId"] = pan_final_page_dict["ICD-O-3_Topo"]
 
 etl.pan_submission_grz["donors"][0]["labData"][0]\
                   ["tissueTypeName"] = ""
