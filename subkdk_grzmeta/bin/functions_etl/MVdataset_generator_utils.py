@@ -347,6 +347,18 @@ def wxs_final_page_to_dict(filepath,excel_file,idx1):
             # sequencer
             report_dict["sequencer"] = wxs_page_final.loc[0, "sequencer"]
 
+            # libraryPrepKit_T
+            report_dict["libraryPrepKit_T"] = wxs_page_final.loc[0, "libraryPrepKit_T"]
+
+            # libraryPrepKitManufacturer_T
+            report_dict["libraryPrepKitManufacturer_T"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_T"]
+
+            # libraryPrepKit_N
+            report_dict["libraryPrepKit_N"] = wxs_page_final.loc[0, "libraryPrepKit_N"]
+
+            # libraryPrepKitManufacturer_N
+            report_dict["libraryPrepKitManufacturer_N"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_N"]
+
             # entity
             # entity_dict = dict()
             report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]
