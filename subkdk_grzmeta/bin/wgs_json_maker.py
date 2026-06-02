@@ -258,10 +258,10 @@ for i_nt in index_normal_tumor:
 
     else:
         etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                          ["tissueOntology"]["name"] = gv.wes_tissueOntology_name[i_nt]
+                          ["tissueOntology"]["name"] = gv.wgs_tissueOntology_name[i_nt]
 
         etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                          ["tissueOntology"]["version"] = gv.wes_tissueOntology_version[i_nt]
+                          ["tissueOntology"]["version"] = gv.wgs_tissueOntology_version[i_nt]
 
         etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                           ["tissueTypeId"] = ""
