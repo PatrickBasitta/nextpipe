@@ -8,6 +8,8 @@ import functions_etl.MVdataset_generator_utils as etl
 import functions_etl.global_variables as gv
 import requests
 import datetime
+import re
+import math
 
 # using argparse for positinal arguments
 parser = argparse.ArgumentParser()
@@ -46,7 +48,7 @@ if "Auswertung" in excel_file.sheet_names:
 elif "auswertung" in excel_file.sheet_names:
     idx = excel_file.sheet_names.index("auswertung")
     smallVariatns_records = etl.wxs_snvdata_to_dicts\
-                            (filepath,excel_file,args.sample_id,idx.hgnc)
+                            (filepath,excel_file,args.sample_id,idx,hgnc)
                                 
 # get id for check, entity, cellularity, MSI, TMB (more flexible)
 if "Final" in excel_file.sheet_names:               
@@ -59,6 +61,17 @@ elif "final" in excel_file.sheet_names:
     wgs_final_page_dict = etl.wxs_final_page_to_dict\
                           (filepath,excel_file,idx1)
                               
+# exlude nan values from proteinChange
+splice_site_pattern = re.compile(r"c\.\d+-\d+[ACGT]>[ACGT]")
+for smallvariant_rec in smallVariatns_records:
+    #print(smallvariant_rec.get("dnaChange"))
+    cdna = smallvariant_rec.get("dnaChange")
+    #print(smallvariant_rec.get("proteinChange"))
+    protein = smallvariant_rec.get("proteinChange")
+    if splice_site_pattern.match(cdna) and pd.isna(protein):
+        #print("match")
+        smallvariant_rec["proteinChange"] = "-"
+
 # write to mv_data - use
 Oncology_Molecular_Report = { # wgs data MV + adds
 "SmallVariants" : smallVariatns_records,
@@ -92,10 +105,10 @@ Oncology_Molecular_Report = { # wgs data MV + adds
     }],
 "complexBiomarkers": [{
     "ploidy" : "na",
-    "tmb" : wgs_final_page_dict["tmb"]["tmb_status"],
+    "tmb" : str(wgs_final_page_dict["tmb"]["tmb_status"]),
     "tmb_mutations_Mb" : float(wgs_final_page_dict["tmb"]["mutations_Mb"]),
-    "tmb_Anzahl_Mutationen_missense" : wgs_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
-    "msi_status" : wgs_final_page_dict["msi"]["msi_status"],
+    "tmb_Anzahl_Mutationen_missense" : float(wgs_final_page_dict["tmb"]["Anzahl_Mutationen_missense"]),
+    "msi_status" : str(wgs_final_page_dict["msi"]["msi_status"]),
     "msiErgebnis_MSIsensor_pro" : float(wgs_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"]),
     #"HR_deficiency_score_OA" : wgs_final_page_dict["HR_deficiency_score_OA"],
     "hrdHigh" : "na",
@@ -108,6 +121,36 @@ Oncology_Molecular_Report = { # wgs data MV + adds
     "sbbsSignaturesPresent" : "na"
     }]
 }
+
+# remove nan from complexbiomarkers
+for value in Oncology_Molecular_Report["complexBiomarkers"]:
+    check_ploidy = value.get("ploidy")
+    check_tmp = value.get("tmb")
+    check_tmb_mutations_Mb = value.get("tmb_mutations_Mb")
+    check_tmb_Anzahl_Mutationen_missense = value.get("tmb_Anzahl_Mutationen_missense")
+    check_msi_status = value.get("msi_status")
+    check_msiErgebnis_MSIsensor_pro = value.get("msiErgebnis_MSIsensor_pro")
+    check_hrdHigh = value.get("hrdHigh")
+    check_lstHigh = value.get("lstHigh")
+    check_tailHigh = value.get("tailHigh")
+    if pd.isna(check_ploidy):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["ploidy"] = "na"
+    if pd.isna(check_tmp):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb"] = "na"
+    if pd.isna(check_tmb_mutations_Mb):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb_mutations_Mb"] = "na"
+    if pd.isna(check_tmb_Anzahl_Mutationen_missense):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb_Anzahl_Mutationen_missense"] = "na"
+    if pd.isna(check_msi_status):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["msi_status"] = "na"
+    if pd.isna(check_msiErgebnis_MSIsensor_pro):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["msiErgebnis_MSIsensor_pro"] = "na"
+    if pd.isna(check_hrdHigh):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["hrdHigh"] = "na"
+    if pd.isna(check_lstHigh):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["lstHigh"] = "na"
+    if pd.isna(check_tailHigh):
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tailHigh"] = "na"
 
 # add patient data
 with open(args.patient_data_json, "r") as patient_data:
@@ -250,11 +293,15 @@ for i_nt in index_normal_tumor:
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["libraryType"] = gv.wgs_libraryType # get from excel as well
 
-    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["libraryPrepKit"] = gv.wgs_libraryPrepKit
+    libraryPrepkit = [wgs_final_page_dict["libraryPrepkit_N"], wgs_final_page_dict["libraryPrepkit_T"]]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["libraryPrepKitManufacturer"] = gv.wgs_libraryPrepKitManufacturer
+                      ["libraryPrepKit"] = libraryPrepkit[i_nt]
+
+    libraryPrepKitManufacturer = [wgs_final_page_dict["libraryPrepKitManufacturer_N"], wgs_final_page_dict["libraryPrepKitManufacturer_T"]]
+
+    etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
+                      ["libraryPrepKitManufacturer"] = libraryPrepKitManufacturer[i_nt]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequencerModel"] = wgs_final_page_dict["sequencer"] # or NextSeq550?
