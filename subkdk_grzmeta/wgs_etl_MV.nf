@@ -192,12 +192,12 @@ process process_bamfile {
     samtools depth -b ${grz_bed} -aa -@ ${task.cpus} -s filtered_${bam.getSimpleName()}_markdup.bam > filtered_${bam.getSimpleName()}_markdup_targeted.depth
 
     cat  filtered_${bam.getSimpleName()}_markdup.depth | awk -v OFS=',' '{sum+=\$3; ++n} END {print sum/n}' > filtered_${bam.getSimpleName()}_markdup.cov       
-    cat  filtered_${bam.getSimpleName()}_markdup_targeted.depth | awk -v OFS=',' -v threshold=\$cov_value '{if(\$3>=threshold){c++}} END {print c/n}' > filtered_${bam.getSimpleName()}_markdup_targeted.cov
+    cat  filtered_${bam.getSimpleName()}_markdup_targeted.depth | awk -v OFS=',' -v threshold=\$cov_value '{sum+=\$3; ++n; if(\$3>=threshold){c++}} END {print c/n}' > filtered_${bam.getSimpleName()}_markdup_targeted.cov
     
     # prepare output samtools depth
     echo "file,mean_cov,targets_above_mincov" > bamqc_header.csv
     sam_result=\$(cat filtered_${bam.getSimpleName()}_markdup.cov)
-    sam_result_targeted=\$(cat filtered_${bam..getSimpleName()}_markdup_targeted.cov)
+    sam_result_targeted=\$(cat filtered_${bam.getSimpleName()}_markdup_targeted.cov)
     sam_file=\$(echo "samtools_depth")
     sam_file_results=\$(echo \$sam_file,\$sam_result,sam_result_targeted)
     echo \$sam_file_results > sam_file_results.csv
