@@ -231,7 +231,7 @@ process process_bamfile {
     echo \$mosdepth_targeted_summary_file_results > mosdepth_targeted_summary_file_results.csv
     # join results   
     cat ${bam.getSimpleName()}.samtools.depth  >> ${bam.getSimpleName()}.bamqc
-    cat mosdepth_qc_file_results.csv >> ${bam.getSimpleName()}.bamqc
+    cat mosdepth_qc_files_results.csv >> ${bam.getSimpleName()}.bamqc
     cat mosdepth_summary_files_results.csv >> ${bam.getSimpleName()}.bamqc
     cat mosdepth_targeted_summary_file_results.csv >> ${bam.getSimpleName()}.bamqc 
     
