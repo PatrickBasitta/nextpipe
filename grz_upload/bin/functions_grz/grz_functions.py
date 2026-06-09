@@ -3,6 +3,8 @@
 import requests
 import functions_grz.grz_global_variables as gv
 import xml.etree.ElementTree as ET
+import subprocess
+import sys
 
 def get_broad_consent(url):
     url = url
@@ -27,6 +29,31 @@ def get_mv_consent(url_mv,pid):
     response = requests.get(url_get_mv, auth=gv.authorization_uuid, verify=gv.certification)
 
     return response.json()
+
+def get_patient_pseudonym(url_patient_pseudonym,pid):
+    suffix = gv.url_suffix_patient_pseudonym
+    url_get_pp = url_patient_pseudonym+pid+suffix
+    response = requests.get(url_get_pp, auth=gv.authorization_uuid, verify=gv.certification)
+    text = response.text
+
+    return text
+
+def get_research_consent_pseudonym(url_research_consent_pseudonym,pid):
+    suffix_bc = gv.url_suffix_research_consent_pseudonym
+    url_get_bp = url_research_consent_pseudonym+pid+suffix_bc
+
+    bc_pseudo_js = subprocess.run(
+    [sys.executable, "fetch_research_consent.py",
+                     "--patient-id", pid,
+                     "--username", gv.username,
+                     "--password", gv.password,
+                     "--base-url", url_get_bp,
+                     "--output", pid+"_bc.json",
+                     "--ca-cert", gv.certification],
+    capture_output = True,
+    text = True,
+    check = True
+    )
 
 def parse_icdo3_xml(xml_file,code):
     tree = ET.parse(xml_file)

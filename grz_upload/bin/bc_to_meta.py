@@ -5,6 +5,8 @@ import functions_grz.grz_functions as grz
 import functions_grz.grz_global_variables as gv
 import argparse
 import xml.etree.ElementTree as ET
+import subprocess
+import sys
 
 # using argparse for positinal arguments
 parser = argparse.ArgumentParser()
@@ -17,10 +19,6 @@ parser.add_argument("-p", "--patient_id", type=str)
 parser.add_argument("-x", "--icdo3_xml", type=str)
 args = parser.parse_args()
 
-# load data
-with open(args.bc_file, 'r') as bcf:
-    bc_data = json.load(bcf)
-
 with open(args.meta_json, 'r') as mj:
     mj_data = json.load(mj)
 
@@ -31,6 +29,14 @@ pid = str(args.patient_id)
 mv_consent = grz.get_mv_consent(gv.url_mv,pid)
 mv_consent_data_wo_presentation_date = {j: i for j, i in mv_consent.items() if j != "presentationDate"}
 mj_data["submission"]["donors"][0]["mvConsent"] = mv_consent_data_wo_presentation_date
+
+# add bc consent pseudonym
+url_bcp = gv.url_research_consent_pseudonym
+grz.get_research_consent_pseudonym(url_bcp,pid)
+
+# load data bcp
+with open(pid+"_bc.json", 'r') as bcf:
+    bc_data = json.load(bcf)
 
 # add bc consent
 mj_data["submission"]["donors"][0]["researchConsents"] = [bc_data]
@@ -95,6 +101,13 @@ else:
     raise valueError("response error")
 
 mj_data["submission"]["submission"]["tanG"] = tang
+
+# add uuid pyseudonym
+# add patient-pseudonym as uuid
+url_patient_pseudonym = gv.url_patient_pseudonym
+#print(url_patient_pseudonym)
+pp = grz.get_patient_pseudonym(url_patient_pseudonym,pid)
+mj_data["submission"]["submission"]["localCaseId"] = pp
 
 # add icd-o-3
 if args.genomic_study_subtype == "tumor+germline" or args.genomic_study_subtype == "tumor-only" and args.library_type == "wxs":
