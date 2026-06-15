@@ -293,10 +293,10 @@ for i_nt in index_normal_tumor:
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
                       ["libraryType"] = gv.wgs_libraryType # get from excel as well
 
-    libraryPrepkit = [wgs_final_page_dict["libraryPrepkit_N"], wgs_final_page_dict["libraryPrepkit_T"]]
+    libraryPrepKit = [wgs_final_page_dict["libraryPrepKit_N"], wgs_final_page_dict["libraryPrepKit_T"]]
 
     etl.wgs_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["libraryPrepKit"] = libraryPrepkit[i_nt]
+                      ["libraryPrepKit"] = libraryPrepKit[i_nt]
 
     libraryPrepKitManufacturer = [wgs_final_page_dict["libraryPrepKitManufacturer_N"], wgs_final_page_dict["libraryPrepKitManufacturer_T"]]
 
