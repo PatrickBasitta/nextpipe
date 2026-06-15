@@ -81,7 +81,7 @@ else:
 
 # add uuid
 mj_data["mvtracker_uuid"] = uuid
-mj_data["submission"]["submission"]["localCaseId"] = uuid
+#mj_data["submission"]["submission"]["localCaseId"] = uuid
 #mj_data["submission"]["donors"][0]["donorPseudonym"] = uuid
 
 # get tanG
