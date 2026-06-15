@@ -10,7 +10,7 @@ import sys
 
 # using argparse for positinal arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("-b", "--bc_file", type=str)
+#parser.add_argument("-b", "--bc_file", type=str)
 parser.add_argument("-m", "--meta_json", type=str)
 parser.add_argument("-i", "--sample_id", type=str)
 parser.add_argument("-s", "--genomic_study_subtype", type=str)
