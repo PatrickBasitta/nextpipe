@@ -50,10 +50,8 @@ process add_bc_uuid_icdo3 {
 
     script:
     """
-    fetch_research_consent.py --patient-id ${pid} --username \$USERNAME --password \$PASSWORD -o ${json_file.getSimpleName()}_bc.json --ca-cert \$ca_cert
     bc_to_meta.py \\
         --sample_id ${sample_id} \\
-        --bc_file ${json_file.getSimpleName()}_bc.json \\
         --meta_json ${json_file} \\
         --genomic_study_subtype ${genomic_study_subtype} \\
         --library_type ${library_type} \\
@@ -112,7 +110,7 @@ workflow grzSubmissionPreparation {
        add_bc_uuid_icdo3(id_json_ch,genomic_study_subtype_ch,library_type_ch,icdo3_xml_ch,submission_dir_ch)
        
        id_meta_ch = add_bc_uuid_icdo3.out.grz_json
-       grz_validate_encrypt(id_meta_ch,submission_dir_ch,config_file_ch)
+       //grz_validate_encrypt(id_meta_ch,submission_dir_ch,config_file_ch)
 }
 
 workflow {
