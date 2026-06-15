@@ -27,11 +27,7 @@ process add_bc_uuid_icdo3 {
     cache 'lenient'
 
     maxForks 1
-
-    secret 'PASSWORD'
-    secret 'USERNAME'
-    secret 'ca_cert'
-    
+   
     publishDir(path: "${params.json_subkdk_dir}/${sample_id}/", pattern: "${sample_id}_patho_meta.json", mode: "copy")
     publishDir(path: "${submission_dir}/${sample_id}/metadata/", pattern: "metadata.json", mode: "copy")
  
