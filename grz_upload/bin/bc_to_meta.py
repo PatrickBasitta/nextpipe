@@ -17,6 +17,7 @@ parser.add_argument("-s", "--genomic_study_subtype", type=str)
 parser.add_argument("-l", "--library_type", type=str)
 parser.add_argument("-p", "--patient_id", type=str)
 parser.add_argument("-x", "--icdo3_xml", type=str)
+parser.add_argument("-y", "--py_script", type=str)
 args = parser.parse_args()
 
 with open(args.meta_json, 'r') as mj:
@@ -32,7 +33,23 @@ mj_data["submission"]["donors"][0]["mvConsent"] = mv_consent_data_wo_presentatio
 
 # add bc consent pseudonym
 url_bcp = gv.url_research_consent_pseudonym
-grz.get_research_consent_pseudonym(url_bcp,pid)
+suffix_bc = gv.url_suffix_research_consent_pseudonym
+url_get_bp = url_bcp+pid+suffix_bc
+
+bc_pseudo_js = subprocess.run(
+[sys.executable, str(args.py_script),
+                 "--patient-id", pid,
+                 "--username", gv.username,
+                 "--password", gv.password,
+                 "--base-url", url_get_bp,
+                 "--output", pid+"_bc.json",
+                 "--ca-cert", gv.certification],
+ capture_output = True,
+ text = True,
+ check = True
+ )
+#url_bcp = gv.url_research_consent_pseudonym
+#grz.get_research_consent_pseudonym(url_bcp,pid)
 
 # load data bcp
 with open(pid+"_bc.json", 'r') as bcf:
@@ -98,7 +115,7 @@ vn_block = grz.get_vn(vn_url_grz_knvr_uuid)
 if vn_block["success"]:
     tang = vn_block["vn"]
 else:
-    raise valueError("response error")
+    raise ValueError("response error")
 
 mj_data["submission"]["submission"]["tanG"] = tang
 
