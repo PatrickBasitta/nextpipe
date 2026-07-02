@@ -113,20 +113,31 @@ process bam_qc {
     samtools view -b -F 1024 -@ ${task.cpus} ${sorted_bam.getSimpleName()}_markdup.bam > filtered_${sorted_bam.getSimpleName()}_markdup.bam
     if [[ "${library_type}" == "wes" ]]; then
         samtools depth -b \$bedfile -aa -@ ${task.cpus} -s filtered_${sorted_bam.getSimpleName()}_markdup.bam > filtered_${sorted_bam.getSimpleName()}_markdup.depth
+        cat  filtered_${sorted_bam.getSimpleName()}_markdup.depth | awk -v OFS=',' -v threshold=\$cov_value '{sum+=\$3; ++n; if(\$3>=threshold){c++}} END {print sum/n, c/n}' > filtered_${sorted_bam.getSimpleName()}_markdup.cov
+        # prepare output samtools depth
+        echo "file,mean_cov,targets_above_mincov" > header.csv
+        sam_results=\$(cat filtered_${sorted_bam.getSimpleName()}_markdup.cov)
+        sam_file=\$(echo "samtools_depth")
+        sam_file_results=\$(echo \$sam_file,\$sam_results)
+        echo \$sam_file_results > sam_file_results.csv
+        cat header.csv sam_file_results.csv > ${sorted_bam.getSimpleName()}.samtools.depth
     elif [[ "${library_type}" == "wgs" ]]; then
         samtools depth -aa -@ ${task.cpus} -s filtered_${sorted_bam.getSimpleName()}_markdup.bam > filtered_${sorted_bam.getSimpleName()}_markdup.depth
+        samtools depth -b \$bedfile -aa -@ ${task.cpus} -s filtered_${sorted_bam.getSimpleName()}_markdup.bam > filtered_${sorted_bam.getSimpleName()}_markdup_targeted.depth
+        cat  filtered_${sorted_bam.getSimpleName()}_markdup.depth | awk -v OFS=',' '{sum+=\$3; ++n} END {print sum/n}' > filtered_${sorted_bam.getSimpleName()}_markdup.cov
+        cat  filtered_${sorted_bam.getSimpleName()}_markdup_targeted.depth | awk -v OFS=',' -v threshold=\$cov_value '{sum+=\$3; ++n; if(\$3>=threshold){c++}} END {print c/n}' > filtered_${sorted_bam.getSimpleName()}_markdup_targeted.cov
+        # prepare output samtools depth
+        echo "file,mean_cov,targets_above_mincov" > bamqc_header.csv
+        sam_result=\$(cat filtered_${sorted_bam.getSimpleName()}_markdup.cov)
+        sam_result_targeted=\$(cat filtered_${sorted_bam.getSimpleName()}_markdup_targeted.cov)
+        sam_file=\$(echo "samtools_depth")
+        sam_file_results=\$(echo \$sam_file,\$sam_result,sam_result_targeted)
+        echo \$sam_file_results > sam_file_results.csv
+        cat bamqc_header.csv sam_file_results.csv > ${sorted_bam.getSimpleName()}.samtools.depth
     else
         echo "Wrong library_type"
         exit 1
     fi
-    cat  filtered_${sorted_bam.getSimpleName()}_markdup.depth | awk -v OFS=',' -v threshold=\$cov_value '{sum+=\$3; ++n; if(\$3>=threshold){c++}} END {print sum/n, c/n}' > filtered_${sorted_bam.getSimpleName()}_markdup.cov
-    # prepare output samtools depth
-    echo "file,mean_cov,targets_above_mincov" > header.csv
-    sam_results=\$(cat filtered_${sorted_bam.getSimpleName()}_markdup.cov)
-    sam_file=\$(echo "samtools_depth")
-    sam_file_results=\$(echo \$sam_file,\$sam_results)
-    echo \$sam_file_results > sam_file_results.csv
-    cat header.csv sam_file_results.csv > ${sorted_bam.getSimpleName()}.samtools.depth
 
     # bam QC with samtools depth including duplicated (old)
     if [[ "${library_type}" == "wes" ]]; then
