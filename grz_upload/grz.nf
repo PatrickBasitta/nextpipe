@@ -37,6 +37,7 @@ process add_bc_uuid_icdo3 {
       val(library_type)
       val(icdo3_xml)
       val(submission_dir)
+      val(py_script)
 
     output:
       //path("metadata.json"), emit: grz_json
@@ -52,7 +53,8 @@ process add_bc_uuid_icdo3 {
         --genomic_study_subtype ${genomic_study_subtype} \\
         --library_type ${library_type} \\
         --patient_id ${pid} \\
-        --icdo3_xml ${icdo3_xml}     
+        --icdo3_xml ${icdo3_xml} \\
+        --py_script ${py_script}     
     """
 
 }
@@ -90,6 +92,7 @@ workflow grzSubmissionPreparation {
        icdo3_xml_ch
        config_file_ch
        submission_dir_ch
+       py_script_ch
 
     main:
         extract_id_jsonpath(target_dir_json_ch)
@@ -103,7 +106,7 @@ workflow grzSubmissionPreparation {
        id_json_ch.view()
        genomic_study_subtype_ch.view()
        //submission_dir_ch = Channel.value(params.submission_dir)
-       add_bc_uuid_icdo3(id_json_ch,genomic_study_subtype_ch,library_type_ch,icdo3_xml_ch,submission_dir_ch)
+       add_bc_uuid_icdo3(id_json_ch,genomic_study_subtype_ch,library_type_ch,icdo3_xml_ch,submission_dir_ch,py_script_ch)
        
        id_meta_ch = add_bc_uuid_icdo3.out.grz_json
        //grz_validate_encrypt(id_meta_ch,submission_dir_ch,config_file_ch)
@@ -119,7 +122,8 @@ workflow {
     config_file_ch = Channel.value(params.config_file)
     //submission_dir_ch = Channel.fromPath(params.submission_dir, type: "dir")
     submission_dir_ch = Channel.value(params.submission_dir)
+    py_script_ch = Channel.value(params.py_script)
     // subworkflow
-    grzSubmissionPreparation(target_dir_json_ch,genomic_study_subtype_ch,library_type_ch,icdo3_xml_ch,config_file_ch,submission_dir_ch)
+    grzSubmissionPreparation(target_dir_json_ch,genomic_study_subtype_ch,library_type_ch,icdo3_xml_ch,config_file_ch,submission_dir_ch,py_script_ch)
     
 }
