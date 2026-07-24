@@ -9,13 +9,17 @@ import glob
 
 # using argparse for positinal arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--target_dir_mvwes", type=str)
-#parser.add_argument("-a", "--nextseq_data_dir", type=str)
-parser.add_argument("-c", "--novaseq_data_dir", type=str)
-parser.add_argument("-p", "--nxf_outputdir", type=str)
+parser.add_argument("-t", "--target_dir_mvwes", type=str) # xlsx files
+parser.add_argument("-c", "--novaseq_data_dir", type=str) # fq files
+parser.add_argument("-a", "--fastp_js_dir", type=str) # fastp files
+parser.add_argument("-q", "--bamqc_dir", type=str) # bamqc files
+parser.add_argument("-l", "--labdata_dir", type=str) # labdata files
+parser.add_argument("-b", "--vcf_dir", type=str) # vcf files
 parser.add_argument("-x", "--id_xlsx_paths", type=str)
 parser.add_argument("-f", "--id_fastq_paths", type=str)
-parser.add_argument("-b", "--id_bam_path", type=str)
+parser.add_argument("-p", "--id_fastp_path", type=str)
+parser.add_argument("-e", "--id_bamqc_path", type=str)
+parser.add_argument("-j", "--id_labdata_path", type=str)
 parser.add_argument("-v", "--id_vcf_path", type=str)
 parser.add_argument("-i", "--id_patient", type=str)
 args = parser.parse_args()
@@ -28,23 +32,25 @@ files_DONE_wes = glob.glob(parent_directory + "/" + "*_fertig.xlsx")
 
 # make id_path_df for json generator
 size_of_df = len(files_DONE_wes)
+print(size_of_df)
 id_path_df = pd.DataFrame("", index=list(range(0,size_of_df)),
-                          columns = ["patient_id", 
-                                     "xlsx_path", 
+                          columns = ["patient_id",
+                                     "xlsx_path",
                                      "fq_R1_path_n",
-                                     "fq_R2_path_n", 
-                                     "fq_R1_path_t", 
+                                     "fq_R2_path_n",
+                                     "fq_R1_path_t",
                                      "fq_R2_path_t",
-                                     "bam_path_n", 
-                                     "bai_path_n",
-                                     "bam_path_t", 
-                                     "bai_path_t",
-                                     "vcf_path"])
+                                     "vcf_path",
+                                     "fastp_js_path_n",
+                                     "bamqc_js_path_n",
+                                     "fastp_js_path_t",
+                                     "bamqc_js_path_t",
+                                     "labdata_js_path"])
 
 
 for i, wes_file in enumerate(files_DONE_wes):
     print(i, wes_file)
-    
+
     # get case id and set xlsx_path
     basename = os.path.basename(wes_file)
     patient_id = basename.split("_")[0] # get check !!!
@@ -53,9 +59,9 @@ for i, wes_file in enumerate(files_DONE_wes):
         id_path_df.loc[i,"patient_id"] = str(patient_id)
     else:
         raise ValueError(f"Please check the following patient '{patient_id}'")
-        
+
     id_path_df.loc[i,"xlsx_path"] = Path(wes_file)
-        
+
     # find fastq.gz files of patient with correct tissue
     #raw_data_dir_NextSeq = args.nextseq_data_dir
     raw_data_dir_NovaSeq = args.novaseq_data_dir
@@ -103,56 +109,15 @@ for i, wes_file in enumerate(files_DONE_wes):
         path_fastq_read2_n = fastq_read2_inNovaSeq_n
         path_fastq_read1_t = fastq_read1_inNovaSeq_t
         path_fastq_read2_t = fastq_read2_inNovaSeq_t
-        
+
     id_path_df.loc[i,"fq_R1_path_n"] = Path(path_fastq_read1_n[0])
     id_path_df.loc[i,"fq_R2_path_n"] = Path(path_fastq_read2_n[0])
     id_path_df.loc[i,"fq_R1_path_t"] = Path(path_fastq_read1_t[0])
     id_path_df.loc[i,"fq_R2_path_t"] = Path(path_fastq_read2_t[0])
-    
-    # find bamfiles
-    # get tissue conservation
-    pattern = ["_N_BLOOD", "_N_FFPE", "_N_FF", "_T_FFPE", "_T_FF"]
-    # create a regex pattern that matches any of the string
-    tissue_conservation_pattern = "|".join(map(re.escape,pattern))
-    matches_in_filename = re.findall(tissue_conservation_pattern,basename)
-    #nxf_dir = r"W:\ngs_pipeline_data\pipeline_user\nextflow_outputdir"
-    nxf_dir = args.nxf_outputdir
-    
-    # normal
-    for tc_pattern in matches_in_filename:
-        #print(tc_pattern)
-        if "N" in tc_pattern:
-            if glob.glob(nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
-               recursive=True) != []:
-                bam_file_path_n = glob.glob\
-                (nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
-                recursive=True)
-            #elif glob.glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-            #     recursive=True) != []:
-            #    bam_file_path_n = glob.\
-            #    glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-            #    recursive=True)
-    # tumor
-        elif "T" in tc_pattern:
-            if glob.glob(nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
-               recursive=True) != []:
-                bam_file_path_t = glob.glob\
-                (nxf_dir +"/"+patient_id + tc_pattern + "*.bam", 
-                recursive=True)
-            #elif glob.glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-            #     recursive=True) != []:
-            #    bam_file_path_t = glob.\
-            #    glob(nxf_dir +"/**/**/"+patient_id + tc_pattern + "*.bam", 
-            #    recursive=True)
-                
-    id_path_df.loc[i,"bam_path_n"] = Path(bam_file_path_n[0])
-    id_path_df.loc[i,"bai_path_n"] = Path(bam_file_path_n[0]+".bai")
-    id_path_df.loc[i,"bam_path_t"] = Path(bam_file_path_t[0])
-    id_path_df.loc[i,"bai_path_t"] = Path(bam_file_path_t[0]+".bai")
-    
+
     # find vcf file wes
     # check that only one file exits! also for fastq / all data
-    vcf_files_dir = nxf_dir
+    vcf_files_dir = args.vcf_dir
     if glob.glob( vcf_files_dir  +"/"+patient_id+"*.vcf", recursive=True) != []:
         vcf_file_path = glob.glob( vcf_files_dir  +"/"+patient_id+"*.vcf", recursive=True)
     #elif glob.glob( vcf_files_dir  +"/**/**/"+patient_id+"*.vcf", recursive=True) != []:
@@ -166,26 +131,66 @@ for i, wes_file in enumerate(files_DONE_wes):
     #        if matches_in_filename[0] in vcf_files and \
     #           matches_in_filename[1] in vcf_files:
     #           vcf_file_path_final.append(vcf_files)
-   
+
     id_path_df.loc[i,"vcf_path"] = Path(vcf_file_path[0])
-    
+
+    # find fastp_js files
+    fastp_js_dir = args.fastp_js_dir
+    if glob.glob( fastp_js_dir  +"/"+patient_id+"*_fastp.json", recursive=True) != []:
+        fastp_js_path_n = glob.glob( fastp_js_dir  +"/"+patient_id+"*N*_fastp.json", recursive=True)
+        fastp_js_path_t = glob.glob( fastp_js_dir  +"/"+patient_id+"*T*_fastp.json", recursive=True)
+
+    id_path_df.loc[i,"fastp_js_path_n"] = Path(fastp_js_path_n[0])
+    id_path_df.loc[i,"fastp_js_path_t"] = Path(fastp_js_path_t[0])
+
+    # find bamqc files
+    bamqc_dir = args.bamqc_dir
+    if glob.glob( bamqc_dir  +"/"+patient_id+"*N_bamqc.json", recursive=True) != []:
+        bamqc_path_n = glob.glob( bamqc_dir +"/"+patient_id+"*N_bamqc.json", recursive=True)
+    if glob.glob( bamqc_dir  +"/"+patient_id+"*B_bamqc.json", recursive=True) != []:
+        bamqc_path_n = glob.glob( bamqc_dir +"/"+patient_id+"*B_bamqc.json", recursive=True)
+    if glob.glob( bamqc_dir  +"/"+patient_id+"*T_bamqc.json", recursive=True) != []:
+       bamqc_path_t = glob.glob( bamqc_dir +"/"+patient_id+"*T_bamqc.json", recursive=True)
+
+    id_path_df.loc[i,"bamqc_js_path_n"] = Path(bamqc_path_n[0])
+    id_path_df.loc[i,"bamqc_js_path_t"] = Path(bamqc_path_t[0])
+
+    # find labdata files
+    labdata_dir = args.labdata_dir
+    if glob.glob( labdata_dir  +"/"+patient_id+"_labdata.json", recursive=True) != []:
+        labdata_path = glob.glob( labdata_dir  +"/"+patient_id+"*_labdata.json", recursive=True)
+
+    id_path_df.loc[i,"labdata_js_path"] = Path(labdata_path[0])
+
+
 # make samplesheets
-# for qc_fastp and qc_samtools_depth
-#fastp
-qc_fastp_df = id_path_df[["patient_id", "fq_R1_path_n","fq_R2_path_n",
+# for qc_fastp and qc_samtools_depth - old
+# fq checksums
+fastq_df = id_path_df[["patient_id", "fq_R1_path_n","fq_R2_path_n",
                               "fq_R1_path_t","fq_R2_path_t"]]
-qc_fastp_df.to_csv(args.id_fastq_paths, sep=",",index=False)
+fastq_df.to_csv(args.id_fastq_paths, sep=",",index=False)
 #samtools depth
 #qc_samtools_depth_df = id_path_df[["patient_id", "bam_path", "bai_path"]]
-qc_samtools_depth_df = id_path_df[["patient_id", "bam_path_n", "bai_path_n",
-                                       "bam_path_t", "bai_path_t"]]
-qc_samtools_depth_df.to_csv(args.id_bam_path, sep=",",index=False)
+##qc_samtools_depth_df = id_path_df[["patient_id", "bam_path_n", "bai_path_n",
+##                                       "bam_path_t", "bai_path_t"]]
+##qc_samtools_depth_df.to_csv(args.id_bam_path, sep=",",index=False)
 # for vcf calculations
 vcf_df = id_path_df[["patient_id", "vcf_path"]]
 vcf_df.to_csv(args.id_vcf_path, sep=",",index=False)
 # for json generator
 id_xlsx_df = id_path_df[["patient_id", "xlsx_path"]]
 id_xlsx_df.to_csv(args.id_xlsx_paths, sep=",",index=False)
+
+id_fastp_js_df = id_path_df[["patient_id", "fastp_js_path_n", "fastp_js_path_t"]]
+id_fastp_js_df.to_csv(args.id_fastp_path, sep=",",index=False)
+
+id_bamqc_df = id_path_df[["patient_id", "bamqc_js_path_n", "bamqc_js_path_t"]]
+id_bamqc_df.to_csv(args.id_bamqc_path, sep=",",index=False)
+
+id_labdata_df = id_path_df[["patient_id", "labdata_js_path"]]
+id_labdata_df.to_csv(args.id_labdata_path, sep=",",index=False)
+
 # for meta data fmrest
 id_patient_df = id_path_df["patient_id"]
 id_patient_df.to_csv(args.id_patient, sep=",",index=False)
+

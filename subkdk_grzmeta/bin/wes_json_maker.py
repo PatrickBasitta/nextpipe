@@ -25,14 +25,14 @@ parser.add_argument("-t", "--fq_bytes_json_tumor", type=str)
 parser.add_argument("-u", "--bam_json_tumor", type=str)
 parser.add_argument("-d", "--vcf_sha256_json", type=str)
 parser.add_argument("-e", "--vcf_bytes_json", type=str)
-parser.add_argument("-p", "--patient_data_json", type=str)
+parser.add_argument("-l", "--labdata_json", type=str)
 parser.add_argument("-g", "--bed_sha256_json", type=str)
 parser.add_argument("-j", "--bed_bytes_json", type=str)
 parser.add_argument("-q", "--hgnc", type=str)
 #parser.add_argument("-w", "--targeted_bam_json_normal", type=str)
 #parser.add_argument("-z", "--targeted_bam_json_tumor", type=str)
 args = parser.parse_args()
-      
+
 # make pandas excel
 filepath = args.xlsx_path # xlsx_path !!!
 excel_file = pd.ExcelFile(filepath, engine="openpyxl")
@@ -153,8 +153,8 @@ for value in Oncology_Molecular_Report["complexBiomarkers"]:
         Oncology_Molecular_Report["complexBiomarkers"][0]["tailHigh"] = "na"
 
 # add patient data
-with open(args.patient_data_json, "r") as patient_data:
-    p_data = js.load(patient_data)
+with open(args.labdata_json, "r") as labdata_js:
+    labdata = js.load(labdata_js)
 
 # submission_grz
 etl.wes_submission_grz["submission"]["submissionDate"] = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat().split("T")[0]
@@ -165,23 +165,15 @@ etl.wes_submission_grz["submission"]["coverageType"] = gv.coverageType
 etl.wes_submission_grz["submission"]["submitterId"] = gv.submitterId
 etl.wes_submission_grz["submission"]["genomicDataCenterId"] = gv.genomicDataCenterId
 etl.wes_submission_grz["submission"]["clinicalDataNodeId"] = gv.clinicalDataNodeId
-etl.wes_submission_grz["submission"]["diseaseType"] = gv.diseaseType # assumed
-etl.wes_submission_grz["submission"]["genomicStudyType"] = gv.genomicStudyType # assumed
+etl.wes_submission_grz["submission"]["diseaseType"] = gv.diseaseType
+etl.wes_submission_grz["submission"]["genomicStudyType"] = gv.genomicStudyType
 etl.wes_submission_grz["submission"]["genomicStudySubtype"] = gv.wxs_genomicStudySubtype
 etl.wes_submission_grz["submission"]["labName"] = gv.labName
 
 # add broad consent information
 etl.wes_submission_grz["donors"][0]["donorPseudonym"] = gv.wes_donorPseudonym
-etl.wes_submission_grz["donors"][0]["gender"] = p_data["gender"]
+etl.wes_submission_grz["donors"][0]["gender"] = ""
 etl.wes_submission_grz["donors"][0]["relation"] = gv.wes_relation
-#etl.wes_submission_grz["donors"][0]["mvConsent"]["presentationDate"] = ""
-#etl.wes_submission_grz["donors"][0]["mvConsent"]["version"] = ""
-#etl.wes_submission_grz["donors"][0]["mvConsent"]["scope"][0]["type"] = ""
-#etl.wes_submission_grz["donors"][0]["mvConsent"]["scope"][0]["date"] = ""
-#etl.wes_submission_grz["donors"][0]["mvConsent"]["scope"][0]["domain"] = ""
-#etl.wes_submission_grz["donors"][0]["researchConsents"][0]["schemaVersion"] = "data_from_MVtracker"
-#etl.wes_submission_grz["donors"][0]["researchConsents"][0]["presentationDate"] = "data_from_MVtracker"
-#etl.wes_submission_grz["donors"][0]["researchConsents"][0]["scope"] = "data_from_MVtracker"
 
 # fastp info
 with open(args.fastp_json_normal, "r") as fastp_json_normal:
@@ -195,10 +187,10 @@ fastp_qc_normal_tumor = [fastp_qc_normal, fastp_qc_tumor]
 # bam info
 with open(args.bam_json_normal, "r") as bam_json_normal:
     bam_qc_normal = js.load(bam_json_normal)
-    
+
 with open(args.bam_json_tumor, "r") as bam_json_tumor:
     bam_qc_tumor = js.load(bam_json_tumor)
-    
+
 bam_qc_normal_tumor = [bam_qc_normal, bam_qc_tumor]
 
 # bam info targeted
@@ -213,18 +205,18 @@ bam_qc_normal_tumor = [bam_qc_normal, bam_qc_tumor]
 #add fastq info to submission_grz
 with open(args.fq_sha256_json_normal, "r") as fq_sha256_json_normal:
     fq_sha256sum_normal = js.load(fq_sha256_json_normal)
-    
+
 with open(args.fq_sha256_json_tumor, "r") as fq_sha256_json_tumor:
     fq_sha256sum_tumor = js.load(fq_sha256_json_tumor)
-    
+
 fq_sha256sum_normal_tumor = [fq_sha256sum_normal, fq_sha256sum_tumor ]
 
 with open(args.fq_bytes_json_normal, "r") as fq_byte_json_normal:
     fq_bytesize_normal = js.load(fq_byte_json_normal)
-    
+
 with open(args.fq_bytes_json_tumor, "r") as fq_byte_json_tumor:
     fq_bytesize_tumor = js.load(fq_byte_json_tumor)
-    
+
 fq_bytesize_normal_tumor = [fq_bytesize_normal, fq_bytesize_tumor ]
 
 # add bed info to submission_grz: normal index 2, tumor index 3
@@ -244,21 +236,22 @@ bed_size = bed_bytesize["bed_bytesize"][0]["fileByteSize"]
 
 # index_number_files: len(3 files in normal, 4 files in tumor)
 index_num_files = [3,4]
-sampleconservation = [wes_final_page_dict["sampleConservation_N"],wes_final_page_dict["sampleConservation_T"]]
+## sampleconservation = [wes_final_page_dict["sampleConservation_N"],wes_final_page_dict["sampleConservation_T"]]
+sampleconservation = [lower(labdata["normal material"]), lower(labdata["tumor material"])]
 # index 0 = normal, index 1 = tumor
 index_normal_tumor = [0,1]
 for i_nt in index_normal_tumor:
-  
+
     # add info to sumbmission_grz - labData
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["labDataName"] = gv.wes_labDataName[i_nt] #p_data["pathoProId"]
 
     # add info tissue ontology
     if sampleconservation[i_nt] == "blood" or sampleconservation[i_nt] == "blood ":
-        
+
         etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                           ["tissueOntology"]["name"] = "UBERON"
-    
+
         etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                           ["tissueOntology"]["version"] = "2025-08-15"
 
@@ -288,8 +281,8 @@ for i_nt in index_normal_tumor:
                           ["sampleConservation"] = sampleconservation[i_nt]
 
     # add further labData information
-    sampledate = [wes_final_page_dict["sampledate_N"], wes_final_page_dict["sampledate_T"]]
-
+    #sampledate = [wes_final_page_dict["sampledate_N"], wes_final_page_dict["sampledate_T"]]
+    sampledate = [labdata["sampledate_N"], labdata["sampledate_T"]]
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sampleDate"] = sampledate[i_nt]
 
@@ -315,13 +308,13 @@ for i_nt in index_normal_tumor:
                       ["libraryPrepKitManufacturer"] = gv.wes_libraryPrepKitManufacturer
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["sequencerModel"] = wes_final_page_dict["sequencer"] # or NextSeq550?
+                      ["sequencerModel"] = labdata["sequencer"] # or NextSeq550?
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["sequencerManufacturer"] = gv.wes_sequencerManufacturer # known
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
-                      ["kitName"] = wes_final_page_dict["kit_name"]
+                      ["kitName"] =  labdata["kit_name"]  # wes_final_page_dict["kit_name"]
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["kitManufacturer"] = gv.wes_kitManufacturer
@@ -332,7 +325,8 @@ for i_nt in index_normal_tumor:
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["enrichmentKitDescription"] = gv.wes_enrichmentKitDescription
 
-    barcode = [wes_final_page_dict["barcode_N"], wes_final_page_dict["barcode_T"]]
+    #barcode = [wes_final_page_dict["barcode_N"], wes_final_page_dict["barcode_T"]]
+    barcode = [labdata["barcode_N"], labdata["barcode_T"]]
 
     etl.wes_submission_grz["donors"][0]["labData"][i_nt]\
                       ["barcode"] = barcode[i_nt]
@@ -528,19 +522,20 @@ etl.wes_submission_grz["donors"][0]["labData"][index_tumor]\
 #if patient_id == patient_id_check:
 
 wes_json = {
-       "analysis" : p_data["analysis"],
+       "analysis" : "WES",
        "mvtracker_uuid" : "",
-       "pathoProId": p_data["pathoProId"],
-       "nexusId": p_data["nexusId"],
-       "molpathId": p_data["molpathId"],
-       "patient_id" :  p_data["orbisId"],
-       "firstname":p_data["firstname"],
-       "lastame": p_data["lastname"],
-       "dateofbrith": p_data["dateofbirth"],
-       "network" :  wes_final_page_dict["network"],
+       "pathoProId": "",
+       "nexusId": "",
+       "enumber": labdata["number"],
+       "molpathId": "",
+       "patient_id" : labdata["patient_id"],
+       "firstname": "",
+       "lastame": "",
+       "dateofbrith": "",
+       "network" :  "mv",
        "diseaseType" : "oncological",
        "entity_excel" : wes_final_page_dict["entity"],
-       "entity_fm": p_data["entity"],
+       "entity_fm": "",
        "molecularReportod" : Oncology_Molecular_Report,
        "submission" : etl.wes_submission_grz
         }

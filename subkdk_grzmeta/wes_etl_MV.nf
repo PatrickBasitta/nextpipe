@@ -10,12 +10,17 @@ process extract_id_filepath {
     input:
       path(target_dir)
       val(NovaSeq_data_dir)
-      val(nxf_outputdir)
+      val(vcf_dir)
+      val(fastp_js)
+      val(bamqc)
+      val(labdata)
 
     output:
       path("id_xlsx_paths.csv"), emit: id_xlsx
       path("fastq_paths.csv")  , emit: id_fastqs
-      path("bam_path.csv")     , emit: id_bam
+      path("fastp_path.csv")   , emit: id_fastp_js
+      path("bamqc_path.csv")   , emit: id_bamqc
+      path("labdata_path.csv") , emit: id_labdata
       path("vcf_path.csv")     , emit: id_vcf
       path("patient_id.csv")   , emit: id_patient
 
@@ -24,10 +29,15 @@ process extract_id_filepath {
     wes_extract_id_filepath.py \\
         --target_dir_mvwes ${target_dir} \\
         --novaseq_data_dir ${NovaSeq_data_dir} \\
-        --nxf_outputdir ${nxf_outputdir} \\
+        --vcf_dir ${vcf_dir} \\
+        --fastp_js_dir ${fastp_js} \\
+        --bamqc_dir ${bamqc} \\
+        --labdata_dir ${labdata} \\
         --id_xlsx_paths id_xlsx_paths.csv \\
         --id_fastq_paths fastq_paths.csv \\
-        --id_bam_path bam_path.csv \\
+        --id_fastp_path fastp_path.csv \\
+        --id_bamqc_path bamqc_path.csv \\
+        --id_labdata_path labdata_path.csv \\
         --id_vcf_path vcf_path.csv \\
         --id_patient patient_id.csv
     """  
@@ -39,7 +49,7 @@ process process_fastqs {
     tag "${sample_id}"
     debug true
     
-    conda "bioconda::fastp=1.0.1"
+    //conda "bioconda::fastp=1.0.1"
     
     memory = { Math.max(16, (task.attempt * read1.size() * 0.2 / 1000000000).toDouble()) .GB }
     //cpus 16
@@ -52,16 +62,9 @@ process process_fastqs {
         val(grz_submission_dir)
 
     output:
-        //tuple val(sample_id), path("${read1.getSimpleName()}_${read2.getSimpleName()}_fq_sha256sum.json")        , emit: sha256sum_fqs
-        //tuple val(sample_id), path("${read1.getSimpleName()}_${read2.getSimpleName()}_fq_bytesize.json")      , emit: bytesize_fqs
-        //tuple val(sample_id), path("${read1.getSimpleName()}.fastp_1.fq.gz")                                  , emit: fastp_1_fq
-        //tuple val(sample_id), path("${read2.getSimpleName()}.fastp_2.fq.gz")                                  , emit: fastp_2_fq
-        //tuple val(sample_id), path("${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.json")            , emit: fastp_json
-        //tuple val(sample_id), path("${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.html")            , emit: fastp_html
-        //tuple val(sample_id), path("${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.log")                , emit: fastp_log    
-        tuple val(sample_id), path("${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.json"), path("${read1.getSimpleName()}_${read2.getSimpleName()}_fq_sha256sum.json"), path("${read1.getSimpleName()}_${read2.getSimpleName()}_fq_bytesize.json"), emit: fastp_out
+        tuple val(sample_id), path("${read1.getSimpleName()}_${read2.getSimpleName()}_fq_sha256sum.json"), path("${read1.getSimpleName()}_${read2.getSimpleName()}_fq_bytesize.json"), emit: fastp_out
    
-     script:
+    script:
     def awk = "awk -v OFS=',' '{num=num?num OFS s1 \$1 s1:s1 \$1 s1} {file=file?file OFS s1 \$2 s1:s1 \$2 s1} END{print num,file}'"
     """  
     sha256sum ${read1} ${read2} > ${read1.getSimpleName()}_${read2.getSimpleName()}_fq_cal_sha256.txt
@@ -84,15 +87,6 @@ process process_fastqs {
                                           | (.[] | select(length > 0) | . / ",") as \$input
                                           | {"R1": {"file":  \$input[2], "fileByteSize": \$input[0]}}, {"R2": {"file": \$input[3],"fileByteSize": \$input[1]}}]}
                                            ' > ${read1.getSimpleName()}_${read2.getSimpleName()}_fq_bytesize.json                                                  
-    fastp \\
-        --in1 ${read1} \\
-        --in2 ${read2} \\
-        --out1 ${read1.getSimpleName()}.fastp_1.fq.gz \\
-        --out2 ${read2.getSimpleName()}.fastp_2.fq.gz \\
-        --thread 8 \\
-        --json ${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.json \\
-        --html ${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.html \\
-        2> >(tee ${read1.getSimpleName()}_${read2.getSimpleName()}.fastp.log >&2)
      
     if [ ! -f ${grz_submission_dir}/${sample_id}/files/${read1} ]
     then
@@ -104,106 +98,6 @@ process process_fastqs {
       cp ${read2} ${grz_submission_dir}/${sample_id}/files/
     fi
 
-    """
-}
-
-process process_bamfile {
-
-    tag "${sample_id}"
-    debug true
-    //errorStrategy 'ignore'
-
-    conda "bioconda::samtools=1.22.1 bioconda::sambamba bioconda::mosdepth"
-    cache 'lenient'
-    cpus { bam.size() > 35.GB ? 8 : 16 }
-    memory { bam.size() > 35.GB ? '64 GB' : '32 GB' }
-
-    publishDir(path: "${params.outdir}/${sample_id}/coverage", mode: "copy")
-
-    input:
-    tuple val(sample_id), path(bam), path(bai)
-    val(grz_submission_dir)
-    val(wes_bedfile)
-    
-    output:
-    tuple val(sample_id), path("${bam.getSimpleName()}_depth.stats"), emit: sam_qc
-    tuple val(sample_id), path("${bam.getSimpleName()}_bam_qc.csv") , emit: bam_qc
-    tuple val(sample_id), path("${bam.getSimpleName()}_bam.json"), emit: bam_json
-    tuple val(sample_id), path("${bam.getSimpleName()}.samtools.depth"), path("${bam.getSimpleName()}.mosdepth.region"), path("${bam.getSimpleName()}.mosdepth.summary"), path("${bam.getSimpleName()}.bamqc")
-            
-    script:
-    def awk1 = "awk -v OFS=',' '{sum+=\$3; ++n; if(\$3>max){max=\$3}; if(\$3<min||min==0){min=\$3};if(\$3>=30){c++}} END{print min, max, sum/n, c/n}'"
-    def awk2 = "awk -v OFS=',' '{sum+=\$3; ++n; if(\$3>max){max=\$3}; if(\$3<min||min==0){min=\$3};if(\$3>=100){c++}} END{print min, max, sum/n, c/n}'"
-    def awk3 = "awk -v OFS=',' '{num=num?num OFS s1 \$1 s1:s1 \$1 s1} {file=file?file OFS s1 \$2 s1:s1 \$2 s1} END{print num file}'"
-    def sample_name = "${bam.getSimpleName()}"
-    def  normal_pattern = "N"
-    def cmd1 = (sample_name =~ normal_pattern) ? awk1 : awk2
-    """ 
-    samtools depth -b ${wes_bedfile} ${bam} --threads ${task.cpus} -o ${bam.getSimpleName()}_depth.stats
-    cat ${bam.getSimpleName()}_depth.stats | ${cmd1} > ${bam.getSimpleName()}_qc_cov.csv
-    echo "min_cov,max_cov,mean_cov,targets_above_mincov" > header.csv
-    cat header.csv ${bam.getSimpleName()}_qc_cov.csv | ${awk3} > ${bam.getSimpleName()}_bam_qc.csv
-    qc_info=\$(cat ${bam.getSimpleName()}_bam_qc.csv)
-    bamfile="${bam},"
-    full_info=\$bamfile\$qc_info
-    echo \$full_info | jq -Rsn '
-                         {"bam_qc":
-                           [inputs
-                            | . / "\n"
-                            | (.[] | select(length > 0) | . / ",") as \$input
-                            | {"file": \$input[0], "min_cov": \$input[5], "max_cov": \$input[6], "mean_cov": \$input[7], "targets_above_mincov": \$input[8]}]}
-                              ' > ${bam.getSimpleName()}_bam.json
-
-    
-    # bam QC with samtools
-    if [[ "${sample_name}" =~ [NB] ]]; then
-        cov_value=30
-    elif [[ "${sample_name}" =~ [T] ]]; then
-        cov_value=100
-    else
-        echo "No matching filename or wrong library_type"
-        exit 1
-    fi
-
-    # markdup with sambamba
-    mkdir tmp
-    sambamba markdup -t ${task.cpus} --tmpdir tmp ${bam} ${bam.getSimpleName()}_markdup.bam
-
-    # bam QC with samtools depth without duplicates 
-    samtools index -@ ${task.cpus} ${bam.getSimpleName()}_markdup.bam -o ${bam.getSimpleName()}_markdup.bam.bai
-    samtools view -b -F 1024 -@ ${task.cpus} ${bam.getSimpleName()}_markdup.bam > filtered_${bam.getSimpleName()}_markdup.bam
-    samtools depth -b ${wes_bedfile} -aa -@ ${task.cpus} -s filtered_${bam.getSimpleName()}_markdup.bam > filtered_${bam.getSimpleName()}_markdup.depth
-    cat  filtered_${bam.getSimpleName()}_markdup.depth | awk -v OFS=',' -v threshold=\$cov_value '{sum+=\$3; ++n; if(\$3>=threshold){c++}} END {print sum/n, c/n}' > filtered_${bam.getSimpleName()}_markdup.cov
-
-    # prepare output samtools depth
-    echo "file,mean_cov,targets_above_mincov" > bamqc_header.csv
-    sam_results=\$(cat filtered_${bam.getSimpleName()}_markdup.cov)
-    sam_file=\$(echo "samtools_depth")
-    sam_file_results=\$(echo \$sam_file,\$sam_results)
-    echo \$sam_file_results > sam_file_results.csv
-    cat bamqc_header.csv sam_file_results.csv > ${bam.getSimpleName()}.samtools.depth
-
-    # bam QC with mosdepth (for comparison)
-    mosdepth --by ${wes_bedfile} ${bam.getSimpleName()}_markdup ${bam.getSimpleName()}_markdup.bam
-    zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk '{len = \$3 - \$2; sum += len * \$4; total += len} END {print sum/total}' > ${bam.getSimpleName()}.mosdepth.depth
-    zcat  ${bam.getSimpleName()}_markdup.regions.bed.gz | awk -v mincov=\$cov_value '{len = \$3 - \$2; total += len; if (\$4 >= mincov) covered += len} END {print (covered/total)}' > ${bam.getSimpleName()}.mosdepth.ontargets
-    paste -d',' ${bam.getSimpleName()}.mosdepth.depth ${bam.getSimpleName()}.mosdepth.ontargets > ${bam.getSimpleName()}.mosdepth.region
-    cat ${bam.getSimpleName()}_markdup.mosdepth.summary.txt | awk '\$1=="total_region" {print \$4}' > ${bam.getSimpleName()}.mosdepth.summary
-
-    # prepare output mosdepth region
-    mosdepth_region_results=\$(cat ${bam.getSimpleName()}.mosdepth.region)
-    mosdepth_region_file=\$(echo "mosdepth_region")
-    mosdepth_region_file_results=\$(echo \$mosdepth_region_file,\$mosdepth_region_results)
-    echo \$mosdepth_region_file_results > mosdepth_region_file_results.csv
-    # prepare output mosdepth summary
-    mosdepth_summary_results=\$(cat ${bam.getSimpleName()}.mosdepth.summary)
-    mosdepth_summary_file=\$(echo "mosdepth_summary")
-    mosdepth_summary_file_results=\$(echo \$mosdepth_summary_file,\$mosdepth_summary_results)
-    echo \$mosdepth_summary_file_results > mosdepth_summary_file_results.csv
-    # join results   
-    cat ${bam.getSimpleName()}.samtools.depth  >> ${bam.getSimpleName()}.bamqc
-    cat mosdepth_region_file_results.csv >> ${bam.getSimpleName()}.bamqc
-    cat mosdepth_summary_file_results.csv >> ${bam.getSimpleName()}.bamqc 
     """
 }
 
@@ -282,27 +176,6 @@ process process_bamfile {
     """
 }
 
-process extract_patient_data {
-
-    tag "${sample_id}"
-    debug true
-    //errorStrategy 'ignore'
-    cache 'lenient'
-
-    input:
-        val(sample_id)
-
-    output:
-        tuple val(sample_id), path("${sample_id}_meta_data.json"), emit: meta_data
-
-    script:
-    """
-    wes_extract_patient_data.py \\
-         --patient_id ${sample_id} \\
-         --patient_meta_data ${sample_id}_meta_data.json
-    """
-}
-
 process make_json {
 
     tag "${sample_id}"
@@ -315,7 +188,21 @@ process make_json {
     publishDir(path: "${outdir}/${sample_id}/", mode: "copy")
 
     input:
-        tuple val(sample_id), path(xlsx), path(fastp_json_normal), path(sha256sum_fqs_normal), path(bytesize_fqs_normal), path(fastp_json_tumor), path(sha256sum_fqs_tumor), path(bytesize_fqs_tumor), path(bam_json_normal), path(bam_json_tumor), path(json_sha256sum_vcf), path(json_bytesize_vcf), path(sha256sum_bed), path(size_bed), path(patient_data)
+        tuple val(sample_id),
+            path(xlsx),
+            path(fastp_json_normal),
+            path(fastp_json_tumor),
+            path(sha256sum_fqs_normal),
+            path(bytesize_fqs_normal),
+            path(sha256sum_fqs_tumor),
+            path(bytesize_fqs_tumor),
+            path(bam_json_normal),
+            path(bam_json_tumor),
+            path(json_sha256sum_vcf),
+            path(json_bytesize_vcf),
+            path(sha256sum_bed),
+            path(size_bed),
+            path(labdata)
         val(hgnc)
         val(outdir)
 
@@ -327,19 +214,19 @@ process make_json {
     def file_names = [
         "${sample_id}",
         "${xlsx.getSimpleName()}", 
-        "${fastp_json_normal.getSimpleName()}", 
+        "${fastp_json_normal.getSimpleName()}",
+        "${fastp_json_tumor.getSimpleName()}", 
         "${sha256sum_fqs_normal.getSimpleName()}", 
         "${bytesize_fqs_normal.getSimpleName()}", 
-        "${fastp_json_tumor.getSimpleName()}", 
         "${sha256sum_fqs_tumor.getSimpleName()}", 
         "${bytesize_fqs_tumor.getSimpleName()}", 
         "${bam_json_normal.getSimpleName()}", 
         "${bam_json_tumor.getSimpleName()}", 
         "${json_sha256sum_vcf.getSimpleName()}", 
-        "${json_bytesize_vcf.getSimpleName()}", 
-        "${patient_data.getSimpleName()}", 
+        "${json_bytesize_vcf.getSimpleName()}",  
         "${sha256sum_bed.getSimpleName()}", 
-        "${size_bed.getSimpleName()}"
+        "${size_bed.getSimpleName()}",
+        "${labdata.getSimpleName()}",
         ]
     """
     id=${file_names[0]}
@@ -360,18 +247,18 @@ process make_json {
         --sample_id ${sample_id} \\
         --xlsx_path ${xlsx} \\
         --fastp_json_normal ${fastp_json_normal} \\
+        --fastp_json_tumor ${fastp_json_tumor} \\
         --fq_sha256_json_normal ${sha256sum_fqs_normal} \\
         --fq_bytes_json_normal ${bytesize_fqs_normal} \\
-        --fastp_json_tumor ${fastp_json_tumor} \\
         --fq_sha256_json_tumor ${sha256sum_fqs_tumor} \\
         --fq_bytes_json_tumor ${bytesize_fqs_tumor} \\
         --bam_json_normal ${bam_json_normal} \\
         --bam_json_tumor ${bam_json_tumor} \\
         --vcf_sha256_json ${json_sha256sum_vcf} \\
         --vcf_bytes_json ${json_bytesize_vcf} \\
-        --patient_data_json ${patient_data} \\
         --bed_sha256_json ${sha256sum_bed} \\
         --bed_bytes_json ${size_bed} \\
+        --labdata_json ${labdata} \\
         --hgnc ${hgnc}
     """ 
 }
@@ -409,22 +296,25 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
     take:
        target_dir_mvwes_ch
        NovaSeq_data_dir_ch
-       nxf_outputdir_ch
        grz_submission_dir_ch
        hgnc_ch
-       wes_bedfile_ch       
+       wes_bedfile_ch
+       fastp_js_ch
+       bamqc_ch
+       labdata_ch
+       vcf_dir_ch
        outdir_ch
 
     main:
 
-       extract_id_filepath(target_dir_mvwes_ch,NovaSeq_data_dir_ch,nxf_outputdir_ch)
+       extract_id_filepath(target_dir_mvwes_ch,NovaSeq_data_dir_ch,vcf_dir_ch,fastp_js_ch,bamqc_ch,labdata_ch)
         
        // make samplesheets
        // channel for make_json process
        id_xlsx_ch = extract_id_filepath.out.id_xlsx | splitCsv(header: true) | map { row -> [row.patient_id,
                                                                                              file(row.xlsx_path) ]}
        
-       // channel for process_fastp
+       // channel for process_fastq
        id_fastqs_ch = extract_id_filepath.out.id_fastqs | splitCsv(header: true) | map { row ->
                       [[ row.patient_id,
                            file(row.fq_R1_path_n),
@@ -439,25 +329,30 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
 
        // id_fastqs_ch.view()
        
-       // channel for process_bamfile
-       id_bam_ch = extract_id_filepath.out.id_bam | splitCsv(header: true) | map { row -> 
-                      [[row.patient_id,
-                          file(row.bam_path_n),
-                          file(row.bai_path_n),
-                          ],
-                      [ row.patient_id,
-                          file(row.bam_path_t),
-                          file(row.bai_path_t),
-                          ]
-                      ]
-                      } | flatMap{ it -> [it[0], it[1]] }
-
-       //id_bam_ch.view()
-
        // channel for process_vcf
        id_vcf_ch = extract_id_filepath.out.id_vcf | splitCsv(header: true) | map { row -> [row.patient_id,
                                                                                            file(row.vcf_path) ]}
-      
+
+       // channel for fastp_json
+       id_fastpjs_ch = extract_id_filepath.out.id_fastp_js | splitCsv(header: true) | map { row -> [row.patient_id,
+                                                                                           file(row.fastp_js_path_n),
+                                                                                           file(row.fastp_js_path_t) ]}
+       
+       id_fastpjs_ch.view()
+
+       // channel for bamqc_json
+       id_bamqc_ch = extract_id_filepath.out.id_bamqc | splitCsv(header: true) | map { row -> [row.patient_id,
+                                                                                           file(row.bamqc_js_path_n),
+                                                                                           file(row.bamqc_js_path_t) ]}
+
+       id_bamqc_ch.view()
+
+       // channel for labdata
+       id_labdata_ch = extract_id_filepath.out.id_labdata | splitCsv(header: true) | map { row -> [row.patient_id,
+                                                                                           file(row.labdata_js_path) ]}
+       
+       id_labdata_ch.view()
+
        // channel for patient_id
        id_patient_ch = extract_id_filepath.out.id_patient | splitCsv(header: true) | map { row -> [row.patient_id]}
        id_patient_ch.view()
@@ -466,20 +361,15 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
        grz_dirs_ch =  grz_dirs(patient_id,grz_submission_dir_ch)
        sub_dir = grz_dirs_ch.done.first()
        //sub_dir.view()
-       patient_data = extract_patient_data(patient_id)
+       
                                                                                
        fastq_out = process_fastqs(id_fastqs_ch,sub_dir)
-       bam_out = process_bamfile(id_bam_ch,sub_dir,wes_bedfile_ch)
+       
        vcf_bed_out = process_vcf_bedfile(id_vcf_ch,sub_dir,wes_bedfile_ch)
 
-       //fastq_out.fastp_json.view()
-       //fastq_out.sha256sum_fqs.view()
-       //fastq_out.bytesize_fqs.view()
-       //joined_fq_data = fastq_out.fastp_json.join(fastq_out.sha256sum_fqs, by:0).join(fastq_out.bytesize_fqs, by:0)
-       //joined_fq_data.view()
+       // process fq_data       
        fq_data = fastq_out.fastp_out
-       //joined_fq_data.view()
-
+       
        //join paired normal tumor and sort N first T last
        paired_fq_data = fq_data.groupTuple() | map {it -> [it[0], it[1..-1].flatten()]}
        //paired_fq_data.view()
@@ -489,10 +379,11 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
                                       def val2 = it[1][1]
                                       def val3 = it[1][2]
                                       def val4 = it[1][3]
-                                      def val5 = it[1][4]
-                                      def val6 = it[1][5]
+                                      //def val5 = it[1][4]
+                                      //def val6 = it[1][5]
                                       //output
-                                      [key,val1,val2,val3,val4,val5,val6]}
+                                      //[key,val1,val2,val3,val4,val5,val6]}
+                                      [key,val1,val2,val3,val4]}
        //flat_paired_fq_data.view()
        
        sorted_normal_tumor_paired_fq_data = flat_paired_fq_data.map{it ->  
@@ -504,66 +395,41 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
                                                                 (it[2].name.findAll {it.contains('N')}) ? normal_lst.add(it[2]) : tumor_lst.add(it[2])
                                                                 (it[3].name.findAll {it.contains('N')}) ? normal_lst.add(it[3]) : tumor_lst.add(it[3])
                                                                 (it[4].name.findAll {it.contains('N')}) ? normal_lst.add(it[4]) : tumor_lst.add(it[4])
-                                                                (it[5].name.findAll {it.contains('N')}) ? normal_lst.add(it[5]) : tumor_lst.add(it[5])
-                                                                (it[6].name.findAll {it.contains('N')}) ? normal_lst.add(it[6]) : tumor_lst.add(it[6])
+                                                                //(it[5].name.findAll {it.contains('N')}) ? normal_lst.add(it[5]) : tumor_lst.add(it[5])
+                                                                //(it[6].name.findAll {it.contains('N')}) ? normal_lst.add(it[6]) : tumor_lst.add(it[6])
                                                                 // output                                                                
                                                                 [key,normal_lst,tumor_lst]} | map { it ->
                                                                                               def key_fq = it[0]
-                                                                                              def fp_n = it[1][0]
-                                                                                              def sha_n = it[1][1]
-                                                                                              def byte_n = it[1][2]
-                                                                                              def fp_t = it[2][0]
-                                                                                              def sha_t = it[2][1]
-                                                                                              def byte_t = it[2][2]
+                                                                                              def sha_n = it[1][0]
+                                                                                              def byte_n = it[1][1]
+                                                                                              //def byte_n = it[1][2]
+                                                                                              def sha_t = it[2][0]
+                                                                                              def byte_t = it[2][1]
+                                                                                              //def byte_t = it[2][2]
                                                                                               //output
-                                                                                              [key_fq,fp_n,sha_n,byte_n,fp_t,sha_t,byte_t]}
+                                                                                              //[key_fq,fp_n,sha_n,byte_n,fp_t,sha_t,byte_t]}
+                                                                                              [key_fq,sha_n,byte_n,sha_t,byte_t]}
                                                              
-       //sorted_normal_tumor_paired_fq_data.view()
-       
-       // join bam json files and sort N first T last       
-       bam_data = bam_out.bam_json
-       bam_data.view()
-       paired_bam_data = bam_data.groupTuple() | map {it -> [it[0], it[1..-1].flatten()]}
-       paired_bam_data.view()
-       //paired_bam_data.count().view()
-       flat_paired_bam_data = paired_bam_data | map { it ->
-                                      def key = it[0]
-                                      def val1 = it[1][0]
-                                      def val2 = it[1][1]
-                                      //output
-                                      [key,val1,val2]}
-       //flat_paired_bam_data.view()
-       //flat_paired_bam_data.count().view()
-       
-       sorted_normal_tumor_paired_bam_data = flat_paired_bam_data.map{it ->
-                                                                def key = it[0]
-                                                                def normalbam_lst = []
-                                                                def tumorbam_lst = []
-                                                                // this logic is due that 1 files are expected (1x N, 1x T)
-                                                                (it[1].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[1]) : tumorbam_lst.add(it[1])
-                                                                (it[2].name.findAll {it.contains('N')}) ? normalbam_lst.add(it[2]) : tumorbam_lst.add(it[2])
-                                                                // output
-                                                                [key,normalbam_lst,tumorbam_lst]} | map { it ->
-                                                                                              def key_bam = it[0]
-                                                                                              def bam_n = it[1][0]
-                                                                                              def bam_t = it[2][0]
-                                                                                              //output
-                                                                                              [key_bam,bam_n,bam_t]}
-
-       //sorted_normal_tumor_paired_bam_data.view()
+       sorted_normal_tumor_paired_fq_data.view()
        
        // join vcf data bedfile
-       joined_vcf_data_bed = vcf_bed_out.json_sha256sum_vcf.join(vcf_bed_out.json_bytesize_vcf,by:0).join(vcf_bed_out.json_sha256_size_bed,by:0)
+       joined_vcf_data_bed = vcf_bed_out.json_sha256sum_vcf
+                                 .join(vcf_bed_out.json_bytesize_vcf,by:0)
+                                 .join(vcf_bed_out.json_sha256_size_bed,by:0)
+       
        //joined_vcf_data_bed.view()
-       //vcf_bed_out.json_sha256sum_bed.view()
-       //paired_vcf_data = joined_vcf_data.groupTuple(by:0,sort:true).flatten().collect()
-       //paired_vcf_data.view()
-             
+                    
        // join data for json
-       data_for_json = id_xlsx_ch.join(sorted_normal_tumor_paired_fq_data,by:0).join(sorted_normal_tumor_paired_bam_data,by:0).join(joined_vcf_data_bed,by:0).join(patient_data.meta_data,by:0) 
-       //data_for_json.view()
-       //data_for_json.count().view()
-       make_json(data_for_json,hgnc_ch,outdir_ch)
+       data_for_json = id_xlsx_ch
+                          .join(id_fastpjs_ch,by:0)
+                          .join(sorted_normal_tumor_paired_fq_data,by:0)
+                          .join(id_bamqc_ch,by:0)
+                          .join(joined_vcf_data_bed,by:0)
+                          .join(id_labdata_ch,by:0)
+        
+       data_for_json.view()
+       data_for_json.count().view()
+       //#make_json(data_for_json,hgnc_ch,outdir_ch)
        
 
     //emit:
@@ -577,13 +443,17 @@ workflow {
     target_dir_mvwes_ch = Channel.fromPath(params.target_dir_mvwes, type: "dir")
     // NextSeq_data_dir_ch = Channel.value(params.NextSeq_data_dir)
     NovaSeq_data_dir_ch = Channel.value(params.NovaSeq_data_dir)
-    nxf_outputdir_ch = Channel.value(params.nxf_outputdir)
+    //nxf_outputdir_ch = Channel.value(params.nxf_outputdir)
     //pan_bedfile_ch = Channel.value(params.bedfile)
     grz_submission_dir_ch = Channel.value(params.grz_submission_dir)
     hgnc_ch = Channel.value(params.hgnc)
     wes_bedfile_ch = Channel.value(params.wes_bedfile)
     //grz_bed_ch = Channel.value(params.grz_bed)
+    fastp_js_ch = Channel.value(params.fastp_js_dir)
+    bamqc_ch = Channel.value(params.bamqc_dir)
+    labdata_ch = Channel.value(params.labdata_dir)
+    vcf_dir_ch = Channel.value(params.vcf_dir)
     outdir_ch = Channel.value(params.outdir)
 
-    wes_ETL_subKDK_grzSubmissionPreparation(target_dir_mvwes_ch,NovaSeq_data_dir_ch,nxf_outputdir_ch,grz_submission_dir_ch,hgnc_ch,wes_bedfile_ch,outdir_ch)
+    wes_ETL_subKDK_grzSubmissionPreparation(target_dir_mvwes_ch,NovaSeq_data_dir_ch,grz_submission_dir_ch,hgnc_ch,wes_bedfile_ch,fastp_js_ch,bamqc_ch,labdata_ch,vcf_dir_ch,outdir_ch)
 }
