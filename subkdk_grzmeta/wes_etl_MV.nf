@@ -427,9 +427,9 @@ workflow wes_ETL_subKDK_grzSubmissionPreparation {
                           .join(joined_vcf_data_bed,by:0)
                           .join(id_labdata_ch,by:0)
         
-       data_for_json.view()
-       data_for_json.count().view()
-       //#make_json(data_for_json,hgnc_ch,outdir_ch)
+       //data_for_json.view()
+       //data_for_json.count().view()
+       make_json(data_for_json,hgnc_ch,outdir_ch)
        
 
     //emit:

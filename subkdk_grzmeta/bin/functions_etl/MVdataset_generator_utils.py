@@ -316,48 +316,48 @@ def wxs_final_page_to_dict(filepath,excel_file,idx1):
             report_dict = dict()
             
             # network
-            report_dict["network"] = wxs_page_final.loc[0,"network"]
+            #report_dict["network"] = wxs_page_final.loc[0,"network"]
             
             # library_type
-            report_dict["library_type"] = wxs_page_final.loc[0,"library_type"]
+            #report_dict["library_type"] = wxs_page_final.loc[0,"library_type"]
             
             # sampleConservation_T
-            report_dict["sampleConservation_T"] = wxs_page_final.loc[0,"sampleConservation_T"]
+            #report_dict["sampleConservation_T"] = wxs_page_final.loc[0,"sampleConservation_T"]
             
             # sampleConservation_N
-            report_dict["sampleConservation_N"] = wxs_page_final.loc[0,"sampleConservation_N"]
+            #report_dict["sampleConservation_N"] = wxs_page_final.loc[0,"sampleConservation_N"]
                         
             # entity
             # entity_dict = dict()
             # report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]   
             
             # sampledates
-            report_dict["sampledate_T"] = wxs_page_final.loc[0, "sampledate_T"]
+            #report_dict["sampledate_T"] = wxs_page_final.loc[0, "sampledate_T"]
 
-            report_dict["sampledate_N"] = wxs_page_final.loc[0, "sampledate_N"]
+            #report_dict["sampledate_N"] = wxs_page_final.loc[0, "sampledate_N"]
 
             # kit_name
-            report_dict["kit_name"] = wxs_page_final.loc[0, "kit_name"]
+            #report_dict["kit_name"] = wxs_page_final.loc[0, "kit_name"]
 
             # barcodes
-            report_dict["barcode_T"] = wxs_page_final.loc[0, "barcode_T"]
+            #report_dict["barcode_T"] = wxs_page_final.loc[0, "barcode_T"]
 
-            report_dict["barcode_N"] = wxs_page_final.loc[0, "barcode_N"]
+            #report_dict["barcode_N"] = wxs_page_final.loc[0, "barcode_N"]
 
             # sequencer
-            report_dict["sequencer"] = wxs_page_final.loc[0, "sequencer"]
+            #report_dict["sequencer"] = wxs_page_final.loc[0, "sequencer"]
 
             # libraryPrepKit_T
-            report_dict["libraryPrepKit_T"] = wxs_page_final.loc[0, "libraryPrepKit_T"]
+            #report_dict["libraryPrepKit_T"] = wxs_page_final.loc[0, "libraryPrepKit_T"]
 
             # libraryPrepKitManufacturer_T
-            report_dict["libraryPrepKitManufacturer_T"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_T"]
+            #report_dict["libraryPrepKitManufacturer_T"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_T"]
 
             # libraryPrepKit_N
-            report_dict["libraryPrepKit_N"] = wxs_page_final.loc[0, "libraryPrepKit_N"]
+            #report_dict["libraryPrepKit_N"] = wxs_page_final.loc[0, "libraryPrepKit_N"]
 
             # libraryPrepKitManufacturer_N
-            report_dict["libraryPrepKitManufacturer_N"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_N"]
+            #report_dict["libraryPrepKitManufacturer_N"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_N"]
 
             # entity
             # entity_dict = dict()

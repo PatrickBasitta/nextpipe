@@ -237,7 +237,7 @@ bed_size = bed_bytesize["bed_bytesize"][0]["fileByteSize"]
 # index_number_files: len(3 files in normal, 4 files in tumor)
 index_num_files = [3,4]
 ## sampleconservation = [wes_final_page_dict["sampleConservation_N"],wes_final_page_dict["sampleConservation_T"]]
-sampleconservation = [lower(labdata["normal material"]), lower(labdata["tumor material"])]
+sampleconservation = [labdata["normal material"].lower(), labdata["tumor material"].lower()]
 # index 0 = normal, index 1 = tumor
 index_normal_tumor = [0,1]
 for i_nt in index_normal_tumor:
@@ -526,7 +526,7 @@ wes_json = {
        "mvtracker_uuid" : "",
        "pathoProId": "",
        "nexusId": "",
-       "enumber": labdata["number"],
+       "enumber": labdata["enumber"],
        "molpathId": "",
        "patient_id" : labdata["patient_id"],
        "firstname": "",
