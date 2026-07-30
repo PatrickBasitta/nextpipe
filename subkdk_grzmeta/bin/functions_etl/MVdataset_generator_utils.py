@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-@author: Patrick Basitta
-"""
 
 import os
 import pandas as pd
@@ -10,395 +7,368 @@ import requests
 import json as js
 import functions_etl.global_variables as gv
 import xml.etree.ElementTree as ET
+import numpy as np
+from typing import Dict, Any
 
 def pan_snvdata_to_dicts(filepath,excel_file,patient_id,idx):
-    
-    with open(filepath, 'rb') as snv_file: 
-        snv_data = pd.read_excel(snv_file, 
-                                 sheet_name= excel_file.sheet_names[idx],
-                                 engine="openpyxl")   
-        
-        # get idx/IDX of reported x/X
-        idx_of_variants_to_report = snv_data.index\
-                                   [snv_data["submit"] == "x"].tolist()
-                                   
-        IDX_of_variants_to_report = snv_data.index\
-                                   [snv_data["submit"] == "X"].tolist()
-                                   
-        # merge idx/IDX and sort
-        merged = idx_of_variants_to_report + IDX_of_variants_to_report
-        merged.sort()
 
-        # get variants                                
-        variants_to_report = snv_data.loc[merged, :]
-        
-        # get all necessary columns !!!change pancancer python script!!!
-        
-        # add column identifier, genomicSource = "somatic" and LOH
-        variants_to_report["identifier"] = ""
-        variants_to_report["genomicSource"] = "somatic"
-        variants_to_report["LOH"] = "not_available"
-        
-        # rename colums
-        variants_to_report = variants_to_report.rename(columns = 
-                                       {"Chromosom":"chromosome",
-                                        "Position":"startPosition",
-                                        "End Position": "endPosition",
-                                        "Reference": "ref",
-                                        "Allele": "alt",
-                                        "Gen":"gene.diplay",
-                                        "HGNC_MV":"gene.code",
-                                        "Transcript_ID": "transcriptId",
-                                        "cDNA_Change": "dnaChange",
-                                        "Amino_Acid_Change": "proteinChange",
-                                        "Consequence": "variantTypes"
-                                        })
-        
-        # convert np int64 to int
-        variants_to_report= variants_to_report.reset_index(drop="TRUE")
-        variants_to_report["interpretation_int"] = ""
-        for number in range(len(variants_to_report["Interpretation"])):
-            variants_to_report.loc[number,"interpretation_int"] = int(variants_to_report.loc\
-                                                                   [number,"Interpretation"])
+    #with open(filepath, 'rb') as snv_file:
+    snv_data = pd.read_excel(filepath,
+                             sheet_name= excel_file.sheet_names[idx],
+                             engine="openpyxl")
 
-        # get final columns to report
-        final_data = variants_to_report[["identifier",
-                                         "genomicSource",
-                                         "gene.diplay",
-                                         "gene.code",
-                                         "transcriptId",
-                                         "dnaChange",
-                                         "proteinChange",
-                                         "chromosome",
-                                         "startPosition",
-                                         "endPosition",
-                                         "ref",
-                                         "alt",
-                                         "localization",
-                                         "variantTypes",
-                                         "interpretation_int",
-                                         "LOH"]]
-        
-        # VariantID-generator
-        smallVariantId_lst = []
-        for i in range(len(final_data)):
-            i = i + 1
-            smallVariantId_lst.append("smallVariantId_"+str(i))
-            
-        # add id to identifier column
-        final_data.loc[:,"identifier"] =  smallVariantId_lst
-        
-        # make dictionaries
-        smallVariatns_records = final_data.to_dict("records")
-        
-        return smallVariatns_records
+    # get idx/IDX of reported x/X
+    idx_of_variants_to_report = snv_data.index\
+                               [snv_data["submit"] == "x"].tolist()
+
+    IDX_of_variants_to_report = snv_data.index\
+                               [snv_data["submit"] == "X"].tolist()
+
+    # merge idx/IDX and sort
+    merged = idx_of_variants_to_report + IDX_of_variants_to_report
+    merged.sort()
+
+    # get variants
+    variants_to_report = snv_data.loc[merged, :]
+
+    # get all necessary columns !!!change pancancer python script!!!
+
+    # add column identifier, genomicSource = "somatic" and LOH
+    variants_to_report["identifier"] = ""
+    variants_to_report["genomicSource"] = "somatic"
+    variants_to_report["LOH"] = "not_available"
+
+    # rename colums
+    variants_to_report = variants_to_report.rename(columns =
+                                   {"Chromosom":"chromosome",
+                                    "Position":"startPosition",
+                                    "End Position": "endPosition",
+                                    "Reference": "ref",
+                                    "Allele": "alt",
+                                    "Gen":"gene.diplay",
+                                    "HGNC_MV":"gene.code",
+                                    "Transcript_ID": "transcriptId",
+                                    "cDNA_Change": "dnaChange",
+                                    "Amino_Acid_Change": "proteinChange",
+                                    "Consequence": "variantTypes"
+                                     })
+
+    # convert np int64 to int
+    variants_to_report= variants_to_report.reset_index(drop="TRUE")
+    variants_to_report["interpretation_int"] = ""
+    for number in range(len(variants_to_report["Interpretation"])):
+        variants_to_report.loc[number,"interpretation_int"] = int(variants_to_report.loc\
+                                                               [number,"Interpretation"])
+
+    # get final columns to report
+    final_data = variants_to_report[["identifier",
+                                     "genomicSource",
+                                     "gene.diplay",
+                                     "gene.code",
+                                     "transcriptId",
+                                     "dnaChange",
+                                     "proteinChange",
+                                     "chromosome",
+                                     "startPosition",
+                                     "endPosition",
+                                     "ref",
+                                     "alt",
+                                     "localization",
+                                     "variantTypes",
+                                     "interpretation_int",
+                                     "LOH"]]
+
+    # VariantID-generator
+    smallVariantId_lst = []
+    for i in range(len(final_data)):
+        i = i + 1
+        smallVariantId_lst.append("smallVariantId_"+str(i))
+
+    # add id to identifier column
+    final_data.loc[:,"identifier"] =  smallVariantId_lst
+
+    # make dictionaries
+    smallVariatns_records = final_data.to_dict("records")
+
+    return smallVariatns_records
 
 def wxs_snvdata_to_dicts(filepath,excel_file,patient_id,idx,hgnc):
-    
-    with open(filepath, 'rb') as snv_file: 
-        snv_data = pd.read_excel(snv_file, 
-                                 sheet_name= excel_file.sheet_names[idx],
-                                 engine="openpyxl")   
-        
-        # get idx/IDX of reported x/X
-        idx_of_variants_to_report = snv_data.index\
-                                   [snv_data["submit"] == "x"].tolist()
-                                   
-        IDX_of_variants_to_report = snv_data.index\
-                                   [snv_data["submit"] == "X"].tolist()
-                                   
-        # merge idx/IDX and sort
-        merged = idx_of_variants_to_report + IDX_of_variants_to_report
-        merged.sort()
 
-        # get variants                                
-        variants_to_report = snv_data.loc[merged, :]
-        
-        # get all necessary columns
-        
-        # add column identifier, genomicSource = "somatic" and LOH
-        variants_to_report["identifier"] = ""
-        variants_to_report["genomicSource"] = "somatic"
-        #variants_to_report["interpretation"] = ""
-        variants_to_report["LOH"] = "not_available"
-        
-        # rename colums
-        variants_to_report = variants_to_report.rename(columns = 
-                                       {"Chromosome":"chromosome",
-                                        "Start_Position":"startPosition",
-                                        "End_Position": "endPosition",
-                                        "Reference_Allele": "ref",
-                                        "Tumor_Seq_Allele2": "alt",
-                                        "HUGO_SYMBOL":"gene.display",
-                                        "NM-Nummer": "transcriptId",
-                                        "HGVSc": "dnaChange",
-                                        "HGVSp": "proteinChange",
-                                        "CSQ_Consequence": "variantTypes"
-                                        })
-        
-        # add localization, due not present in xlsx (in PanCancer it is present)
-        
-        # getting fields {coding,inRegulatoryElements,
-        # notInCodingAndNotInRegulatoryElements} in field localization
-        # required for the MV Oncology report
-        variants_to_report["localization"] = "-"
+    #with open(filepath, 'rb') as snv_file:
+    snv_data = pd.read_excel(filepath,
+                             sheet_name= excel_file.sheet_names[idx],
+                             engine="openpyxl")
 
-        # field: coding (bool: according to ensemble variation catalog and HGVSp = xxx.p.xxx / exists)
-        # field: notInCodingAndNotInRegulatoryElements (bool: )
-        # field: inRegulatoryElements(bool: )
-        
-        # Reset indices
-        variants_to_report = variants_to_report.reset_index(drop="TRUE")
-        
-        # coding_SO_term
-        coding_SO_term = ["synonymous_variant",
-                          "missense_variant", 
-                          "inframe_insertion", 
-                          "inframe_deletion", 
-                          "stop_gained",
-                          "frameshift_variant", 
-                          "coding_sequence_variant",
-                          "start_lost", 
-                          "stop_lost", 
-                          "start_retained_variant",
-                          "stop_retained_variant", 
-                          "incomplete_terminal_codon_variant",
-                          "transcript_ablation",
-                          "transcript_amplification", 
-                          "protein_altering_variant",
-                          "coding_transcript_variant",
-                          "NMD_transcript_variant"]
-        
-        # regulatroy_SO_term
-        regulatroy_SO_term = ["TFBS_ablation", 
-                              "TFBS_amplification",
-                              "TF_binding_site_variant", 
-                              "regulatory_region_ablation",
-                              "regulatory_region_amplification",
-                              "regulatory_region_variant"]
-        
-        # define "localization"
-        for i in range(len(variants_to_report["proteinChange"])):
-            if variants_to_report.loc[i,"variantTypes"] in coding_SO_term and pd.isna\
-               (variants_to_report.loc[i,"proteinChange"]) == False and variants_to_report.loc\
-                     [i,"proteinChange"].startswith("p."):
-                         variants_to_report.loc[i,"localization"] = "coding"            
-            elif variants_to_report.loc\
-                [i,"variantTypes"] in regulatroy_SO_term and variants_to_report.loc\
-                      [i,"proteinChange"].startswith("p.") == False:
-                          variants_to_report.loc[i,"localization"] = "inRegulatoryElements"
-            elif variants_to_report.loc\
-                [i,"variantTypes"] not in regulatroy_SO_term and variants_to_report.loc\
-                    [i,"variantTypes"] not in coding_SO_term and str(variants_to_report.loc\
-                      [i,"proteinChange"]).startswith("p.") == False:
-                          variants_to_report.loc[i,"localization"] = "notInCodingAndNotInRegulatoryElements"
+    # get idx/IDX of reported x/X
+    idx_of_variants_to_report = snv_data.index\
+                               [snv_data["submit"] == "x"].tolist()
 
-        # fields {inRegulatoryElements,notInCodingAndNotInRegulatoryElements} are
-        # preliminary not catched here in PanCancer, but must be added in WES/WGS
-        
-        # add HGNC_MV, due not present in xlsx (in PanCancer it is present)
-        # make HGNC_code column
-        hgnc["HGNC_code"] = hgnc["HGNC"]
-        # make dict (sorts automatically)
-        hgnc_dict = dict(zip(hgnc["ID"] ,hgnc["HGNC_code"]))
-        # add hgnc code
-        for i in range(len(variants_to_report["gene.display"])):
-            variants_to_report.loc[i, "gene.code"] = hgnc_dict[variants_to_report.loc[i, "gene.display"]]
-        
-        # convert np int64 to int
-        variants_to_report["interpretation_int"] = ""
-        for number in range(len(variants_to_report["interpretation"])):
-            variants_to_report.loc[number,"interpretation_int"] = int(variants_to_report.loc\
-                                                                     [number,"interpretation"])
-        # get final columns to report
-        final_data = variants_to_report[["identifier",
-                                         "genomicSource",
-                                         "gene.display",
-                                         "gene.code",
-                                         "transcriptId",
-                                         "dnaChange",
-                                         "proteinChange",
-                                         "chromosome",
-                                         "startPosition",
-                                         "endPosition",
-                                         "ref",
-                                         "alt",
-                                         "localization",
-                                         "variantTypes",
-                                         "interpretation_int",
-                                         "LOH"]]
-        
-        # VariantID-generator
-        smallVariantId_lst = []
-        for i in range(len(final_data)):
-            i = i + 1
-            smallVariantId_lst.append("smallVariantId_"+str(i))
-            
-        # add id to identifier column
-        final_data.loc[:,"identifier"] =  smallVariantId_lst
-        
-        # make dictionaries
-        smallVariatns_records = final_data.to_dict("records")
-        
-        return smallVariatns_records    
+    IDX_of_variants_to_report = snv_data.index\
+                               [snv_data["submit"] == "X"].tolist()
+
+    # merge idx/IDX and sort
+    merged = idx_of_variants_to_report + IDX_of_variants_to_report
+    merged.sort()
+
+    # get variants
+    variants_to_report = snv_data.loc[merged, :]
+
+    # get all necessary columns
+
+    # add column identifier, genomicSource = "somatic" and LOH
+    variants_to_report["identifier"] = ""
+    variants_to_report["genomicSource"] = "somatic"
+    #variants_to_report["interpretation"] = ""
+    variants_to_report["LOH"] = "not_available"
+
+    # rename colums
+    variants_to_report = variants_to_report.rename(columns =
+                                   {"Chromosome":"chromosome",
+                                    "Start_Position":"startPosition",
+                                    "End_Position": "endPosition",
+                                    "Reference_Allele": "ref",
+                                    "Tumor_Seq_Allele2": "alt",
+                                    "HUGO_SYMBOL":"gene.display",
+                                    "NM-Nummer": "transcriptId",
+                                    "HGVSc": "dnaChange",
+                                    "HGVSp": "proteinChange",
+                                    "CSQ_Consequence": "variantTypes"
+                                    })
+
+    # add localization, due not present in xlsx (in PanCancer it is present)
+
+    # getting fields {coding,inRegulatoryElements,
+    # notInCodingAndNotInRegulatoryElements} in field localization
+    # required for the MV Oncology report
+    variants_to_report["localization"] = "-"
+
+    # field: coding (bool: according to ensemble variation catalog and HGVSp = xxx.p.xxx / exists)
+    # field: notInCodingAndNotInRegulatoryElements (bool: )
+    # field: inRegulatoryElements(bool: )
+
+    # Reset indices
+    variants_to_report = variants_to_report.reset_index(drop="TRUE")
+
+    # coding_SO_term
+    coding_SO_term = ["synonymous_variant",
+                      "missense_variant",
+                      "inframe_insertion",
+                      "inframe_deletion",
+                      "stop_gained",
+                      "frameshift_variant",
+                      "coding_sequence_variant",
+                      "start_lost",
+                      "stop_lost",
+                      "start_retained_variant",
+                      "stop_retained_variant",
+                      "incomplete_terminal_codon_variant",
+                      "transcript_ablation",
+                      "transcript_amplification",
+                      "protein_altering_variant",
+                      "coding_transcript_variant",
+                      "NMD_transcript_variant"]
+
+    # regulatroy_SO_term
+    regulatroy_SO_term = ["TFBS_ablation",
+                          "TFBS_amplification",
+                          "TF_binding_site_variant",
+                          "regulatory_region_ablation",
+                          "regulatory_region_amplification",
+                          "regulatory_region_variant"]
+
+    # define "localization"
+    for i in range(len(variants_to_report["proteinChange"])):
+        if variants_to_report.loc[i,"variantTypes"] in coding_SO_term and pd.isna\
+           (variants_to_report.loc[i,"proteinChange"]) == False and variants_to_report.loc\
+                 [i,"proteinChange"].startswith("p."):
+                     variants_to_report.loc[i,"localization"] = "coding"
+        elif variants_to_report.loc\
+            [i,"variantTypes"] in regulatroy_SO_term and variants_to_report.loc\
+                  [i,"proteinChange"].startswith("p.") == False:
+                      variants_to_report.loc[i,"localization"] = "inRegulatoryElements"
+        elif variants_to_report.loc\
+            [i,"variantTypes"] not in regulatroy_SO_term and variants_to_report.loc\
+                [i,"variantTypes"] not in coding_SO_term and str(variants_to_report.loc\
+                  [i,"proteinChange"]).startswith("p.") == False:
+                      variants_to_report.loc[i,"localization"] = "notInCodingAndNotInRegulatoryElements"
+
+    # fields {inRegulatoryElements,notInCodingAndNotInRegulatoryElements} are
+    # preliminary not catched here in PanCancer, but must be added in WES/WGS
+
+    # add HGNC_MV, due not present in xlsx (in PanCancer it is present)
+    # make HGNC_code column
+    hgnc["HGNC_code"] = hgnc["HGNC"]
+    # make dict (sorts automatically)
+    hgnc_dict = dict(zip(hgnc["ID"] ,hgnc["HGNC_code"]))
+    # add hgnc code
+    for i in range(len(variants_to_report["gene.display"])):
+        variants_to_report.loc[i, "gene.code"] = hgnc_dict[variants_to_report.loc[i, "gene.display"]]
+
+    # convert np int64 to int
+    variants_to_report["interpretation_int"] = ""
+    for number in range(len(variants_to_report["interpretation"])):
+        variants_to_report.loc[number,"interpretation_int"] = int(variants_to_report.loc\
+                                                                 [number,"interpretation"])
+    # get final columns to report
+    final_data = variants_to_report[["identifier",
+                                     "genomicSource",
+                                     "gene.display",
+                                     "gene.code",
+                                     "transcriptId",
+                                     "dnaChange",
+                                     "proteinChange",
+                                     "chromosome",
+                                     "startPosition",
+                                     "endPosition",
+                                     "ref",
+                                     "alt",
+                                     "localization",
+                                     "variantTypes",
+                                     "interpretation_int",
+                                     "LOH"]]
+
+    # VariantID-generator
+    smallVariantId_lst = []
+    for i in range(len(final_data)):
+        i = i + 1
+        smallVariantId_lst.append("smallVariantId_"+str(i))
+
+    # add id to identifier column
+    final_data.loc[:,"identifier"] =  smallVariantId_lst
+
+    # make dictionaries
+    smallVariatns_records = final_data.to_dict("records")
+
+    return smallVariatns_records
+
+def to_json_safe(value) -> Any:
+    # Converts pandas/numpy/special types to json-native python types
+    if pd.isna(value):
+        return None
+    if isinstance(value, (np.integer,)):
+        return int(value)
+    if isinstance(value, (np.floating,)):
+        return float(value)
+    if isinstance(value, np.bool_):
+        return bool(value)
+    if isinstance(value, pd.Timestamp):
+        return value.isoformat()
+    if isinstance(value, str):
+        return value.strip() if value else value
+    return str(value) # Fallback for unexpected types
 
 def pan_final_page_to_dict(filepath,excel_file,idx1):
-    
-        with open(filepath, 'rb') as file: 
-            pancancer_page_final = pd.read_excel(file, 
+
+        pancancer_page_final = pd.read_excel(filepath,
                                      sheet_name= excel_file.sheet_names[idx1],
                                      engine="openpyxl")
 
-            report_dict = dict()
-            
-             # network
-            report_dict["network"] = pancancer_page_final.loc[0,"network"]
-           
-            # sampleConservation_T
-            report_dict["sampleConservation_T"] = pancancer_page_final.loc[0,"sampleConservation_T"]
+        report_dict = dict()
 
-            # ICD-O-3_Topo
-            report_dict["ICD-O-3_Topo"] =  pancancer_page_final.loc[0,"ICD-O-3_Topo"]
+        # network
+        report_dict["network"] = pancancer_page_final.loc[0,"network"]
 
-            # ICD-O-3_Topo
-            report_dict["ICD-O-3_Morpho"] =  pancancer_page_final.loc[0,"ICD-O-3_Morpho"]
+        # sampleConservation_T
+        report_dict["sampleConservation_T"] = pancancer_page_final.loc[0,"sampleConservation_T"]
 
-            # sampledates
-            report_dict["sampledate_T"] = pancancer_page_final.loc[0, "sampledate_T"]
+        # ICD-O-3_Topo
+        report_dict["ICD-O-3_Topo"] =  pancancer_page_final.loc[0,"ICD-O-3_Topo"]
 
-            # kit_name
-            report_dict["kit_name"] = pancancer_page_final.loc[0, "kit_name"]
+        # ICD-O-3_Topo
+        report_dict["ICD-O-3_Morpho"] =  pancancer_page_final.loc[0,"ICD-O-3_Morpho"]
 
-            # entity
-            # entity_dict = dict()
-            report_dict["entity"] = pancancer_page_final.loc[0, "Entitaet"]   
-            
-            # barcodes
-            report_dict["barcode_T"] = pancancer_page_final.loc[0, "barcode_T"]
+        # sampledates
+        report_dict["sampledate_T"] = pancancer_page_final.loc[0, "sampledate_T"]
 
-            # cellularity
-            report_dict["cellularity"] = pancancer_page_final.loc[0, "TZ (%)"]
+        # kit_name
+        report_dict["kit_name"] = pancancer_page_final.loc[0, "kit_name"]
 
-            # sequencer
-            report_dict["sequencer"] = pancancer_page_final.loc[0, "sequencer"]
-             
-            # Average_coverage
-            report_dict["average_coverage"] = pancancer_page_final.loc[0, "Average_coverage"] 
-            
-            # Coverage>100
-            report_dict["coverage_above100"] = pancancer_page_final.loc[0, "Coverage>100 (in %)"]
-            
-            # MSI as dict
-            msi = dict()
-            msi["msi_status"] = pancancer_page_final.loc[0, "MSI"]
-            msi["msiAnzahlMarkerStabil"] = int(pancancer_page_final.loc\
+        # entity
+        # entity_dict = dict()
+        report_dict["entity"] = pancancer_page_final.loc[0, "Entitaet"]
+
+        # barcodes
+        report_dict["barcode_T"] = pancancer_page_final.loc[0, "barcode_T"]
+
+        # cellularity
+        report_dict["cellularity"] = pancancer_page_final.loc[0, "TZ (%)"]
+
+        # sequencer
+        report_dict["sequencer"] = pancancer_page_final.loc[0, "sequencer"]
+
+        # Average_coverage
+        report_dict["average_coverage"] = pancancer_page_final.loc[0, "Average_coverage"]
+
+        # Coverage>100
+        report_dict["coverage_above100"] = pancancer_page_final.loc[0, "Coverage>100 (in %)"]
+
+        # MSI as dict
+        msi = dict()
+        msi["msi_status"] = pancancer_page_final.loc[0, "MSI"]
+        msi["msiAnzahlMarkerStabil"] = int(pancancer_page_final.loc\
                                           [0, "Anzahl_Marker_stabil"])
-            msi["msiAnzahlMarkerInstabil"] = int(pancancer_page_final.loc\
+        msi["msiAnzahlMarkerInstabil"] = int(pancancer_page_final.loc\
                                           [0, "Anzahl_Marker_instabil"])
-            msi["msiAnzahlMarkerfail"] = int(pancancer_page_final.loc\
+        msi["msiAnzahlMarkerfail"] = int(pancancer_page_final.loc\
                                           [0, "Anzahl_Marker_fail"])
-            report_dict["msi"] = msi    
-            # TMB
-            tmb = dict()
-            tmb["tmb_status"] =  pancancer_page_final.loc[0, "TMB"]
-            tmb["tmb_mutations_Mb"] =  pancancer_page_final.loc[0, "mutations_Mb"]
-            report_dict["tmb"] = tmb 
-            
-            return report_dict
+        report_dict["msi"] = msi
+        # TMB
+        tmb = dict()
+        tmb["tmb_status"] =  pancancer_page_final.loc[0, "TMB"]
+        tmb["tmb_mutations_Mb"] =  pancancer_page_final.loc[0, "mutations_Mb"]
+        report_dict["tmb"] = tmb
 
-def wxs_final_page_to_dict(filepath,excel_file,idx1):
-    
-        with open(filepath, 'rb') as file: 
-            wxs_page_final = pd.read_excel(file, 
-                                     sheet_name= excel_file.sheet_names[idx1],
-                                     engine="openpyxl")
+        return report_dict
 
-            report_dict = dict()
-            
-            # network
-            #report_dict["network"] = wxs_page_final.loc[0,"network"]
-            
-            # library_type
-            #report_dict["library_type"] = wxs_page_final.loc[0,"library_type"]
-            
-            # sampleConservation_T
-            #report_dict["sampleConservation_T"] = wxs_page_final.loc[0,"sampleConservation_T"]
-            
-            # sampleConservation_N
-            #report_dict["sampleConservation_N"] = wxs_page_final.loc[0,"sampleConservation_N"]
-                        
-            # entity
-            # entity_dict = dict()
-            # report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]   
-            
-            # sampledates
-            #report_dict["sampledate_T"] = wxs_page_final.loc[0, "sampledate_T"]
+def wxs_final_page_to_dict(filepath: str,excel_file:str ,idx1: int) -> Dict[str, Any]:
+    # Reads a WGS/WES Excel report sheet ('final' sheet), extracts entity, cellularity, MSI, TMB and HRD metrics
+    # and returns a JSON-serializable dictionary
+    try:
+        wxs_page_final = pd.read_excel(filepath, sheet_name= excel_file.sheet_names[idx1], engine="openpyxl")
 
-            #report_dict["sampledate_N"] = wxs_page_final.loc[0, "sampledate_N"]
+        if wxs_page_final.empty:
+            raise ValueError("'Final' sheet is empty")
 
-            # kit_name
-            #report_dict["kit_name"] = wxs_page_final.loc[0, "kit_name"]
+        # Clean columm names (Excel often adds trailing spaces)
+        wxs_page_final.columns = [str(col).strip() for col in wxs_page_final.columns]
 
-            # barcodes
-            #report_dict["barcode_T"] = wxs_page_final.loc[0, "barcode_T"]
+        # Safe extration helper
+        def extract_value(col_name: str):
+            if col_name not in wxs_page_final.columns:
+                return None
+            return to_json_safe(wxs_page_final.loc[0,col_name])
 
-            #report_dict["barcode_N"] = wxs_page_final.loc[0, "barcode_N"]
+        # Build structured, JSON-ready dict
+        report_dict = {
+            "entity": extract_value("Entitaet"),
+            "cellularity": extract_value("TZ (%)"),
+            "msi": {
+                "msi_status": extract_value("MSI_UKB"),
+                "Ergebnis_MSIsensor_pro": extract_value("Ergebnis_MSIsensor_pro(%)_UKB"),
+                "msi_OA": extract_value("MSI_OA")
+            },
+            "tmb": {
+                "tmb_status": extract_value("TMB_UKB"),
+                "Anzahl_Mutationen_missense": extract_value("Anzahl_Mutationen_missense_UKB"),
+                "mutations_Mb": extract_value("mutations_Mb_UKB"),
+                "tmb_OA": extract_value("TMB_OA"),
+                "mutations_Mb_OA": extract_value("mutations_Mb_OA")
+            },
+            "hrd": extract_value("HR deficiency score_OA")
+        }
 
-            # sequencer
-            #report_dict["sequencer"] = wxs_page_final.loc[0, "sequencer"]
+        return report_dict
 
-            # libraryPrepKit_T
-            #report_dict["libraryPrepKit_T"] = wxs_page_final.loc[0, "libraryPrepKit_T"]
+    except FileNotFoundError:
+        print(f"File not found: {filepath}")
+    except IndexError:
+        print(f"Sheet index {idx1} out of range.")
+    except KeyError as e:
+        print(f"Column error: {e}")
+    except Exception as e:
+        print(f"Failed to parse excel: {e}")
 
-            # libraryPrepKitManufacturer_T
-            #report_dict["libraryPrepKitManufacturer_T"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_T"]
-
-            # libraryPrepKit_N
-            #report_dict["libraryPrepKit_N"] = wxs_page_final.loc[0, "libraryPrepKit_N"]
-
-            # libraryPrepKitManufacturer_N
-            #report_dict["libraryPrepKitManufacturer_N"] = wxs_page_final.loc[0, "libraryPrepKitManufacturer_N"]
-
-            # entity
-            # entity_dict = dict()
-            report_dict["entity"] = wxs_page_final.loc[0, "Entitaet"]
-
-            # cellularity
-            report_dict["cellularity"] = float(wxs_page_final.loc[0, "TZ (%)"]) 
-            
-            # Average_coverage !
-            #report_dict["average_coverage"] = wxs_page_final.loc[0, "Average_coverage"] 
-            
-            # Coverage>100 !
-            #report_dict["overage_above100"] = wxs_page_final.loc[0, "Coverage>100"]
-            
-            # MSI as dict
-            msi = dict()
-            msi["msi_status"] = wxs_page_final.loc[0, "MSI_UKB"]
-            msi["Ergebnis_MSIsensor_pro"] = float(wxs_page_final.loc\
-                                          [0, "Ergebnis_MSIsensor_pro(%)_UKB"])
-            msi["msi_OA"] = wxs_page_final.loc[0, "MSI_OA"]
-
-            report_dict["msi"] = msi   
-            
-            # TMB
-            tmb = dict()
-            tmb["tmb_status"] =  wxs_page_final.loc[0, "TMB_UKB"]
-            tmb["Anzahl_Mutationen_missense"] =  wxs_page_final.loc\
-                                                 [0, "Anzahl_Mutationen_missense_UKB"]
-            tmb["mutations_Mb"] =  wxs_page_final.loc\
-                                                 [0, "mutations_Mb_UKB"]
-            tmb["tmb_OA"] = wxs_page_final.loc[0, "TMB_OA"]
-            tmb["mutations_Mb_OA"] = wxs_page_final.loc[0, "mutations_Mb_OA"]
-             
-            report_dict["tmb"] = tmb
-
-            # HRD
-            hrd = dict()
-            hrd = wxs_page_final.loc[0, "HR deficiency score_OA"]
-            
-            return report_dict
-                    
+    return {} # Safe fallback for downstream code
 
 pan_submission_grz = {
     "$schema": "https://raw.githubusercontent.com/BfArM-MVH/MVGenomseq/refs/tags/v1.2.1/GRZ/grz-schema.json",

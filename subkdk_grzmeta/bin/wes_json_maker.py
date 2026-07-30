@@ -76,49 +76,49 @@ for smallvariant_rec in smallVariatns_records:
 Oncology_Molecular_Report = { # wes data MV + adds
 "SmallVariants" : smallVariatns_records,
 "copyNumberVariants" : [{
-    "identifier" : "na",
-    "genomicSource" : "na",
-    "cnvType" : "na",
-    "gene.display" : "na",
-    "gene.code" : "na",
-    "chromosome" : "na",
-    "endPosition" : "na",
-    "startPosition" : "na",
-    "localization" : "na"
+    "identifier" : "",
+    "genomicSource" : "",
+    "cnvType" : "",
+    "gene.display" : "",
+    "gene.code" : "",
+    "chromosome" : "",
+    "endPosition" : "",
+    "startPosition" : "",
+    "localization" : ""
     }],
 "structualVariants" : [{
-    "identifier" : "na",
-    "genomicSource" : "na",
-    "geneA.display" : "na",
-    "geneA.code" : "na",
-    "geneB.diplay" : "na",
-    "geneB.code" : "na",
-    "structureType" : "na",
-    "description" : "na"
+    "identifier" : "",
+    "genomicSource" : "",
+    "geneA.display" : "",
+    "geneA.code" : "",
+    "geneB.diplay" : "",
+    "geneB.code" : "",
+    "structureType" : "",
+    "description" : ""
      }],
 "expressionVariants" : [{
-    "identifier" : "na",
-    "gene.display" : "na",
-    "gene.code" : "na",
-    "expressionType" : "na",
-    "reference" : "na"
+    "identifier" : "",
+    "gene.display" : "",
+    "gene.code" : "",
+    "expressionType" : "",
+    "reference" : ""
     }],
 "complexBiomarkers": [{
-    "ploidy" : "na",
-    "tmb" : str(wes_final_page_dict["tmb"]["tmb_status"]),
-    "tmb_mutations_Mb" : float(wes_final_page_dict["tmb"]["mutations_Mb"]),
-    "tmb_Anzahl_Mutationen_missense" : float(wes_final_page_dict["tmb"]["Anzahl_Mutationen_missense"]),
-    "msi_status" : str(wes_final_page_dict["msi"]["msi_status"]),
-    "msiErgebnis_MSIsensor_pro" : float(wes_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"]),
+    "ploidy" : "",
+    "tmb" : wes_final_page_dict["tmb"]["tmb_status"],
+    "tmb_mutations_Mb" : wes_final_page_dict["tmb"]["mutations_Mb"],
+    "tmb_Anzahl_Mutationen_missense" : wes_final_page_dict["tmb"]["Anzahl_Mutationen_missense"],
+    "msi_status" : wes_final_page_dict["msi"]["msi_status"],
+    "msiErgebnis_MSIsensor_pro" : wes_final_page_dict["msi"]["Ergebnis_MSIsensor_pro"],
     #"HR_deficiency_score_OA" : wes_final_page_dict["HR_deficiency_score"],
-    "hrdHigh" : "na",
-    "lstHigh" : "na",
-    "tailHigh" : "na"
+    "hrdHigh" : "",
+    "lstHigh" : "",
+    "tailHigh" : ""
     }],
 "sbsSignatures" : [{
-    "sbsVersion" : "na",
-    "sbsSignatures" : "na",
-    "sbbsSignaturesPresent" : "na"
+    "sbsVersion" : "",
+    "sbsSignatures" : "",
+    "sbbsSignaturesPresent" : ""
     }]
 }
 
@@ -134,23 +134,23 @@ for value in Oncology_Molecular_Report["complexBiomarkers"]:
     check_lstHigh = value.get("lstHigh")
     check_tailHigh = value.get("tailHigh")
     if pd.isna(check_ploidy):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["ploidy"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["ploidy"] = ""
     if pd.isna(check_tmp):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb"] = ""
     if pd.isna(check_tmb_mutations_Mb):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb_mutations_Mb"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb_mutations_Mb"] = ""
     if pd.isna(check_tmb_Anzahl_Mutationen_missense):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb_Anzahl_Mutationen_missense"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tmb_Anzahl_Mutationen_missense"] = ""
     if pd.isna(check_msi_status):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["msi_status"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["msi_status"] = ""
     if pd.isna(check_msiErgebnis_MSIsensor_pro):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["msiErgebnis_MSIsensor_pro"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["msiErgebnis_MSIsensor_pro"] = ""
     if pd.isna(check_hrdHigh):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["hrdHigh"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["hrdHigh"] = ""
     if pd.isna(check_lstHigh):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["lstHigh"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["lstHigh"] = ""
     if pd.isna(check_tailHigh):
-        Oncology_Molecular_Report["complexBiomarkers"][0]["tailHigh"] = "na"
+        Oncology_Molecular_Report["complexBiomarkers"][0]["tailHigh"] = ""
 
 # add patient data
 with open(args.labdata_json, "r") as labdata_js:
