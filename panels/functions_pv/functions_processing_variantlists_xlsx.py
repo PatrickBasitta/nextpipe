@@ -126,7 +126,7 @@ def merge_variantDBi_fil(index_fil_sheets, all_data_sheets_lst, variantDBi):
 def rename_all_sheets(names_all_sheets, index_cov_sheets, index_unfil_sheets,\
                       index_fil_sheets):
     
-    renamed_all_sheets = [renamed.split("_" "")[0]\
+    renamed_all_sheets = ["_".join(renamed.rsplit("_" "")[:3])\
                           for renamed in names_all_sheets]
 
     # Rename cov_sheets    
